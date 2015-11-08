@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/background"
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent"
+    android:orientation="vertical"
+    android:weightSum="1">
+
+    <ImageView
+        android:id="@+id/backgroundImg"
+        android:layout_width="wrap_content"
+        android:layout_height="320dp"
+        android:adjustViewBounds="true"
+        android:alpha="0.5"
+        android:src="@drawable/dre" />
+
+    <ImageView
+        android:id="@+id/blackImg"
+        android:layout_width="20dp"
+        android:layout_height="20dp"
+        android:adjustViewBounds="true"
+        android:visibility="invisible"
+        android:src="@drawable/black" />
+
+    <View
+        android:id="@+id/horiz"
+        android:layout_width="1dp"
+        android:layout_height="30dp"
+        android:background="#FF0000" />
+    <View
+        android:id="@+id/vertic"
+        android:layout_width="30dp"
+        android:layout_height="1dp"
+        android:background="#FF0000" />
+
+</FrameLayout>
