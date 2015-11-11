@@ -8,7 +8,10 @@ import android.graphics.Paint;
 import android.graphics.drawable.BitmapDrawable;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.Toolbar;
 import android.util.Log;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
@@ -31,6 +34,8 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        Toolbar myToolbar = (android.support.v7.widget.Toolbar) findViewById(R.id.my_toolbar);
+        setSupportActionBar(myToolbar);
 
         context = this.getApplicationContext();
         boardImage = (ImageView) findViewById(R.id.backgroundImg);
@@ -43,7 +48,7 @@ public class MainActivity extends AppCompatActivity {
                 boardWidth = boardImage.getMeasuredHeight();
                 boardHeight = boardImage.getMeasuredWidth();
 
-                drawGrid();
+                drawBoardGrid();
 
                 return true;
             }
@@ -111,7 +116,27 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
-    private void drawGrid() {
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        // Inflate the menu; this adds items to the action bar if it is present.
+        getMenuInflater().inflate(R.menu.menu_main, menu);
+        return true;
+    }
+
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
+            case R.id.action_settings:
+                return true;
+
+            default:
+                return super.onOptionsItemSelected(item);
+
+        }
+    }
+
+    private void drawBoardGrid() {
         Paint p = new Paint();
         p.setColor(Color.BLACK);
         Bitmap bitmap = ((BitmapDrawable) boardImage.getDrawable()).getBitmap();
