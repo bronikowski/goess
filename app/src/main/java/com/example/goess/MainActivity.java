@@ -101,7 +101,8 @@ public class MainActivity extends AppCompatActivity {
                         verticParam.rightMargin = (int) event.getX();
                         verticParam.topMargin = (int) event.getY();
                         vertic.setVisibility(View.VISIBLE);
-                        frameLayout.addView(vertic, verticParam);
+                        if ((int) event.getY() < boardHeight)
+                            frameLayout.addView(vertic, verticParam);
 
                         break;
                     case MotionEvent.ACTION_UP:
