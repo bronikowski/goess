@@ -1,7 +1,6 @@
 package com.example.goess;
 
 
-import android.graphics.Point;
 import android.util.Log;
 import java.io.BufferedReader;
 import java.io.File;
@@ -22,9 +21,9 @@ public class SGFParser {
 
     }
 
-    public ArrayList<Point> getMovesList(String filePath) {
+    public ArrayList<Move> getMovesList(String filePath) {
 
-        ArrayList<Point> list = new ArrayList<Point>();
+        ArrayList<Move> list = new ArrayList<>();
         String content = getFileContent(filePath);
         Log.i(TAG, "Content " + content);
 
@@ -34,14 +33,12 @@ public class SGFParser {
         content = content.substring(start + 1);
         Log.i(TAG, "start at " + start + "  " + content);
 
-        char letter;
+        char a, b;
         for (int i = 0; i < content.length() - 1; i += 6) {
-            letter = content.charAt(i + 2);
-            Point p = new Point();
-            p.x = letter - 'a' + 1;
-            letter = content.charAt(i + 2 + 1);
-            p.y = letter - 'a' + 1;
-            list.add(p);
+            a = content.charAt(i + 2);
+            b = content.charAt(i + 2 + 1);
+            Move move = new Move(a - 'a' + 1, b - 'a' + 1, content.charAt(i) == 'B');
+            list.add(move);
         }
 
         return list;
@@ -72,4 +69,6 @@ public class SGFParser {
         }
         return sb.toString();
     }
+
+
 }

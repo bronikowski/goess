@@ -73,7 +73,7 @@
             android:layout_centerHorizontal="true">
 
             <Button
-                android:id="@+id/nextBtn"
+                android:id="@+id/rewindBtn"
                 android:layout_width="0.0dip" android:layout_height="fill_parent"
                 android:background="@android:drawable/ic_media_rew"
                 android:layout_weight="0.8" />
@@ -84,13 +84,13 @@
                 android:background="@drawable/ic_media_playback"
                 android:layout_weight="1.0" />
             <Button
-                android:id="@+id/begBtn"
+                android:id="@+id/nextBtn"
                 android:layout_width="0.0dip" android:layout_height="fill_parent"
                 android:background="@android:drawable/ic_media_play"
                 android:layout_weight="1.0" />
 
             <Button
-                android:id="@+id/endBtn"
+                android:id="@+id/forwardBtn"
                 android:layout_width="0.0dip" android:layout_height="fill_parent"
                 android:background="@android:drawable/ic_media_ff"
                 android:layout_weight="0.8" />

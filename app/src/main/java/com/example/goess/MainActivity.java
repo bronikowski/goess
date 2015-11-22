@@ -40,9 +40,15 @@ public class MainActivity extends AppCompatActivity {
     int boardHeight;
     int stoneWidth;
     int stoneHeight;
+    float offsetW;
+    float offsetH;
 
     Button nextBtn;
     Button prevBtn;
+    Button rewindBtn;
+    Button forwardBtn;
+
+    FrameLayout frameLayout;
 
     BoardLogic boardLogic;
 
@@ -58,10 +64,12 @@ public class MainActivity extends AppCompatActivity {
         stoneImage = (ImageView) findViewById(R.id.blackImg);
         nextBtn = (Button) findViewById(R.id.nextBtn);
         prevBtn = (Button) findViewById(R.id.prevBtn);
+        rewindBtn = (Button) findViewById(R.id.rewindBtn);
+        forwardBtn = (Button) findViewById(R.id.forwardBtn);
 
         boardLogic = new BoardLogic();
 
-        final FrameLayout frameLayout = (FrameLayout)findViewById(R.id.background);
+        frameLayout = (FrameLayout)findViewById(R.id.background);
 
         ViewTreeObserver vto = boardImage.getViewTreeObserver();
         vto.addOnPreDrawListener(new ViewTreeObserver.OnPreDrawListener() {
@@ -69,6 +77,8 @@ public class MainActivity extends AppCompatActivity {
                 boardImage.getViewTreeObserver().removeOnPreDrawListener(this);
                 boardWidth = boardImage.getMeasuredHeight();
                 boardHeight = boardImage.getMeasuredWidth();
+                offsetW = (boardWidth - (GRID_PADDING * 2)) / 18;
+                offsetH = (boardHeight - (GRID_PADDING * 2)) / 18;
 
                 stoneWidth = stoneImage.getMeasuredHeight();
                 stoneHeight = stoneImage.getMeasuredWidth();
@@ -87,7 +97,6 @@ public class MainActivity extends AppCompatActivity {
         });
 
 
-
         final View horiz = (View) findViewById(R.id.horiz);
         final View vertic = (View) findViewById(R.id.vertic);
         horiz.setVisibility(View.INVISIBLE);
@@ -100,7 +109,7 @@ public class MainActivity extends AppCompatActivity {
 
                 FrameLayout.LayoutParams horizParam = new FrameLayout.LayoutParams(1, boardWidth);
                 FrameLayout.LayoutParams verticParam = new FrameLayout.LayoutParams(boardHeight, 1);
-                FrameLayout.LayoutParams stoneParam = new FrameLayout.LayoutParams(STONE_SIZE, STONE_SIZE);
+
                 ViewGroup owner = (ViewGroup) stoneImage.getParent();
 
                 int action = event.getAction();
@@ -134,11 +143,10 @@ public class MainActivity extends AppCompatActivity {
 
                         int eventX = (int) event.getX();
                         int eventY = (int) event.getY();
-                        if (eventX > 15 && eventX < (boardWidth - 10)
-                            && eventY > 15 && eventY < (boardHeight - 10)) {
 
-                            float offsetW = (boardWidth - (GRID_PADDING * 2)) / 18;
-                            float offsetH = (boardHeight - (GRID_PADDING * 2)) / 18;
+                        if (eventX > 15 && eventX < (boardWidth - 10)
+                                && eventY > 15 && eventY < (boardHeight - 10)) {
+
                             int x = ((int) (eventX / offsetW)) + 1;
                             int y = ((int) (eventY / offsetH)) + 1;
 
@@ -147,10 +155,8 @@ public class MainActivity extends AppCompatActivity {
                             if (y > 19)
                                 y = 19;
 
-                            stoneParam.leftMargin = ((int) (x * offsetW)) - (STONE_SIZE / 2) + 1/*imgpadding*/;
-                            stoneParam.topMargin = ((int) (y * offsetH)) - (STONE_SIZE / 2);
-                            frameLayout.addView(img, stoneParam);
-
+                            Move move = new Move(x, y, true);
+                            drawStone(move, v);
                         }
 
                         break;
@@ -159,12 +165,50 @@ public class MainActivity extends AppCompatActivity {
                     default:
                         break;
                 }
+
                 return true;
             }
         });
 
+        View.OnClickListener listener = new View.OnClickListener() {
+            public void onClick(View v) {
+                switch (v.getId()) {
+                    case R.id.nextBtn:
+
+                        Move move = boardLogic.getNextMove();
+                        if (move != null)
+                            drawStone(move, v);
+                        else
+                            Log.w(TAG, "No more moves left!");
+
+                        break;
+                    case R.id.prevBtn:
+                        break;
+                }
+            }
+        };
+
+        nextBtn.setOnClickListener(listener);
+
     }
 
+
+    private void drawStone(Move move, View view) {
+        Log.i(TAG, "Putting stone at " + String.valueOf(move.x) + ":" + String.valueOf(move.y));
+        ImageView img = new ImageView(context);
+        img.setImageDrawable(view.getResources().getDrawable(
+                move.currentPlayer == Move.Player.BLACK ? R.drawable.black : R.drawable.white));
+
+        if (move.currentPlayer == Move.Player.WHITE)
+            STONE_SIZE = 30;
+        else
+            STONE_SIZE = 28;
+        FrameLayout.LayoutParams stoneParam = new FrameLayout.LayoutParams(STONE_SIZE, STONE_SIZE);
+
+        stoneParam.leftMargin = ((int) (move.x * offsetW)) - (STONE_SIZE / 2) + 1/*imgpadding*/;
+        stoneParam.topMargin = ((int) (move.y * offsetH)) - (STONE_SIZE / 2);
+        frameLayout.addView(img, stoneParam);
+    }
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
@@ -175,8 +219,9 @@ public class MainActivity extends AppCompatActivity {
 
             if (filePath.substring(filePath.length() - 3).equals(FILE_EXT)) {
                 Log.i(TAG, "Opening file: " + filePath);
-                SGFParser parser = new SGFParser();
-                boardLogic.movesList = parser.getMovesList(filePath);
+
+                boardLogic.parse(filePath);
+
             } else {
                 Toast.makeText(getApplicationContext(), "This is not SGF!",
                         Toast.LENGTH_LONG).show();
