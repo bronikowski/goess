@@ -155,8 +155,10 @@ public class MainActivity extends AppCompatActivity {
                             if (y > 19)
                                 y = 19;
 
-                            Move move = new Move(x, y, true);
-                            drawStone(move, v);
+                            Move move = new Move(x, y, boardLogic.currentPlayer == Move.Player.BLACK);
+                            if (boardLogic.isValid(move)) { //todo: draw only if correct guess
+                                drawStone(move, v);
+                            }
                         }
 
                         break;
@@ -197,17 +199,20 @@ public class MainActivity extends AppCompatActivity {
         Log.i(TAG, "Putting stone at " + String.valueOf(move.x) + ":" + String.valueOf(move.y));
         ImageView img = new ImageView(context);
         img.setImageDrawable(view.getResources().getDrawable(
-                move.currentPlayer == Move.Player.BLACK ? R.drawable.black : R.drawable.white));
+                move.player == Move.Player.BLACK ? R.drawable.black : R.drawable.white));
 
-        if (move.currentPlayer == Move.Player.WHITE)
+        if (move.player == Move.Player.WHITE)
             STONE_SIZE = 30;
         else
             STONE_SIZE = 28;
-        FrameLayout.LayoutParams stoneParam = new FrameLayout.LayoutParams(STONE_SIZE, STONE_SIZE);
 
+        FrameLayout.LayoutParams stoneParam = new FrameLayout.LayoutParams(STONE_SIZE, STONE_SIZE);
         stoneParam.leftMargin = ((int) (move.x * offsetW)) - (STONE_SIZE / 2) + 1/*imgpadding*/;
         stoneParam.topMargin = ((int) (move.y * offsetH)) - (STONE_SIZE / 2);
         frameLayout.addView(img, stoneParam);
+
+        boardLogic.updateBoardState(move);
+
     }
 
     @Override

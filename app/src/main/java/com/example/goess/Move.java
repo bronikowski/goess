@@ -11,12 +11,12 @@ public class Move {
 
     int x;
     int y;
-    Player currentPlayer;
+    Player player;
 
     public Move(int x, int y, boolean black) {
         this.x = x;
         this.y = y;
-        this.currentPlayer = black ? Player.BLACK : Player.WHITE;
+        this.player = black ? Player.BLACK : Player.WHITE;
     }
 
 }
