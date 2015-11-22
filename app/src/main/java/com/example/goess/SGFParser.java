@@ -22,13 +22,31 @@ public class SGFParser {
 
     }
 
-    public ArrayList<Point> parse(String filePath) {
+    public ArrayList<Point> getMovesList(String filePath) {
 
         ArrayList<Point> list = new ArrayList<Point>();
         String content = getFileContent(filePath);
         Log.i(TAG, "Content " + content);
+
+        int start = content.indexOf(";B[");
+        if (start < 0)
+            Log.e(TAG, "Could not find first move!");
+        content = content.substring(start + 1);
+        Log.i(TAG, "start at " + start + "  " + content);
+
+        char letter;
+        for (int i = 0; i < content.length() - 1; i += 6) {
+            letter = content.charAt(i + 2);
+            Point p = new Point();
+            p.x = letter - 'a' + 1;
+            letter = content.charAt(i + 2 + 1);
+            p.y = letter - 'a' + 1;
+            list.add(p);
+        }
+
         return list;
     }
+
 
     private String getFileContent(String filePath) {
 

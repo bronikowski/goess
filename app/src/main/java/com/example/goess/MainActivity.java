@@ -17,6 +17,7 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewTreeObserver;
+import android.widget.Button;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.Toast;
@@ -40,6 +41,11 @@ public class MainActivity extends AppCompatActivity {
     int stoneWidth;
     int stoneHeight;
 
+    Button nextBtn;
+    Button prevBtn;
+
+    BoardLogic boardLogic;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -50,9 +56,12 @@ public class MainActivity extends AppCompatActivity {
         context = this.getApplicationContext();
         boardImage = (ImageView) findViewById(R.id.backgroundImg);
         stoneImage = (ImageView) findViewById(R.id.blackImg);
+        nextBtn = (Button) findViewById(R.id.nextBtn);
+        prevBtn = (Button) findViewById(R.id.prevBtn);
 
-        BoardLogic boardLogic = new BoardLogic();
+        boardLogic = new BoardLogic();
 
+        final FrameLayout frameLayout = (FrameLayout)findViewById(R.id.background);
 
         ViewTreeObserver vto = boardImage.getViewTreeObserver();
         vto.addOnPreDrawListener(new ViewTreeObserver.OnPreDrawListener() {
@@ -69,12 +78,14 @@ public class MainActivity extends AppCompatActivity {
 
                 drawBoardGrid();
 
+                ViewGroup.LayoutParams params = frameLayout.getLayoutParams();
+                params.height = boardHeight;
+                params.width = boardWidth;
+
                 return true;
             }
         });
 
-
-        final FrameLayout frameLayout = (FrameLayout)findViewById(R.id.background);
 
 
         final View horiz = (View) findViewById(R.id.horiz);
@@ -165,7 +176,7 @@ public class MainActivity extends AppCompatActivity {
             if (filePath.substring(filePath.length() - 3).equals(FILE_EXT)) {
                 Log.i(TAG, "Opening file: " + filePath);
                 SGFParser parser = new SGFParser();
-                parser.parse(filePath);
+                boardLogic.movesList = parser.getMovesList(filePath);
             } else {
                 Toast.makeText(getApplicationContext(), "This is not SGF!",
                         Toast.LENGTH_LONG).show();
