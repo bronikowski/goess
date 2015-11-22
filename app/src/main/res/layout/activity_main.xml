@@ -58,7 +58,7 @@
     </FrameLayout>
 
     <RelativeLayout
-        xmlns:android="http://schemas.android.com/apk/res/android"
+        android:id="@+id/controlsLayout"
         android:layout_width="fill_parent" android:layout_height="30dp"
         android:layout_centerHorizontal="true">
         <!--
@@ -69,34 +69,30 @@
         -->
         <LinearLayout
             android:orientation="horizontal"
-            android:layout_width="200dp" android:layout_height="wrap_content"
+            android:layout_width="150dp" android:layout_height="wrap_content"
             android:layout_centerHorizontal="true">
 
             <Button
                 android:id="@+id/nextBtn"
                 android:layout_width="0.0dip" android:layout_height="fill_parent"
-                android:text="start"
-                android:textSize="8sp"
+                android:background="@android:drawable/ic_media_rew"
                 android:layout_weight="0.8" />
 
             <Button
                 android:id="@+id/prevBtn"
                 android:layout_width="0.0dip" android:layout_height="fill_parent"
-                android:text="prev"
-                android:textSize="10sp"
+                android:background="@drawable/ic_media_playback"
                 android:layout_weight="1.0" />
             <Button
                 android:id="@+id/begBtn"
                 android:layout_width="0.0dip" android:layout_height="fill_parent"
-                android:text="next"
-                android:textSize="10sp"
+                android:background="@android:drawable/ic_media_play"
                 android:layout_weight="1.0" />
 
             <Button
                 android:id="@+id/endBtn"
                 android:layout_width="0.0dip" android:layout_height="fill_parent"
-                android:text="end"
-                android:textSize="8sp"
+                android:background="@android:drawable/ic_media_ff"
                 android:layout_weight="0.8" />
 
         </LinearLayout>
