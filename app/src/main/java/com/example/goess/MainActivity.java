@@ -19,8 +19,9 @@ import android.view.ViewGroup;
 import android.view.ViewTreeObserver;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
-import com.nbsp.materialfilepicker.ui.FilePickerActivity;
+import android.widget.Toast;
 
+import com.nbsp.materialfilepicker.ui.FilePickerActivity;
 
 
 public class MainActivity extends AppCompatActivity {
@@ -28,6 +29,7 @@ public class MainActivity extends AppCompatActivity {
     private static String TAG = "MainActivity";
     private static int GRID_PADDING = 20;
     private static int STONE_SIZE = 28;
+    private static String FILE_EXT = "sgf";
     private static int REQUEST_CODE = 1;
 
     ImageView boardImage;
@@ -159,7 +161,17 @@ public class MainActivity extends AppCompatActivity {
 
         if (requestCode == REQUEST_CODE && resultCode == RESULT_OK) {
             String filePath = data.getStringExtra(FilePickerActivity.RESULT_FILE_PATH);
-            Log.i(TAG, "Opening file: " + filePath);
+
+            if (filePath.substring(filePath.length() - 3).equals(FILE_EXT)) {
+                Log.i(TAG, "Opening file: " + filePath);
+                SGFParser parser = new SGFParser();
+                parser.parse(filePath);
+            } else {
+                Toast.makeText(getApplicationContext(), "This is not SGF!",
+                        Toast.LENGTH_LONG).show();
+                Intent intent = new Intent(this, FilePickerActivity.class);
+                startActivityForResult(intent, REQUEST_CODE);
+            }
         }
     }
 
