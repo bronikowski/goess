@@ -7,8 +7,8 @@
 
 
     <!-- Settings, should always be in the overflow -->
-    <item android:id="@+id/action_settings"
+    <item android:id="@+id/action_openGame"
         android:orderInCategory="100"
-          android:title="@string/action_settings"
+          android:title="Open game"
           app:showAsAction="never"/>
 </menu>
