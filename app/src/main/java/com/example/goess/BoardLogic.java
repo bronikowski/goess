@@ -5,6 +5,7 @@ import java.util.ArrayList;
 
 public class BoardLogic {
 
+    private static String TAG = "BoardLogic";
     private static int BOARD_SIZE = 19;
 
     int currentIndex;
@@ -39,7 +40,15 @@ public class BoardLogic {
         return (movesList.size() != 0);
     }
 
-    public void updateBoardState(Move move) {
+    public void removeLastMoveFromBoardState() {
+        if (currentIndex > 0) {
+            Move lastDrawnMove = movesList.get(currentIndex - 1);
+            currentIndex--;
+            board[lastDrawnMove.x - 1][lastDrawnMove.y - 1] = Move.Player.EMPTY;
+        }
+    }
+
+    public void addMoveToBoardState(Move move) {
         board[move.x - 1][move.y - 1] = move.player;
         currentPlayer = (move.player == Move.Player.BLACK) ? Move.Player.WHITE : Move.Player.BLACK;
     }
