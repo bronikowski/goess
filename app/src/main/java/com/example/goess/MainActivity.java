@@ -1,6 +1,7 @@
 package com.example.goess;
 
 import android.content.Context;
+import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
@@ -18,12 +19,16 @@ import android.view.ViewGroup;
 import android.view.ViewTreeObserver;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
+import com.nbsp.materialfilepicker.ui.FilePickerActivity;
+
+
 
 public class MainActivity extends AppCompatActivity {
 
     private static String TAG = "MainActivity";
     private static int GRID_PADDING = 20;
     private static int STONE_SIZE = 28;
+    private static int REQUEST_CODE = 1;
 
     ImageView boardImage;
     ImageView stoneImage;
@@ -74,6 +79,7 @@ public class MainActivity extends AppCompatActivity {
         final View vertic = (View) findViewById(R.id.vertic);
         horiz.setVisibility(View.INVISIBLE);
         vertic.setVisibility(View.INVISIBLE);
+
 
         boardImage.setOnTouchListener(new View.OnTouchListener() {
             @Override
@@ -146,6 +152,18 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+
+        if (requestCode == REQUEST_CODE && resultCode == RESULT_OK) {
+            String filePath = data.getStringExtra(FilePickerActivity.RESULT_FILE_PATH);
+            Log.i(TAG, "Opening file: " + filePath);
+        }
+    }
+
+
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         // Inflate the menu; this adds items to the action bar if it is present.
@@ -157,7 +175,9 @@ public class MainActivity extends AppCompatActivity {
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
-            case R.id.action_settings:
+            case R.id.action_openGame:
+                Intent intent = new Intent(this, FilePickerActivity.class);
+                startActivityForResult(intent, REQUEST_CODE);
                 return true;
 
             default:
