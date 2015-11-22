@@ -42,6 +42,7 @@ public class MainActivity extends AppCompatActivity {
     int stoneHeight;
     float offsetW;
     float offsetH;
+    int currentStoneViewId;
 
     Button nextBtn;
     Button prevBtn;
@@ -185,13 +186,17 @@ public class MainActivity extends AppCompatActivity {
 
                         break;
                     case R.id.prevBtn:
+                        if (currentStoneViewId >= 3) {
+                            frameLayout.removeViewAt(currentStoneViewId--);
+                            boardLogic.removeLastMoveFromBoardState();
+                        }
                         break;
                 }
             }
         };
 
         nextBtn.setOnClickListener(listener);
-
+        prevBtn.setOnClickListener(listener);
     }
 
 
@@ -210,8 +215,9 @@ public class MainActivity extends AppCompatActivity {
         stoneParam.leftMargin = ((int) (move.x * offsetW)) - (STONE_SIZE / 2) + 1/*imgpadding*/;
         stoneParam.topMargin = ((int) (move.y * offsetH)) - (STONE_SIZE / 2);
         frameLayout.addView(img, stoneParam);
+        currentStoneViewId = frameLayout.indexOfChild(img);
 
-        boardLogic.updateBoardState(move);
+        boardLogic.addMoveToBoardState(move);
 
     }
 
