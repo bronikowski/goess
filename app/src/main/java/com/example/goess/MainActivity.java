@@ -98,6 +98,8 @@ public class MainActivity extends AppCompatActivity {
         });
 
 
+        currentStoneViewId = 0;
+
         final View horiz = (View) findViewById(R.id.horiz);
         final View vertic = (View) findViewById(R.id.vertic);
         horiz.setVisibility(View.INVISIBLE);
@@ -191,12 +193,27 @@ public class MainActivity extends AppCompatActivity {
                             boardLogic.removeLastMoveFromBoardState();
                         }
                         break;
+                    case R.id.rewindBtn:
+                        if (currentStoneViewId >= 3) {
+                            frameLayout.removeViews(3, currentStoneViewId - 2);
+                            currentStoneViewId = 0;
+                            boardLogic.clearBoardState();
+                        }
+                        break;
+                    case R.id.forwardBtn:
+                        Move m;
+                        while ((m= boardLogic.getNextMove()) != null) {
+                            drawStone(m, v);
+                        }
+                        break;
                 }
             }
         };
 
         nextBtn.setOnClickListener(listener);
         prevBtn.setOnClickListener(listener);
+        rewindBtn.setOnClickListener(listener);
+        forwardBtn.setOnClickListener(listener);
     }
 
 

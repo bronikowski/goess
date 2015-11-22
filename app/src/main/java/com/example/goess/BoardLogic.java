@@ -23,7 +23,10 @@ public class BoardLogic {
     }
 
     public Move getNextMove() {
-        return movesList.get(currentIndex++);
+        Move move = null;
+        if (currentIndex < movesList.size())
+            move = movesList.get(currentIndex++);
+        return move;
     }
 
     private void initBoard() {
@@ -38,6 +41,11 @@ public class BoardLogic {
         movesList = parser.getMovesList(filePath);
 
         return (movesList.size() != 0);
+    }
+
+    public void clearBoardState() {
+        currentIndex = 0;
+        initBoard();
     }
 
     public void removeLastMoveFromBoardState() {
