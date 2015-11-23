@@ -52,6 +52,7 @@ public class MainActivity extends AppCompatActivity {
     FrameLayout frameLayout;
 
     BoardLogic boardLogic;
+    boolean gameReady;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -69,6 +70,7 @@ public class MainActivity extends AppCompatActivity {
         forwardBtn = (Button) findViewById(R.id.forwardBtn);
 
         boardLogic = new BoardLogic();
+        gameReady = false;
 
         frameLayout = (FrameLayout)findViewById(R.id.background);
 
@@ -179,18 +181,25 @@ public class MainActivity extends AppCompatActivity {
             public void onClick(View v) {
                 switch (v.getId()) {
                     case R.id.nextBtn:
-
-                        Move move = boardLogic.getNextMove();
-                        if (move != null)
-                            drawStone(move, v);
-                        else
-                            Log.w(TAG, "No more moves left!");
-
+                        if (gameReady) {
+                            Move move = boardLogic.getNextMove();
+                            if (move != null)
+                                drawStone(move, v);
+                            else
+                                Log.w(TAG, "No more moves left!");
+                        } else
+                            Toast.makeText(getApplicationContext(), "Please choose a game!",
+                                    Toast.LENGTH_LONG).show();
                         break;
                     case R.id.prevBtn:
                         if (currentStoneViewId >= 3) {
                             frameLayout.removeViewAt(currentStoneViewId--);
                             boardLogic.removeLastMoveFromBoardState();
+                            if (boardLogic.currentIndex > 0) {
+                                ImageView iv = (ImageView) frameLayout.getChildAt(currentStoneViewId);
+                                iv.setImageResource(boardLogic.currentPlayer == Move.Player.BLACK ?
+                                        R.drawable.white_marked : R.drawable.black_marked);
+                            }
                         }
                         break;
                     case R.id.rewindBtn:
@@ -201,10 +210,14 @@ public class MainActivity extends AppCompatActivity {
                         }
                         break;
                     case R.id.forwardBtn:
-                        Move m;
-                        while ((m= boardLogic.getNextMove()) != null) {
-                            drawStone(m, v);
-                        }
+                        if (gameReady) {
+                            Move m;
+                            while ((m = boardLogic.getNextMove()) != null) {
+                                drawStone(m, v);
+                            }
+                        } else
+                            Toast.makeText(getApplicationContext(), "Please choose a game!",
+                                    Toast.LENGTH_LONG).show();
                         break;
                 }
             }
@@ -217,11 +230,12 @@ public class MainActivity extends AppCompatActivity {
     }
 
 
+
     private void drawStone(Move move, View view) {
         Log.i(TAG, "Putting stone at " + String.valueOf(move.x) + ":" + String.valueOf(move.y));
         ImageView img = new ImageView(context);
         img.setImageDrawable(view.getResources().getDrawable(
-                move.player == Move.Player.BLACK ? R.drawable.black : R.drawable.white));
+                move.player == Move.Player.BLACK ? R.drawable.black_marked : R.drawable.white_marked));
 
         if (move.player == Move.Player.WHITE)
             STONE_SIZE = 30;
@@ -234,9 +248,16 @@ public class MainActivity extends AppCompatActivity {
         frameLayout.addView(img, stoneParam);
         currentStoneViewId = frameLayout.indexOfChild(img);
 
+        if (boardLogic.currentIndex >= 2) {
+            ImageView iv = (ImageView) frameLayout.getChildAt(currentStoneViewId - 1);
+            iv.setImageResource(boardLogic.currentPlayer == Move.Player.BLACK ?
+                    R.drawable.white : R.drawable.black);
+        }
+
         boardLogic.addMoveToBoardState(move);
 
     }
+
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
@@ -248,7 +269,7 @@ public class MainActivity extends AppCompatActivity {
             if (filePath.substring(filePath.length() - 3).equals(FILE_EXT)) {
                 Log.i(TAG, "Opening file: " + filePath);
 
-                boardLogic.parse(filePath);
+                gameReady = boardLogic.parse(filePath);
 
             } else {
                 Toast.makeText(getApplicationContext(), "This is not SGF!",
