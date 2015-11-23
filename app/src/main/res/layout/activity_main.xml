@@ -43,6 +43,20 @@
             android:adjustViewBounds="true"
             android:visibility="invisible"
             android:src="@drawable/white" />
+        <ImageView
+            android:id="@+id/blackMarked"
+            android:layout_width="28dp"
+            android:layout_height="28dp"
+            android:adjustViewBounds="true"
+            android:visibility="invisible"
+            android:src="@drawable/black_marked" />
+        <ImageView
+            android:id="@+id/whiteMarked"
+            android:layout_width="28dp"
+            android:layout_height="28dp"
+            android:adjustViewBounds="true"
+            android:visibility="invisible"
+            android:src="@drawable/white_marked" />
 
         <View
             android:id="@+id/horiz"

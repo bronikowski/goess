@@ -10,7 +10,6 @@ public class BoardLogic {
 
     int currentIndex;
     Move.Player currentPlayer;
-
     Move.Player[][] board;
     public ArrayList<Move> movesList;
 
@@ -21,6 +20,7 @@ public class BoardLogic {
         currentPlayer = Move.Player.BLACK;
         movesList = new ArrayList<Move>();
     }
+
 
     public Move getNextMove() {
         Move move = null;
@@ -53,6 +53,7 @@ public class BoardLogic {
             Move lastDrawnMove = movesList.get(currentIndex - 1);
             currentIndex--;
             board[lastDrawnMove.x - 1][lastDrawnMove.y - 1] = Move.Player.EMPTY;
+            currentPlayer = (currentPlayer == Move.Player.BLACK) ? Move.Player.WHITE : Move.Player.BLACK;
         }
     }
 
@@ -62,6 +63,7 @@ public class BoardLogic {
     }
 
     public boolean isValid(Move move) {
-        return (board[move.x - 1][move.y - 1] == Move.Player.EMPTY);
+        return false;
+        //return (board[move.x - 1][move.y - 1] == Move.Player.EMPTY);
     }
 }
