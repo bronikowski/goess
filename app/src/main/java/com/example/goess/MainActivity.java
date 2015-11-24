@@ -20,6 +20,7 @@ import android.view.ViewTreeObserver;
 import android.widget.Button;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.nbsp.materialfilepicker.ui.FilePickerActivity;
@@ -35,6 +36,7 @@ public class MainActivity extends AppCompatActivity {
 
     ImageView boardImage;
     ImageView stoneImage;
+    TextView testLabel;
     Context context;
     int boardWidth;
     int boardHeight;
@@ -64,6 +66,7 @@ public class MainActivity extends AppCompatActivity {
         context = this.getApplicationContext();
         boardImage = (ImageView) findViewById(R.id.backgroundImg);
         stoneImage = (ImageView) findViewById(R.id.blackImg);
+        testLabel = (TextView) findViewById(R.id.testLabel);
         nextBtn = (Button) findViewById(R.id.nextBtn);
         prevBtn = (Button) findViewById(R.id.prevBtn);
         rewindBtn = (Button) findViewById(R.id.rewindBtn);
@@ -161,9 +164,9 @@ public class MainActivity extends AppCompatActivity {
                                 y = 19;
 
                             Move move = new Move(x, y, boardLogic.currentPlayer == Move.Player.BLACK);
-                            if (boardLogic.isValid(move)) { //todo: draw only if correct guess
+                            if (boardLogic.isValid(move))
                                 drawStone(move, v);
-                            }
+                            updateScore();
                         }
 
                         break;
@@ -230,6 +233,9 @@ public class MainActivity extends AppCompatActivity {
     }
 
 
+    private void updateScore() {
+        testLabel.setText("score: " + String.valueOf(boardLogic.score));
+    }
 
     private void drawStone(Move move, View view) {
         Log.i(TAG, "Putting stone at " + String.valueOf(move.x) + ":" + String.valueOf(move.y));

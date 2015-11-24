@@ -1,6 +1,5 @@
 package com.example.goess;
 
-
 import java.util.ArrayList;
 
 public class BoardLogic {
@@ -12,6 +11,7 @@ public class BoardLogic {
     Move.Player currentPlayer;
     Move.Player[][] board;
     public ArrayList<Move> movesList;
+    int score;
 
     public BoardLogic() {
         board = new Move.Player[BOARD_SIZE][BOARD_SIZE];
@@ -63,7 +63,27 @@ public class BoardLogic {
     }
 
     public boolean isValid(Move move) {
-        return false;
-        //return (board[move.x - 1][move.y - 1] == Move.Player.EMPTY);
+
+        if (board[move.x - 1][move.y - 1] != Move.Player.EMPTY)
+            return false;
+
+        boolean res = false;
+
+        if (currentIndex < movesList.size()) {
+            Move nextMove = movesList.get(currentIndex);
+            int diffX = Math.abs(nextMove.x - move.x);
+            int diffY = Math.abs(nextMove.y - move.y);
+            int maxDiff = Math.max(diffX, diffY);
+            if (maxDiff <= 10)
+                score = 10 - maxDiff;
+            else
+                score = 0;
+            res = (score == 10);
+        }
+
+        if (res)
+            currentIndex++;
+
+        return res;
     }
 }
