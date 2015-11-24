@@ -110,7 +110,6 @@ public class MainActivity extends AppCompatActivity {
         horiz.setVisibility(View.INVISIBLE);
         vertic.setVisibility(View.INVISIBLE);
 
-
         boardImage.setOnTouchListener(new View.OnTouchListener() {
             @Override
             public boolean onTouch(View v, MotionEvent event) {
@@ -140,6 +139,7 @@ public class MainActivity extends AppCompatActivity {
                         if ((int) event.getY() < boardHeight)
                             frameLayout.addView(vertic, verticParam);
 
+
                         break;
                     case MotionEvent.ACTION_UP:
 
@@ -155,14 +155,14 @@ public class MainActivity extends AppCompatActivity {
                         if (eventX > 15 && eventX < (boardWidth - 10)
                                 && eventY > 15 && eventY < (boardHeight - 10)) {
 
-                            int x = ((int) (eventX / offsetW)) + 1;
-                            int y = ((int) (eventY / offsetH)) + 1;
+                            float offset = (boardWidth - (GRID_PADDING * 2)) / 18;
+                            int x = Math.round((float)eventX / offset);
+                            int y = Math.round((float)eventY / offset);
 
                             if (x > 19)
                                 x = 19;
                             if (y > 19)
                                 y = 19;
-
                             Move move = new Move(x, y, boardLogic.currentPlayer == Move.Player.BLACK);
                             if (boardLogic.isValid(move))
                                 drawStone(move, v);
