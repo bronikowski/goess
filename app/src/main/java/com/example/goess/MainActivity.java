@@ -155,9 +155,8 @@ public class MainActivity extends AppCompatActivity {
                         if (eventX > 15 && eventX < (boardWidth - 10)
                                 && eventY > 15 && eventY < (boardHeight - 10)) {
 
-                            float offset = (boardWidth - (GRID_PADDING * 2)) / 18;
-                            int x = Math.round((float)eventX / offset);
-                            int y = Math.round((float)eventY / offset);
+                            int x = Math.round((float)eventX / offsetW);
+                            int y = Math.round((float)eventY / offsetH);
 
                             if (x > 19)
                                 x = 19;
