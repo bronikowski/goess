@@ -20,6 +20,7 @@ import android.view.ViewTreeObserver;
 import android.widget.Button;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -234,6 +235,13 @@ public class MainActivity extends AppCompatActivity {
 
     private void updateScore() {
         testLabel.setText("score: " + String.valueOf(boardLogic.score));
+        LinearLayout fill =  (LinearLayout) findViewById(R.id.scoreFill);
+        LinearLayout bkg =  (LinearLayout) findViewById(R.id.scoreBkg);
+        ViewGroup.LayoutParams paramsBkg =  bkg.getLayoutParams();
+        ViewGroup.LayoutParams params =  fill.getLayoutParams();
+        params.width = boardLogic.score * (paramsBkg.width / 10);
+
+        fill.setLayoutParams(params);
     }
 
     private void drawStone(Move move, View view) {
