@@ -29,6 +29,8 @@
             android:alpha="0.5"
             android:src="@drawable/dre" />
 
+
+
         <ImageView
             android:id="@+id/blackImg"
             android:layout_width="28dp"
@@ -73,17 +75,19 @@
 
     <RelativeLayout
         android:id="@+id/controlsLayout"
-        android:layout_width="fill_parent" android:layout_height="30dp"
+        android:layout_width="fill_parent" android:layout_height="140dp"
         android:layout_centerHorizontal="true">
 
         <TextView
             android:text="0"
             android:id="@+id/testLabel"
-            android:layout_width="wrap_content" android:layout_height="wrap_content" />
+            android:layout_width="wrap_content" android:layout_height="30dp" />
 
         <LinearLayout
+            android:id="@+id/buttonsLayout"
             android:orientation="horizontal"
-            android:layout_width="150dp" android:layout_height="wrap_content"
+            android:layout_width="150dp" android:layout_height="50dp"
+            android:paddingBottom="20dp"
             android:layout_centerHorizontal="true">
 
             <Button
@@ -110,6 +114,35 @@
                 android:layout_weight="0.8" />
 
         </LinearLayout>
+
+        <RelativeLayout
+            android:id="@+id/scoreLayout"
+            android:orientation="horizontal"
+            android:layout_width="100dp"
+            android:layout_height="30dp"
+            android:layout_below="@+id/buttonsLayout"
+            android:layout_centerHorizontal="true">
+
+            <LinearLayout
+                android:id="@+id/scoreBkg"
+                android:layout_width="100dp"
+                android:layout_height="22dp"
+                android:layout_centerInParent="true" layout_centerHorizontal="true"
+                android:background="@drawable/score_bkg" />
+
+            <LinearLayout
+                android:id="@+id/scoreFill"
+                android:layout_toRightOf="@+id/scoreBkg"
+                android:layout_width="0dp"
+                android:layout_height="22dp"
+                android:alpha="0.6"
+                android:layout_centerInParent="true"
+                android:layout_alignParentLeft="true"
+                android:background="@drawable/score_fill" />
+
+        </RelativeLayout>
+
+
     </RelativeLayout>
 
 </LinearLayout>
