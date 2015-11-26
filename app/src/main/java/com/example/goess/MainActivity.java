@@ -239,7 +239,12 @@ public class MainActivity extends AppCompatActivity {
         LinearLayout bkg =  (LinearLayout) findViewById(R.id.scoreBkg);
         ViewGroup.LayoutParams paramsBkg =  bkg.getLayoutParams();
         ViewGroup.LayoutParams params =  fill.getLayoutParams();
-        params.width = boardLogic.score * (paramsBkg.width / 10);
+        params.width = boardLogic.score * ((paramsBkg.width - 10) / 10);
+        View v = findViewById(R.id.scoreFillEnd);
+        if (boardLogic.score == 10) {
+            v.setVisibility(View.VISIBLE);
+        } else
+            v.setVisibility(View.INVISIBLE);
 
         fill.setLayoutParams(params);
     }
