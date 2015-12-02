@@ -163,10 +163,10 @@ public class MainActivity extends AppCompatActivity {
                                 x = 19;
                             if (y > 19)
                                 y = 19;
-                            Move move = new Move(x, y, boardLogic.currentPlayer == Move.Player.BLACK);
+                            Move move = new Move(x, y, Move.Player.BLACK);
                             if (boardLogic.isValid(move))
                                 drawStone(move, v);
-                            updateScore();
+                            updateScoreLabel();
                         }
 
                         break;
@@ -233,7 +233,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
 
-    private void updateScore() {
+    private void updateScoreLabel() {
         testLabel.setText("score: " + String.valueOf(boardLogic.score));
         LinearLayout fill =  (LinearLayout) findViewById(R.id.scoreFill);
         LinearLayout bkg =  (LinearLayout) findViewById(R.id.scoreBkg);
@@ -287,7 +287,7 @@ public class MainActivity extends AppCompatActivity {
             if (filePath.substring(filePath.length() - 3).equals(FILE_EXT)) {
                 Log.i(TAG, "Opening file: " + filePath);
 
-                gameReady = boardLogic.parse(filePath);
+                gameReady = boardLogic.parseSGFFile(filePath);
 
             } else {
                 Toast.makeText(getApplicationContext(), "This is not SGF!",
