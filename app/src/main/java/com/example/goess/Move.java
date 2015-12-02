@@ -13,10 +13,10 @@ public class Move {
     int y;
     Player player;
 
-    public Move(int x, int y, boolean black) {
+    public Move(int x, int y, Player player) {
         this.x = x;
         this.y = y;
-        this.player = black ? Player.BLACK : Player.WHITE;
+        this.player = (player == Player.BLACK) ? Player.BLACK : Player.WHITE;
     }
 
 }

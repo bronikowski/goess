@@ -37,7 +37,7 @@ public class SGFParser {
         for (int i = 0; i < content.length() - 1; i += 6) {
             a = content.charAt(i + 2);
             b = content.charAt(i + 2 + 1);
-            Move move = new Move(a - 'a' + 1, b - 'a' + 1, content.charAt(i) == 'B');
+            Move move = new Move(a - 'a' + 1, b - 'a' + 1, content.charAt(i) == 'B' ? Move.Player.BLACK : Move.Player.WHITE);
             list.add(move);
         }
 
