@@ -34,6 +34,7 @@ public class MainActivity extends AppCompatActivity {
     private static int STONE_SIZE = 28;
     private static String FILE_EXT = "sgf";
     private static int REQUEST_CODE = 1;
+    private static int BOARD_SIZE = 19;
 
     ImageView boardImage;
     ImageView stoneImage;
@@ -57,12 +58,16 @@ public class MainActivity extends AppCompatActivity {
     BoardLogic boardLogic;
     boolean gameReady;
 
+    View[][] stonesImg;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         Toolbar myToolbar = (Toolbar) findViewById(R.id.my_toolbar);
         setSupportActionBar(myToolbar);
+
+        stonesImg = new View[BOARD_SIZE][BOARD_SIZE];
 
         context = this.getApplicationContext();
         boardImage = (ImageView) findViewById(R.id.backgroundImg);
@@ -77,6 +82,7 @@ public class MainActivity extends AppCompatActivity {
         gameReady = false;
 
         frameLayout = (FrameLayout)findViewById(R.id.background);
+
 
         ViewTreeObserver vto = boardImage.getViewTreeObserver();
         vto.addOnPreDrawListener(new ViewTreeObserver.OnPreDrawListener() {
@@ -163,9 +169,10 @@ public class MainActivity extends AppCompatActivity {
                                 x = 19;
                             if (y > 19)
                                 y = 19;
-                            Move move = new Move(x, y, Move.Player.BLACK);
+                            Move move = new Move(x - 1, y - 1, boardLogic.currentPlayer);
                             if (boardLogic.isValid(move))
                                 drawStone(move, v);
+                            checkIfCapturing(move);
                             updateScoreLabel();
                         }
 
@@ -186,8 +193,10 @@ public class MainActivity extends AppCompatActivity {
                     case R.id.nextBtn:
                         if (gameReady) {
                             Move move = boardLogic.getNextMove();
-                            if (move != null)
+                            if (move != null) {
                                 drawStone(move, v);
+                                checkIfCapturing(move);
+                            }
                             else
                                 Log.w(TAG, "No more moves left!");
                         } else
@@ -196,7 +205,12 @@ public class MainActivity extends AppCompatActivity {
                         break;
                     case R.id.prevBtn:
                         if (currentStoneViewId >= 3) {
-                            frameLayout.removeViewAt(currentStoneViewId--);
+                            if (boardLogic.currentIndex > 0) {//readd dead
+                                Move lastDrawnMove = boardLogic.movesList.get(boardLogic.currentIndex - 1);
+                                frameLayout.removeView(stonesImg[lastDrawnMove.x][lastDrawnMove.y]);
+                            }
+
+                            currentStoneViewId--;
                             boardLogic.removeLastMoveFromBoardState();
                             if (boardLogic.currentIndex > 0) {
                                 ImageView iv = (ImageView) frameLayout.getChildAt(currentStoneViewId);
@@ -207,7 +221,10 @@ public class MainActivity extends AppCompatActivity {
                         break;
                     case R.id.rewindBtn:
                         if (currentStoneViewId >= 3) {
-                            frameLayout.removeViews(3, currentStoneViewId - 2);
+                            for (int i = 0; i < BOARD_SIZE; ++i)
+                                for (int j = 0; j < BOARD_SIZE; ++j)
+                                    frameLayout.removeView(stonesImg[i][j]);
+
                             currentStoneViewId = 0;
                             boardLogic.clearBoardState();
                         }
@@ -217,6 +234,7 @@ public class MainActivity extends AppCompatActivity {
                             Move m;
                             while ((m = boardLogic.getNextMove()) != null) {
                                 drawStone(m, v);
+
                             }
                         } else
                             Toast.makeText(getApplicationContext(), "Please choose a game!",
@@ -232,6 +250,17 @@ public class MainActivity extends AppCompatActivity {
         forwardBtn.setOnClickListener(listener);
     }
 
+    private void checkIfCapturing(Move move) {
+        if (boardLogic.isCapturing(move)) {
+            for (int i = 0; i < boardLogic.deadStones.size(); ++i) {
+                Move m = boardLogic.deadStones.get(i);
+                frameLayout.removeView(stonesImg[m.x][m.y]);
+                currentStoneViewId--;
+                boardLogic.removeFromBoardState(m);
+            }
+            boardLogic.deadStones.clear();
+        }
+    }
 
     private void updateScoreLabel() {
         testLabel.setText("score: " + String.valueOf(boardLogic.score));
@@ -261,8 +290,8 @@ public class MainActivity extends AppCompatActivity {
             STONE_SIZE = 28;
 
         FrameLayout.LayoutParams stoneParam = new FrameLayout.LayoutParams(STONE_SIZE, STONE_SIZE);
-        stoneParam.leftMargin = ((int) (move.x * offsetW)) - (STONE_SIZE / 2) + 1/*imgpadding*/;
-        stoneParam.topMargin = ((int) (move.y * offsetH)) - (STONE_SIZE / 2);
+        stoneParam.leftMargin = ((int) ((move.x + 1) * offsetW)) - (STONE_SIZE / 2) + 1/*imgpadding*/;
+        stoneParam.topMargin = ((int) ((move.y + 1) * offsetH)) - (STONE_SIZE / 2);
         frameLayout.addView(img, stoneParam);
         currentStoneViewId = frameLayout.indexOfChild(img);
 
@@ -273,7 +302,7 @@ public class MainActivity extends AppCompatActivity {
         }
 
         boardLogic.addMoveToBoardState(move);
-
+        stonesImg[move.x][move.y] = img;
     }
 
 
