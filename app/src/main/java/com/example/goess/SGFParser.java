@@ -13,8 +13,8 @@ import java.util.ArrayList;
 public class SGFParser {
 
     private static String TAG = "SGFParser";
-    private static String BLACK_MOVE = "B";
-    private static String WHITE_MOVE = "W";
+    private static char BLACK_MOVE = 'B';
+    private static char WHITE_MOVE = 'W';
 
 
     public SGFParser() {
@@ -28,17 +28,37 @@ public class SGFParser {
         Log.i(TAG, "Content " + content);
 
         int start = content.indexOf(";B[");
-        if (start < 0)
+        if (start < 0) {
             Log.e(TAG, "Could not find first move!");
-        content = content.substring(start + 1);
+            return list;
+        }
+        int startOffset = 1;
+        if (start == 0)
+            startOffset = 0; //should not happen
         Log.i(TAG, "start at " + start + "  " + content);
 
-        char a, b;
-        for (int i = 0; i < content.length() - 1; i += 6) {
-            a = content.charAt(i + 2);
-            b = content.charAt(i + 2 + 1);
-            Move move = new Move(a - 'a' + 1, b - 'a' + 1, content.charAt(i) == 'B' ? Move.Player.BLACK : Move.Player.WHITE);
-            list.add(move);
+        char next, a, b;
+        int endOffset = content.length() - 4;
+        boolean checked = false;
+
+        try {
+            for (int i = start - startOffset; i < endOffset; ++i) {
+                next = content.charAt(i);
+                if (!checked && next == '(') {
+                    checked = true;
+                    endOffset = content.indexOf(")");
+                }
+                if (next == BLACK_MOVE || next == WHITE_MOVE) {
+                    a = content.charAt(i + 2);
+                    b = content.charAt(i + 2 + 1);
+                    Move move = new Move(a - 'a', b - 'a', content.charAt(i) == BLACK_MOVE ? Move.Player.BLACK : Move.Player.WHITE);
+                    Log.i(TAG, "add   " + String.valueOf(move.x) + ":" + String.valueOf(move.y));
+                    list.add(move);
+                }
+            }
+        } catch (IndexOutOfBoundsException e) {
+            Log.e(TAG, "IndexOutOfBoundsException: " + e.getMessage());
+            list.clear();
         }
 
         return list;
@@ -58,7 +78,7 @@ public class SGFParser {
 
             String line = null;
             while ((line = reader.readLine()) != null)
-                sb.append(line).append("\n");
+                sb.append(line);
 
             reader.close();
 
@@ -69,6 +89,5 @@ public class SGFParser {
         }
         return sb.toString();
     }
-
 
 }

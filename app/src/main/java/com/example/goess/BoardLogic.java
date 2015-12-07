@@ -13,14 +13,15 @@ public class BoardLogic {
     Move.Player currentPlayer;
     Move.Player[][] board;
     public ArrayList<Move> movesList;
+    public ArrayList<Move> deadStones = new ArrayList<>();
     int score;
 
     public BoardLogic() {
         board = new Move.Player[BOARD_SIZE][BOARD_SIZE];
         initBoard();
         movesList = new ArrayList<Move>();
-    }
 
+    }
 
     public Move getNextMove() {
         Move move = null;
@@ -33,6 +34,7 @@ public class BoardLogic {
         for (int i = 0; i < BOARD_SIZE; ++i) {
             for (int j = 0; j < BOARD_SIZE; ++j)
                 board[i][j] = Move.Player.EMPTY;
+
         }
         currentIndex = 0;
         currentPlayer = Move.Player.BLACK;
@@ -54,18 +56,19 @@ public class BoardLogic {
         if (currentIndex > 0) {
             Move lastDrawnMove = movesList.get(currentIndex - 1);
             currentIndex--;
-            board[lastDrawnMove.x - 1][lastDrawnMove.y - 1] = Move.Player.EMPTY;
+            board[lastDrawnMove.x][lastDrawnMove.y] = Move.Player.EMPTY;
             currentPlayer = (currentPlayer == Move.Player.BLACK) ? Move.Player.WHITE : Move.Player.BLACK;
         }
     }
 
+    public void removeFromBoardState(Move move) {
+        board[move.x][move.y] = Move.Player.EMPTY;
+    }
+
+
     public void addMoveToBoardState(Move move) {
-        board[move.x - 1][move.y - 1] = move.player;
+        board[move.x][move.y] = move.player;
         currentPlayer = (move.player == Move.Player.BLACK) ? Move.Player.WHITE : Move.Player.BLACK;
-
-        if (isCapturing(move))
-            Log.i(TAG, "Capturing");
-
     }
 
     private ArrayList<Move> getNeighbours(Move move, Move.Player color) {
@@ -74,15 +77,18 @@ public class BoardLogic {
         int x = move.x;
         int y = move.y;
 
-        if (x != 0  && board[x - 1][y] == color)
+        if (x != 0 && board[x - 1][y] == color) {
             neighbours.add(new Move(x - 1, y, color));
-        if (y != 0  && board[x][y - 1] == color)
+        }
+        if (y != 0 && board[x][y - 1] == color) {
             neighbours.add(new Move(x, y - 1, color));
-        if (x != BOARD_SIZE - 1 &&  board[x + 1][y] == color)
+        }
+        if (x != BOARD_SIZE - 1 && board[x + 1][y] == color) {
             neighbours.add(new Move(x + 1, y, color));
-        if (y != BOARD_SIZE - 1 &&  board[x][y + 1] == color)
+        }
+        if (y != BOARD_SIZE - 1 && board[x][y + 1] == color) {
             neighbours.add(new Move(x, y + 1, color));
-
+        }
 
         return neighbours;
 
@@ -102,7 +108,6 @@ public class BoardLogic {
             result.add(new Move(x + 1, y, move.player));
         if (y != BOARD_SIZE - 1 &&  board[x][y + 1] == move.player && visited[x][y + 1] == 0)
             result.add(new Move(x, y + 1, move.player));
-
 
         return result;
 
@@ -124,12 +129,13 @@ public class BoardLogic {
 
         for (int i = 0; i < group.size(); ++i) {
             if (visited[group.get(i).x][group.get(i).y] == 0) {
-                ArrayList<Move> n = getNeighboursNotVisited(move, visited);
+                ArrayList<Move> n = findGroupAt(group.get(i), visited);
                 result.addAll(n);
             }
         }
         return result;
     }
+
 
     private int countLiberties(ArrayList<Move> group) {
 
@@ -144,14 +150,11 @@ public class BoardLogic {
 
         for (int j = 0; j < group.size(); ++j) {
             ArrayList<Move> n = getNeighbours(group.get(j), Move.Player.EMPTY);
-            for (int i = 0; i < n.size(); ++i)
-            {
-                if (visited[n.get(i).x][n.get(i).y] == 0)
-                {
+            for (int i = 0; i < n.size(); ++i) {
+                if (visited[n.get(i).x][n.get(i).y] == 0) {
                     visited[n.get(i).x][n.get(i).y] = 1;
                     ++liberties;
                 }
-
             }
         }
 
@@ -165,15 +168,17 @@ public class BoardLogic {
         for (int i = 0; i < neighbours.size(); ++i) {
             Move m = neighbours.get(i);
             ArrayList<Move> group = findGroupAt(m, null);
-            if (countLiberties(group) == 0)
+            if (countLiberties(group) == 0) {
+                deadStones.addAll(group);
                 return true;
+            }
         }
         return false;
     }
 
     public boolean isValid(Move move) {
 
-        if (board[move.x - 1][move.y - 1] != Move.Player.EMPTY)
+        if (board[move.x][move.y] != Move.Player.EMPTY)
             return false;
 
         boolean res = false;
