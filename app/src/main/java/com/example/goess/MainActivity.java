@@ -26,6 +26,8 @@ import android.widget.Toast;
 
 import com.nbsp.materialfilepicker.ui.FilePickerActivity;
 
+import java.util.ArrayList;
+
 
 public class MainActivity extends AppCompatActivity {
 
@@ -171,7 +173,7 @@ public class MainActivity extends AppCompatActivity {
                                 y = 19;
                             Move move = new Move(x - 1, y - 1, boardLogic.currentPlayer);
                             if (boardLogic.isValid(move))
-                                drawStone(move, v);
+                                drawStone(move, v, true);
                             checkIfCapturing(move);
                             updateScoreLabel();
                         }
@@ -194,7 +196,7 @@ public class MainActivity extends AppCompatActivity {
                         if (gameReady) {
                             Move move = boardLogic.getNextMove();
                             if (move != null) {
-                                drawStone(move, v);
+                                drawStone(move, v, true);
                                 checkIfCapturing(move);
                             }
                             else
@@ -205,17 +207,21 @@ public class MainActivity extends AppCompatActivity {
                         break;
                     case R.id.prevBtn:
                         if (currentStoneViewId >= 3) {
-                            if (boardLogic.currentIndex > 0) {//readd dead
-                                Move lastDrawnMove = boardLogic.movesList.get(boardLogic.currentIndex - 1);
+                            Log.w(TAG, "prevbtn");
+                            Move lastDrawnMove = boardLogic.getPreviousMove();
+                            if (lastDrawnMove != null)
                                 frameLayout.removeView(stonesImg[lastDrawnMove.x][lastDrawnMove.y]);
-                            }
 
-                            currentStoneViewId--;
+
                             boardLogic.removeLastMoveFromBoardState();
-                            if (boardLogic.currentIndex > 0) {
-                                ImageView iv = (ImageView) frameLayout.getChildAt(currentStoneViewId);
-                                iv.setImageResource(boardLogic.currentPlayer == Move.Player.BLACK ?
-                                        R.drawable.white_marked : R.drawable.black_marked);
+                            updateLastMoveMark();
+                            currentStoneViewId--;
+
+                            ArrayList<Move> deadStones = boardLogic.restoreBoardState();
+                            if (deadStones != null && deadStones.size() > 0) {
+                                for (int i = 0; i < deadStones.size(); ++i) {
+                                    drawStone(deadStones.get(i), v, false);
+                                }
                             }
                         }
                         break;
@@ -227,7 +233,7 @@ public class MainActivity extends AppCompatActivity {
                         if (gameReady) {
                             Move m;
                             while ((m = boardLogic.getNextMove()) != null) {
-                                drawStone(m, v);
+                                drawStone(m, v, true);
                                 checkIfCapturing(m);
                             }
                         } else
@@ -252,7 +258,6 @@ public class MainActivity extends AppCompatActivity {
                 currentStoneViewId--;
                 boardLogic.removeFromBoardState(m);
             }
-            boardLogic.deadStones.clear();
         }
     }
 
@@ -280,11 +285,13 @@ public class MainActivity extends AppCompatActivity {
         fill.setLayoutParams(params);
     }
 
-    private void drawStone(Move move, View view) {
-        Log.i(TAG, "Putting stone at " + String.valueOf(move.x) + ":" + String.valueOf(move.y));
+    private void drawStone(Move move, View view, boolean mark) {
+        Log.i(TAG, "Putting stone at " + String.valueOf(move.x) + ":" + String.valueOf(move.y)
+                + " nr " + String.valueOf(boardLogic.currentIndex));
+
         ImageView img = new ImageView(context);
         img.setImageDrawable(view.getResources().getDrawable(
-                move.player == Move.Player.BLACK ? R.drawable.black_marked : R.drawable.white_marked));
+                move.player == Move.Player.BLACK ? R.drawable.black : R.drawable.white));
 
         if (move.player == Move.Player.WHITE)
             STONE_SIZE = 30;
@@ -297,14 +304,31 @@ public class MainActivity extends AppCompatActivity {
         frameLayout.addView(img, stoneParam);
         currentStoneViewId = frameLayout.indexOfChild(img);
 
-        if (boardLogic.currentIndex >= 2) {
-            ImageView iv = (ImageView) frameLayout.getChildAt(currentStoneViewId - 1);
-            iv.setImageResource(boardLogic.currentPlayer == Move.Player.BLACK ?
-                    R.drawable.white : R.drawable.black);
-        }
-
         boardLogic.addMoveToBoardState(move);
         stonesImg[move.x][move.y] = img;
+        if (mark)
+            updateLastMoveMark();
+    }
+
+    ImageView lastMarkedStone = null;
+
+    private void updateLastMoveMark() {
+
+        Move lastDrawnMove = boardLogic.getPreviousMove();
+        if (lastDrawnMove != null) {
+            Log.i(TAG, "last drawn stone at " + String.valueOf(lastDrawnMove.x) + ":" + String.valueOf(lastDrawnMove.y));
+
+            ImageView iv = (ImageView) stonesImg[lastDrawnMove.x][lastDrawnMove.y];
+            iv.setImageResource(boardLogic.currentPlayer == Move.Player.BLACK ?
+                    R.drawable.white_marked : R.drawable.black_marked);
+            if (lastMarkedStone == null)
+                lastMarkedStone = iv;
+            else {
+                lastMarkedStone.setImageResource(boardLogic.currentPlayer == Move.Player.BLACK ?
+                        R.drawable.black : R.drawable.white);
+                lastMarkedStone = iv;
+            }
+        }
     }
 
 

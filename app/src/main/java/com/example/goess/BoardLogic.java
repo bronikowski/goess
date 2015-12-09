@@ -3,6 +3,7 @@ package com.example.goess;
 import android.util.Log;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 
 public class BoardLogic {
 
@@ -14,6 +15,7 @@ public class BoardLogic {
     Move.Player[][] board;
     public ArrayList<Move> movesList;
     public ArrayList<Move> deadStones = new ArrayList<>();
+    HashMap<Integer, ArrayList<Move>> captureCache = new HashMap<Integer, ArrayList<Move>>();
     int score;
 
     public BoardLogic() {
@@ -27,6 +29,13 @@ public class BoardLogic {
         Move move = null;
         if (currentIndex < movesList.size())
             move = movesList.get(currentIndex++);
+        return move;
+    }
+
+    public Move getPreviousMove() {
+        Move move = null;
+        if ((currentIndex  > 0) && (currentIndex <= movesList.size()))
+            move = movesList.get(currentIndex - 1);
         return move;
     }
 
@@ -59,6 +68,16 @@ public class BoardLogic {
             board[lastDrawnMove.x][lastDrawnMove.y] = Move.Player.EMPTY;
             currentPlayer = (currentPlayer == Move.Player.BLACK) ? Move.Player.WHITE : Move.Player.BLACK;
         }
+     //   Log.i(TAG, "remove, index at " + String.valueOf(currentIndex));
+    }
+
+    public ArrayList<Move> restoreBoardState() {
+
+        ArrayList<Move> deadStones = captureCache.get(currentIndex + 1);
+        if (deadStones != null)
+        Log.i(TAG, "restore from cache  " + String.valueOf(currentIndex + 1) + " size " + String.valueOf(deadStones.size()));
+        captureCache.remove(currentIndex + 1);
+        return deadStones;
     }
 
     public void removeFromBoardState(Move move) {
@@ -69,6 +88,7 @@ public class BoardLogic {
     public void addMoveToBoardState(Move move) {
         board[move.x][move.y] = move.player;
         currentPlayer = (move.player == Move.Player.BLACK) ? Move.Player.WHITE : Move.Player.BLACK;
+        Log.i(TAG, "added move, id    " + String.valueOf(movesList.size()));
     }
 
     private ArrayList<Move> getNeighbours(Move move, Move.Player color) {
@@ -165,11 +185,17 @@ public class BoardLogic {
         Move.Player color = (move.player == Move.Player.BLACK) ? Move.Player.WHITE : Move.Player.BLACK;
         ArrayList<Move> neighbours = getNeighbours(move, color);
 
+        deadStones.clear();
+        Log.i(TAG, "check if capturing  nr " + String.valueOf(currentIndex));
         for (int i = 0; i < neighbours.size(); ++i) {
             Move m = neighbours.get(i);
             ArrayList<Move> group = findGroupAt(m, null);
             if (countLiberties(group) == 0) {
                 deadStones.addAll(group);
+                ArrayList<Move> tmp = new ArrayList<>();
+                tmp.addAll(group);
+                captureCache.put(currentIndex, tmp);
+                Log.i(TAG, "add to cache  " + String.valueOf(currentIndex) + " of size " +  String.valueOf(deadStones.size()));
                 return true;
             }
         }
