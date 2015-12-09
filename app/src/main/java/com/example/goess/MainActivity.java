@@ -11,6 +11,7 @@ import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
+import android.view.Gravity;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.MotionEvent;
@@ -24,9 +25,9 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.nbsp.materialfilepicker.ui.FilePickerActivity;
-
+import java.lang.reflect.Field;
 import java.util.ArrayList;
+import com.nbsp.materialfilepicker.ui.FilePickerActivity;
 
 
 public class MainActivity extends AppCompatActivity {
@@ -56,6 +57,7 @@ public class MainActivity extends AppCompatActivity {
     Button forwardBtn;
 
     FrameLayout frameLayout;
+    Toolbar myToolbar;
 
     BoardLogic boardLogic;
     boolean gameReady;
@@ -66,8 +68,12 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        Toolbar myToolbar = (Toolbar) findViewById(R.id.my_toolbar);
+        myToolbar = (Toolbar) findViewById(R.id.my_toolbar);
         setSupportActionBar(myToolbar);
+        getSupportActionBar().setTitle("Choose a game!");
+        setSupportActionBar(myToolbar);
+        TextView title = getActionBarTextView();
+        title.setTextSize(16);
 
         stonesImg = new View[BOARD_SIZE][BOARD_SIZE];
 
@@ -111,7 +117,6 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-
         currentStoneViewId = 0;
 
         final View horiz = (View) findViewById(R.id.horiz);
@@ -123,8 +128,8 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public boolean onTouch(View v, MotionEvent event) {
 
-                FrameLayout.LayoutParams horizParam = new FrameLayout.LayoutParams(1, boardWidth);
-                FrameLayout.LayoutParams verticParam = new FrameLayout.LayoutParams(boardHeight, 1);
+                FrameLayout.LayoutParams horizParam = new FrameLayout.LayoutParams(2, boardWidth);
+                FrameLayout.LayoutParams verticParam = new FrameLayout.LayoutParams(boardHeight, 2);
 
                 ViewGroup owner = (ViewGroup) stoneImage.getParent();
 
@@ -207,11 +212,19 @@ public class MainActivity extends AppCompatActivity {
                         break;
                     case R.id.prevBtn:
                         if (currentStoneViewId >= 3) {
-                            Log.w(TAG, "prevbtn");
+
                             Move lastDrawnMove = boardLogic.getPreviousMove();
                             if (lastDrawnMove != null)
                                 frameLayout.removeView(stonesImg[lastDrawnMove.x][lastDrawnMove.y]);
 
+
+
+                 /*           if (boardLogic.currentIndex > 0) {//readd dead
+                                Move lastDrawnMove = boardLogic.movesList.get(boardLogic.currentIndex - 1);
+                                frameLayout.removeView(stonesImg[lastDrawnMove.x][lastDrawnMove.y]);
+                            }
+
+                            currentStoneViewId--;*/
 
                             boardLogic.removeLastMoveFromBoardState();
                             updateLastMoveMark();
@@ -226,8 +239,18 @@ public class MainActivity extends AppCompatActivity {
                         }
                         break;
                     case R.id.rewindBtn:
+
                         Log.i(TAG, "stones size " + String.valueOf(stonesImg));
                         clearBoard();
+
+                   /*     if (currentStoneViewId >= 3) {
+                            for (int i = 0; i < BOARD_SIZE; ++i)
+                                for (int j = 0; j < BOARD_SIZE; ++j)
+                                    frameLayout.removeView(stonesImg[i][j]);
+
+                            currentStoneViewId = 0;
+                            boardLogic.clearBoardState();
+                        }*/
                         break;
                     case R.id.forwardBtn:
                         if (gameReady) {
@@ -266,6 +289,7 @@ public class MainActivity extends AppCompatActivity {
             frameLayout.removeViews(3, currentStoneViewId - 2);
             currentStoneViewId = 0;
             boardLogic.clearBoardState();
+            boardLogic.deadStones.clear();
         }
     }
 
@@ -344,6 +368,7 @@ public class MainActivity extends AppCompatActivity {
 
                 gameReady = boardLogic.parseSGFFile(filePath);
                 clearBoard();
+                updateGameInfo();
 
             } else {
                 Toast.makeText(getApplicationContext(), "This is not SGF!",
@@ -354,6 +379,11 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    private void updateGameInfo() {
+        getSupportActionBar().setTitle(boardLogic.getBlackPlayer() + " vs " + boardLogic.getWhitePlayer());
+
+        setSupportActionBar(myToolbar);
+    }
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
@@ -362,7 +392,18 @@ public class MainActivity extends AppCompatActivity {
         return true;
     }
 
+    private TextView getActionBarTextView() {
+        TextView titleTextView = null;
 
+        try {
+            Field f = myToolbar.getClass().getDeclaredField("mTitleTextView");
+            f.setAccessible(true);
+            titleTextView = (TextView) f.get(myToolbar);
+        } catch (NoSuchFieldException e) {
+        } catch (IllegalAccessException e) {
+        }
+        return titleTextView;
+    }
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
