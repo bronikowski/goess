@@ -17,6 +17,7 @@ public class BoardLogic {
     public ArrayList<Move> deadStones = new ArrayList<>();
     HashMap<Integer, ArrayList<Move>> captureCache = new HashMap<Integer, ArrayList<Move>>();
     int score;
+    SGFParser parser = new SGFParser();
 
     public BoardLogic() {
         board = new Move.Player[BOARD_SIZE][BOARD_SIZE];
@@ -50,10 +51,18 @@ public class BoardLogic {
     }
 
     public boolean parseSGFFile(String filePath) {
-        SGFParser parser = new SGFParser();
+
         movesList = parser.getMovesList(filePath);
 
         return (movesList.size() != 0);
+    }
+
+    public String getBlackPlayer() {
+        return parser.blackPlayerName;
+    }
+
+    public String getWhitePlayer() {
+        return parser.whitePlayerName;
     }
 
     public void clearBoardState() {
