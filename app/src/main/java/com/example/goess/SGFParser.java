@@ -21,15 +21,21 @@ public class SGFParser {
     String blackPlayerName = "Black";
     String whitePlayerName = "White";
 
+    String lastSgf = "";
+
     public SGFParser() {
 
+    }
+
+    public String getLastSgf() {
+        return lastSgf;
     }
 
     private ArrayList<Move> getMovesList(String content) {
         ArrayList<Move> list = new ArrayList<>();
      //   String content = getFileContent(filePath);
         Log.i(TAG, "Content " + content);
-
+        lastSgf = content;
         int start = content.indexOf(BLACK_PLAYER_NAME);
         int end = content.substring(start).indexOf("]");
         if (start > 0 && end > 0) {
@@ -66,7 +72,7 @@ public class SGFParser {
                     a = content.charAt(i + 2);
                     b = content.charAt(i + 2 + 1);
                     Move move = new Move(a - 'a', b - 'a', content.charAt(i) == BLACK_MOVE ? Move.Player.BLACK : Move.Player.WHITE);
-                    Log.i(TAG, "add   " + String.valueOf(move.x) + ":" + String.valueOf(move.y));
+                //    Log.i(TAG, "add   " + String.valueOf(move.x) + ":" + String.valueOf(move.y));
                     list.add(move);
                 }
             }

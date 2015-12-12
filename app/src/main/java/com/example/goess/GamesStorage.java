@@ -1,16 +1,19 @@
 package com.example.goess;
 
+import android.util.Log;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.Queue;
 
 public class GamesStorage {
 
     static final int DEFAULT_GAMES_LIST_SIZE = 4;
-    static final int RECENT_GAMES_LIST_SIZE = 10;
-
+    static final int RECENT_GAMES_LIST_SIZE = 4;
 
     HashMap<String, String> recentGamesByName = new HashMap<String, String>();
     HashMap<String, String> defaultGamesByName = new HashMap<String, String>();
-
+    Queue<String> recentGamesQueue = Collections.asLifoQueue(new LinkedList<String>());
 
     GamesStorage() {
         initDefault();
@@ -20,11 +23,29 @@ public class GamesStorage {
         defaultGamesByName.put("古力 vs 李世ドル (2015/10/28)", GAME_1);
         defaultGamesByName.put("My test game", GAME_2);
         defaultGamesByName.put("古力 vs 許映皓 (2015/09/08)", GAME_3);
-        defaultGamesByName.put("朴廷桓 vs 古力 (2015-12-01)", GAME_4);
+        defaultGamesByName.put("朴廷桓 vs 古力 (2015-12-01) c1", GAME_4);
     }
 
     public String getDefaultGameAt(String name) {
         return defaultGamesByName.get(name);
+    }
+
+    public String getRecentGameAt(String name) {
+        return recentGamesByName.get(name);
+    }
+
+    public void addRecentGame(String name, String sgf) {
+
+        if (!recentGamesByName.containsKey(name)) {
+            if (recentGamesByName.size() < RECENT_GAMES_LIST_SIZE)
+                recentGamesQueue.add(name);
+            else {
+                String last = recentGamesQueue.remove();
+                recentGamesByName.remove(last);
+                recentGamesQueue.add(name);
+            }
+        }
+        recentGamesByName.put(name, sgf);
     }
 
     private static final String GAME_1 = "(;SZ[19]EV[2015年中国囲碁リーグ第18節]DT[2015/10/28]KM[7.5]" +

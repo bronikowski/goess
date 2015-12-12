@@ -25,7 +25,6 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
-
 import java.lang.reflect.Field;
 import java.util.ArrayList;
 import com.nbsp.materialfilepicker.ui.FilePickerActivity;
@@ -349,8 +348,9 @@ public class MainActivity extends AppCompatActivity {
             if (filePath.substring(filePath.length() - 3).equals(FILE_EXT)) {
                 Log.i(TAG, "Opening file: " + filePath);
                 gameReady = boardLogic.parseSGFFile(filePath);
-                clearBoard();
-                updateGameInfo();
+                if (gameReady) {
+                    loadGame(boardLogic.parser.getLastSgf());
+                }
 
             } else {
                 Toast.makeText(getApplicationContext(), "This is not SGF!",
@@ -361,8 +361,8 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    private void updateGameInfo() {
-        getSupportActionBar().setTitle(boardLogic.getBlackPlayer() + " vs " + boardLogic.getWhitePlayer());
+    private void updateGameInfo(String title) {
+        getSupportActionBar().setTitle(title);
         setSupportActionBar(myToolbar);
     }
 
@@ -392,20 +392,58 @@ public class MainActivity extends AppCompatActivity {
                 Intent intent = new Intent(this, FilePickerActivity.class);
                 startActivityForResult(intent, REQUEST_CODE);
                 return true;
-
             case R.id.action_recentlyUsed:
-
+                showRecentGamesList();
                 return true;
-
             case R.id.action_gamesList:
                 showDefaultGamesList();
                 return true;
             default:
                 return super.onOptionsItemSelected(item);
-
         }
     }
 
+
+
+    private void loadGame(String sgf) {
+        clearBoard();
+        String title = boardLogic.getBlackPlayer() + " vs " + boardLogic.getWhitePlayer();
+        updateGameInfo(title);
+        gamesStorage.addRecentGame(title, sgf);
+    }
+
+    private void showRecentGamesList() {
+        int cnt = gamesStorage.recentGamesQueue.size() > 0 ? gamesStorage.recentGamesQueue.size() : 0;
+        if (cnt == 0) {
+            Toast.makeText(getApplicationContext(), "No recent games found!", Toast.LENGTH_SHORT).show();
+            return;
+        }
+        final CharSequence[] items = new CharSequence[cnt];
+        int i = 0;
+        for (String key : gamesStorage.recentGamesQueue) {
+            items[i++] = key;
+        }
+
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle("Recent games");
+        builder.setItems(items, new DialogInterface.OnClickListener() {
+
+            public void onClick(DialogInterface dialog, int item) {
+                String sgf = gamesStorage.getRecentGameAt(items[item].toString());
+                if (sgf != null) {
+                    gameReady = boardLogic.parseSGFString(sgf);
+                    if (gameReady) {
+                        loadGame(sgf);
+                    }
+                } else
+                    Toast.makeText(getApplicationContext(), "Could not load game!", Toast.LENGTH_SHORT).show();
+            }
+
+        });
+
+        AlertDialog alert = builder.create();
+        alert.show();
+    }
 
     private void showDefaultGamesList() {
         final CharSequence[] items = new CharSequence[gamesStorage.DEFAULT_GAMES_LIST_SIZE];
@@ -419,11 +457,11 @@ public class MainActivity extends AppCompatActivity {
         builder.setItems(items, new DialogInterface.OnClickListener() {
 
             public void onClick(DialogInterface dialog, int item) {
-                Toast.makeText(getApplicationContext(), items[item], Toast.LENGTH_SHORT).show();
                 String sgf = gamesStorage.getDefaultGameAt(items[item].toString());
                 gameReady = boardLogic.parseSGFString(sgf);
-                clearBoard();
-                updateGameInfo();
+                if (gameReady) {
+                    loadGame(sgf);
+                }
             }
 
         });
