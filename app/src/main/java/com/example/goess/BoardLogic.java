@@ -52,8 +52,13 @@ public class BoardLogic {
 
     public boolean parseSGFFile(String filePath) {
 
-        movesList = parser.getMovesList(filePath);
+        movesList = parser.getMovesListFromFile(filePath);
+        return (movesList.size() != 0);
+    }
 
+    public boolean parseSGFString(String content) {
+
+        movesList = parser.getMovesListFromString(content);
         return (movesList.size() != 0);
     }
 
@@ -68,6 +73,8 @@ public class BoardLogic {
     public void clearBoardState() {
         currentIndex = 0;
         initBoard();
+        deadStones.clear();
+        captureCache.clear();
     }
 
     public void removeLastMoveFromBoardState() {
@@ -195,7 +202,7 @@ public class BoardLogic {
         ArrayList<Move> neighbours = getNeighbours(move, color);
 
         deadStones.clear();
-        Log.i(TAG, "check if capturing  nr " + String.valueOf(currentIndex));
+     //   Log.i(TAG, "check if capturing  nr " + String.valueOf(currentIndex));
         for (int i = 0; i < neighbours.size(); ++i) {
             Move m = neighbours.get(i);
             ArrayList<Move> group = findGroupAt(m, null);
@@ -204,7 +211,7 @@ public class BoardLogic {
                 ArrayList<Move> tmp = new ArrayList<>();
                 tmp.addAll(group);
                 captureCache.put(currentIndex, tmp);
-                Log.i(TAG, "add to cache  " + String.valueOf(currentIndex) + " of size " +  String.valueOf(deadStones.size()));
+            //    Log.i(TAG, "add to cache  " + String.valueOf(currentIndex) + " of size " +  String.valueOf(deadStones.size()));
                 return true;
             }
         }
