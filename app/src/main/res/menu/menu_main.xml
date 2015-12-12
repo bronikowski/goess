@@ -7,8 +7,17 @@
 
 
     <!-- Settings, should always be in the overflow -->
+    <item android:id="@+id/action_recentlyUsed"
+        android:orderInCategory="100"
+        android:title="Recently used"
+        app:showAsAction="never"/>
     <item android:id="@+id/action_openGame"
         android:orderInCategory="100"
-          android:title="Open game"
+          android:title="Open your game"
           app:showAsAction="never"/>
+    <item android:id="@+id/action_gamesList"
+        android:orderInCategory="100"
+        android:title="Games repository"
+        app:showAsAction="never"/>
+
 </menu>

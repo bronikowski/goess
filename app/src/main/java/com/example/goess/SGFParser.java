@@ -25,10 +25,9 @@ public class SGFParser {
 
     }
 
-    public ArrayList<Move> getMovesList(String filePath) {
-
+    private ArrayList<Move> getMovesList(String content) {
         ArrayList<Move> list = new ArrayList<>();
-        String content = getFileContent(filePath);
+     //   String content = getFileContent(filePath);
         Log.i(TAG, "Content " + content);
 
         int start = content.indexOf(BLACK_PLAYER_NAME);
@@ -77,6 +76,16 @@ public class SGFParser {
         }
 
         return list;
+    }
+
+    public ArrayList<Move> getMovesListFromString(String content) {
+        return getMovesList(content);
+    }
+
+    public ArrayList<Move> getMovesListFromFile(String filePath) {
+
+        String content = getFileContent(filePath);
+        return getMovesList(content);
     }
 
 

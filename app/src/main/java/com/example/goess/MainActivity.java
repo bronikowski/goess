@@ -1,6 +1,8 @@
 package com.example.goess;
 
+import android.app.AlertDialog;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
@@ -11,7 +13,6 @@ import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
-import android.view.Gravity;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.MotionEvent;
@@ -60,6 +61,7 @@ public class MainActivity extends AppCompatActivity {
     Toolbar myToolbar;
 
     BoardLogic boardLogic;
+    GamesStorage gamesStorage;
     boolean gameReady;
 
     View[][] stonesImg;
@@ -87,6 +89,7 @@ public class MainActivity extends AppCompatActivity {
         forwardBtn = (Button) findViewById(R.id.forwardBtn);
 
         boardLogic = new BoardLogic();
+        gamesStorage = new GamesStorage();
         gameReady = false;
 
         frameLayout = (FrameLayout)findViewById(R.id.background);
@@ -217,15 +220,6 @@ public class MainActivity extends AppCompatActivity {
                             if (lastDrawnMove != null)
                                 frameLayout.removeView(stonesImg[lastDrawnMove.x][lastDrawnMove.y]);
 
-
-
-                 /*           if (boardLogic.currentIndex > 0) {//readd dead
-                                Move lastDrawnMove = boardLogic.movesList.get(boardLogic.currentIndex - 1);
-                                frameLayout.removeView(stonesImg[lastDrawnMove.x][lastDrawnMove.y]);
-                            }
-
-                            currentStoneViewId--;*/
-
                             boardLogic.removeLastMoveFromBoardState();
                             updateLastMoveMark();
                             currentStoneViewId--;
@@ -239,18 +233,8 @@ public class MainActivity extends AppCompatActivity {
                         }
                         break;
                     case R.id.rewindBtn:
-
-                        Log.i(TAG, "stones size " + String.valueOf(stonesImg));
+                      //  Log.i(TAG, "stones size " + String.valueOf(stonesImg));
                         clearBoard();
-
-                   /*     if (currentStoneViewId >= 3) {
-                            for (int i = 0; i < BOARD_SIZE; ++i)
-                                for (int j = 0; j < BOARD_SIZE; ++j)
-                                    frameLayout.removeView(stonesImg[i][j]);
-
-                            currentStoneViewId = 0;
-                            boardLogic.clearBoardState();
-                        }*/
                         break;
                     case R.id.forwardBtn:
                         if (gameReady) {
@@ -285,11 +269,10 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void clearBoard() {
+        boardLogic.clearBoardState();
         if (currentStoneViewId >= 3) {
             frameLayout.removeViews(3, currentStoneViewId - 2);
             currentStoneViewId = 0;
-            boardLogic.clearBoardState();
-            boardLogic.deadStones.clear();
         }
     }
 
@@ -365,7 +348,6 @@ public class MainActivity extends AppCompatActivity {
 
             if (filePath.substring(filePath.length() - 3).equals(FILE_EXT)) {
                 Log.i(TAG, "Opening file: " + filePath);
-
                 gameReady = boardLogic.parseSGFFile(filePath);
                 clearBoard();
                 updateGameInfo();
@@ -381,7 +363,6 @@ public class MainActivity extends AppCompatActivity {
 
     private void updateGameInfo() {
         getSupportActionBar().setTitle(boardLogic.getBlackPlayer() + " vs " + boardLogic.getWhitePlayer());
-
         setSupportActionBar(myToolbar);
     }
 
@@ -412,10 +393,43 @@ public class MainActivity extends AppCompatActivity {
                 startActivityForResult(intent, REQUEST_CODE);
                 return true;
 
+            case R.id.action_recentlyUsed:
+
+                return true;
+
+            case R.id.action_gamesList:
+                showDefaultGamesList();
+                return true;
             default:
                 return super.onOptionsItemSelected(item);
 
         }
+    }
+
+
+    private void showDefaultGamesList() {
+        final CharSequence[] items = new CharSequence[gamesStorage.DEFAULT_GAMES_LIST_SIZE];
+        int i = 0;
+        for (String key : gamesStorage.defaultGamesByName.keySet()) {
+            items[i++] = key;
+        }
+
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle("Games repository");
+        builder.setItems(items, new DialogInterface.OnClickListener() {
+
+            public void onClick(DialogInterface dialog, int item) {
+                Toast.makeText(getApplicationContext(), items[item], Toast.LENGTH_SHORT).show();
+                String sgf = gamesStorage.getDefaultGameAt(items[item].toString());
+                gameReady = boardLogic.parseSGFString(sgf);
+                clearBoard();
+                updateGameInfo();
+            }
+
+        });
+
+        AlertDialog alert = builder.create();
+        alert.show();
     }
 
     private void drawBoardGrid() {
