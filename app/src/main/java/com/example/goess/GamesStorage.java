@@ -66,7 +66,7 @@ public class GamesStorage {
             "W[km];B[mj];W[nj];B[mi];W[lh];B[ni];W[jk];B[kk];W[jj];B[ji];W[oi];B[nh];W[ng];B[oj];W[jg];B[ig];" +
             "W[ml];B[ij];W[hk];B[jh];W[fg];B[gg];W[eg];B[qf];W[rf];B[rh];W[rg];B[nk];W[pg];B[bh];W[ci];B[dh];" +
             "W[mg];B[fk];W[hj];B[bk];W[bj];B[aj];W[bl];B[mf];W[if];B[bi];W[ck];B[ie];W[lg])";
-    
+
     private static final String GAME_4 = "(;US[棋聖道場]WR[九段]KM[6.5]DT[2015-12-01]EV[第17回農心辛拉面杯三国囲棋擂" +
             "臺戦第9局]PC[韓国釜山]PB[朴廷桓]SO[]RE[白両目半勝]BR[九段]PW[古力]SZ[19];B[pd];W[dd];B[qp];W[dq];B[oq];" +
             "W[co];B[nc];W[fc];B[pj];W[jq];B[ci];W[ck];B[bd];W[cf];B[bf];W[cg];B[bg];W[ch];B[bh];W[di];B[cj];" +
