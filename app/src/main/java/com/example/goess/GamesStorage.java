@@ -1,19 +1,17 @@
 package com.example.goess;
 
 import android.util.Log;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedList;
-import java.util.Queue;
 
 public class GamesStorage {
 
-    static final int DEFAULT_GAMES_LIST_SIZE = 4;
-    static final int RECENT_GAMES_LIST_SIZE = 4;
+    static final int DEFAULT_GAMES_LIST_SIZE = 6;
+    static final int RECENT_GAMES_LIST_SIZE = 5;
 
     HashMap<String, String> recentGamesByName = new HashMap<String, String>();
     HashMap<String, String> defaultGamesByName = new HashMap<String, String>();
-    Queue<String> recentGamesQueue = Collections.asLifoQueue(new LinkedList<String>());
+    LinkedList<String> recentGamesQueue = new LinkedList<String>();
 
     GamesStorage() {
         initDefault();
@@ -23,7 +21,9 @@ public class GamesStorage {
         defaultGamesByName.put("古力 vs 李世ドル (2015/10/28)", GAME_1);
         defaultGamesByName.put("My test game", GAME_2);
         defaultGamesByName.put("古力 vs 許映皓 (2015/09/08)", GAME_3);
-        defaultGamesByName.put("朴廷桓 vs 古力 (2015-12-01) c1", GAME_4);
+        defaultGamesByName.put("朴廷桓 vs 古力 (2015-12-01)", GAME_4);
+        defaultGamesByName.put("古力 vs 謝科 (2015-11-08)", GAME_5);
+        defaultGamesByName.put("古力 vs 丁世雄 (2015-05-14)", GAME_6);
     }
 
     public String getDefaultGameAt(String name) {
@@ -38,12 +38,15 @@ public class GamesStorage {
 
         if (!recentGamesByName.containsKey(name)) {
             if (recentGamesByName.size() < RECENT_GAMES_LIST_SIZE)
-                recentGamesQueue.add(name);
+                recentGamesQueue.addFirst(name);
             else {
-                String last = recentGamesQueue.remove();
+                String last = recentGamesQueue.removeLast();
                 recentGamesByName.remove(last);
-                recentGamesQueue.add(name);
+                recentGamesQueue.addFirst(name);
             }
+        } else {
+            recentGamesQueue.remove(name);
+            recentGamesQueue.addFirst(name);
         }
         recentGamesByName.put(name, sgf);
     }
@@ -108,4 +111,45 @@ public class GamesStorage {
             "W[kp];B[mh];W[ks];B[ls];W[ne];B[nd];W[so];B[sm];W[oe];B[of];W[la];B[lf];W[lg];B[ld];W[lb];B[od];" +
             "W[ke];B[jh];W[kg];B[ma];W[oh];B[nh];W[mc];B[nb];W[kq];B[lr];W[mm];B[ai];W[aj];B[pf];W[rf];B[ra];" +
             "W[sb];B[ga];W[js];B[lj];W[jn];B[sn];W[sp];B[qa];W[jm];B[hi];W[no];B[rn];W[lo];B[qs];W[jg];B[sa])";
+
+    private static final String GAME_5 = "(;KM[7.5]PW[謝科]BR[九段]WR[二段]US[棋聖道場]DT[2015-11-08]EV[2015金立智" +
+            "能手機杯囲甲第19局（快棋）]PC[中国]PB[古力]SO[]RE[白2又1/4子勝]SZ[19];B[pd];W[dd];B[pq];W[dq];B[qo];W[jp]" +
+            ";B[do];W[eo];B[en];W[ep];B[dm];W[nq];B[cf];W[fc];B[gn];W[gp];B[bd];W[cc];B[dh];W[oo];B[nc];W[pm];B[hc]" +
+            ";W[rm];B[np];W[op];B[nr];W[oq];B[or];W[mq];B[mr];W[qq];B[pp];W[qr];B[pr];W[ro];B[lq];W[qp];B[po];W[on]" +
+            ";B[jq];W[iq];B[rn];W[qn];B[kq];W[ir];B[bc];W[he];B[jd];W[df];B[dg];W[ef];B[fh];W[qf];B[lo];W[lm];B[rd]" +
+            ";W[of];B[jf];W[me];B[gd];W[hb];B[fd];W[ed];B[gc];W[gb];B[fb];W[ec];B[ib];W[eb];B[gf];W[kg];B[cb];W[ce]" +
+            ";B[be];W[gg];B[hg];W[ke];B[md];W[ld];B[ne];W[mc];B[nd];W[hf];B[je];W[ge];B[mf];W[mg];B[le];W[lf];B[ng]" +
+            ";W[nf];B[me];W[nh];B[pg];W[og];B[pf];W[ph];B[qg];W[qh];B[rg];W[ic];B[jc];W[id];B[ha];W[fa];B[cp];W[cq]" +
+            ";B[bq];W[cn];B[dn];W[jb];B[kb];W[fj];B[dj];W[rh];B[br];W[jr];B[kr];W[ia];B[es];W[jn];B[ks];W[ka];B[mb]" +
+            ";W[lb];B[kc];W[ei];B[di];W[gl];B[fr];W[er];B[dr];W[fq];B[eq];W[cg];B[bf];W[er];B[sh];W[si];B[sg];W[el]" +
+            ";B[fm];W[cr];B[eq];W[dp];B[cs];W[ck];B[fo];W[er];B[fp];W[ds];B[gq];W[bs];B[co];W[gr];B[eq];W[fs];B[fl]" +
+            ";W[fk];B[ek];W[hh];B[im];W[il];B[mm];W[ln];B[jm];W[jl];B[ri];W[sj];B[oi];W[oh];B[pn];W[qm];B[kl];W[ll]" +
+            ";B[hl];W[hm];B[hk];W[in];B[ij];W[gi];B[ji];W[km];B[jg];W[kh];B[ig];W[eh];B[lj];W[kj];B[ki];W[li];B[kk]" +
+            ";W[mj];B[jj];W[mi];B[rp];W[sn];B[rr];W[rq];B[qs];W[sp];B[no];W[mn];B[nn];W[om];B[fq];W[hq];B[lp];W[ma]" +
+            ";B[lc];W[go];B[fn];W[na];B[la];W[bm];B[bj];W[lb];B[hs];W[gs];B[la];W[cj];B[bi];W[lb];B[nm];W[pb];B[la]" +
+            ";W[pe];B[oe];W[lb];B[qc];W[nl];B[la];W[ci];B[ch];W[lb];B[ml];W[mk];B[la];W[ps];B[os];W[lb];B[ol];W[nk]" +
+            ";B[la];W[qe];B[se];W[lb];B[rj];W[sk];B[la];W[rf];B[sf];W[lb];B[rk];W[sl];B[la];W[ms];B[ls];W[lb];B[rl]" +
+            ";W[sm];B[la];W[eg];B[ej];W[lb];B[qb];W[la];B[ob];W[oa];B[pc];W[db];B[pa];W[ib];B[ba];W[kf];B[ho];W[hj]" +
+            ";B[js];W[is];B[gk];W[ik];B[gm];W[gj];B[gl];W[hp];B[hn];W[io];B[cd];W[gh];B[jh];W[ar];B[bp];W[rs];B[ss]" +
+            ";W[sr];B[sq];W[sd];B[sc];W[sr];B[nb];W[ja];B[sq];W[re];B[qd];W[sr];B[kd];W[ko];B[sq];W[bh];B[bg];W[sr]" +
+            ";B[lh];W[lg];B[sq];W[dk];B[ah];W[sr];B[de];W[rs];B[im];W[aq];B[da];W[cs];B[ap];W[as];B[ee];W[fe];B[ce]" +
+            ";W[lk];B[kj];W[dc];B[ps];W[ea];B[ca];W[jm];B[hm];W[ii];B[ih];W[ie];B[ns];W[kp];B[mp];W[mo];B[jk];W[if];" +
+            "B[hi])";
+
+    private static final String GAME_6 = "(;EV[2015金立智能手機杯囲甲第3局]PC[中国重慶]DT[2015-05-14]SZ[19]KM[7.5]US[棋聖" +
+            "道場]SO[]PB[古力]BR[九段]PW[丁世雄]WR[三段]RE[黒中盤勝];B[pd];W[dd];B[pq];W[cp];B[eq];W[qn];B[qp];W[qk];B[qi]" +
+            ";W[ok];B[qf];W[iq];B[do];W[co];B[dn];W[cm];B[cq];W[dm];B[dp];W[fm];B[cn];W[bn];B[bq];W[cf];B[ic];W[gc]" +
+            ";B[ie];W[ge];B[ig];W[ob];B[pb];W[pc];B[oc];W[qc];B[qb];W[od];B[nc];W[qd];B[pe];W[nb];B[rb];W[mc];B[nd]" +
+            ";W[me];B[ne];W[nf];B[kc];W[md];B[oe];W[jd];B[id];W[lb];B[eb];W[ec];B[kd];W[lg];B[kh];W[jf];B[if];W[lh]" +
+            ";B[cc];W[fb];B[gh];W[cd];B[ki];W[ei];B[nj];W[nh];B[kq];W[io];B[on];W[oj];B[gm];W[fl];B[gn];W[ko];B[mq]" +
+            ";W[im];B[jn];W[jo];B[pm];W[qm];B[pl];W[qj];B[ql];W[rl];B[rm];W[rn];B[rk];W[sm];B[rj];W[rp];B[rq];W[ro]" +
+            ";B[nk];W[oi];B[km];W[in];B[gl];W[gk];B[fj];W[ej];B[og];W[ng];B[fg];W[ef];B[fk];W[ek];B[hb];W[gb];B[bo]" +
+            ";W[mo];B[bm];W[bl];B[an];W[ck];B[op];W[kl];B[lm];W[hk];B[fi];W[fn];B[go];W[kk];B[nl];W[gq];B[el];W[dl]" +
+            ";B[gp];W[jq];B[hp];W[kr];B[lr];W[kp];B[lq];W[fr];B[ip];W[jp];B[gd];W[fd];B[kj];W[ik];B[jm];W[jl];B[hc]" +
+            ";W[ga];B[pk];W[er];B[dr];W[js];B[oa];W[kb];B[jb];W[ma];B[pj];W[of];B[pg];W[pf];B[qe];W[je];B[le];W[lf]" +
+            ";B[jg];W[kf];B[jc];W[mi];B[eg];W[dg];B[eh];W[dh];B[ni];W[mj];B[oh];W[fq];B[fp];W[nq];B[np];W[mk];B[ml]" +
+            ";W[nr];B[mp];W[ls];B[ms];W[mr];B[ks];W[gf];B[ii];W[ls];B[db];W[bc];B[ks];W[qg];B[ph];W[ls];B[bb];W[dc]" +
+            ";B[ks];W[hi];B[hh];W[ls];B[cb];W[bd];B[ks];W[gi];B[ja];W[ls];B[ab];W[ba];B[ks];W[jj];B[ji];W[ls];B[ea]" +
+            ";W[ca];B[ks];W[ha];B[ia];W[ls];B[sk];W[sl];B[ks];W[hg];B[ih];W[ls];B[lk];W[ll];B[ks];W[qh];B[pi];W[ls]" +
+            ";B[lj])";
 }
