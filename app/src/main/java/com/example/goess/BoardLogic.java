@@ -151,7 +151,6 @@ public class BoardLogic {
     }
 
 
-
     private ArrayList<Move> findGroupAt(Move move) {
 
         ArrayList<Move> group = getNeighboursNotVisited(move, visited);

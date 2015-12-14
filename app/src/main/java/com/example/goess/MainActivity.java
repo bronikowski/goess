@@ -41,7 +41,7 @@ public class MainActivity extends AppCompatActivity {
 
     ImageView boardImage;
     ImageView stoneImage;
-    TextView testLabel;
+    TextView scoreLabel;
     Context context;
     int boardWidth;
     int boardHeight;
@@ -62,6 +62,8 @@ public class MainActivity extends AppCompatActivity {
     BoardLogic boardLogic;
     GamesStorage gamesStorage;
     boolean gameReady;
+    int tries;
+    float currentScore = 0;
 
     View[][] stonesImg;
 
@@ -81,7 +83,7 @@ public class MainActivity extends AppCompatActivity {
         context = this.getApplicationContext();
         boardImage = (ImageView) findViewById(R.id.backgroundImg);
         stoneImage = (ImageView) findViewById(R.id.blackImg);
-        testLabel = (TextView) findViewById(R.id.testLabel);
+        scoreLabel = (TextView) findViewById(R.id.testLabel);
         nextBtn = (Button) findViewById(R.id.nextBtn);
         prevBtn = (Button) findViewById(R.id.prevBtn);
         rewindBtn = (Button) findViewById(R.id.rewindBtn);
@@ -162,27 +164,38 @@ public class MainActivity extends AppCompatActivity {
                         owner.removeView(horiz);
                         owner.removeView(vertic);
 
-                        ImageView img = new ImageView(context);
-                        img.setImageDrawable(v.getResources().getDrawable(R.drawable.black));
+                        if (gameReady) {
+                            tries++;
+                            ImageView img = new ImageView(context);
+                            img.setImageDrawable(v.getResources().getDrawable(R.drawable.black));
 
-                        int eventX = (int) event.getX();
-                        int eventY = (int) event.getY();
+                            int eventX = (int) event.getX();
+                            int eventY = (int) event.getY();
 
-                        if (eventX > 15 && eventX < (boardWidth - 10)
-                                && eventY > 15 && eventY < (boardHeight - 10)) {
+                            if (eventX > 15 && eventX < (boardWidth - 10)
+                                    && eventY > 15 && eventY < (boardHeight - 10)) {
 
-                            int x = Math.round((float)eventX / offsetW);
-                            int y = Math.round((float)eventY / offsetH);
+                                int x = Math.round((float) eventX / offsetW);
+                                int y = Math.round((float) eventY / offsetH);
 
-                            if (x > 19)
-                                x = 19;
-                            if (y > 19)
-                                y = 19;
-                            Move move = new Move(x - 1, y - 1, boardLogic.currentPlayer);
-                            if (boardLogic.isValid(move))
-                                drawStone(move, v, true);
-                            checkIfCapturing(move);
-                            updateScoreLabel();
+                                if (x > 19)
+                                    x = 19;
+                                if (y > 19)
+                                    y = 19;
+
+                                Move move = new Move(x - 1, y - 1, boardLogic.currentPlayer);
+
+                                if (boardLogic.isValid(move)) {
+                                    drawStone(move, v, true);
+                                    currentScore += (1.0f / tries);
+                                    tries = 0;
+                                    checkIfCapturing(move);
+                                } else
+                                    currentScore += 0;
+
+                                float totalScore = (currentScore / boardLogic.currentIndex) * 100;
+                                updateScoreLabel(totalScore);
+                            }
                         }
 
                         break;
@@ -207,7 +220,8 @@ public class MainActivity extends AppCompatActivity {
                                 checkIfCapturing(move);
                             }
                             else
-                                Log.w(TAG, "No more moves left!");
+                                Toast.makeText(getApplicationContext(), "No more moves!",
+                                        Toast.LENGTH_SHORT).show();
                         } else
                             Toast.makeText(getApplicationContext(), "Please choose a game!",
                                     Toast.LENGTH_LONG).show();
@@ -256,6 +270,8 @@ public class MainActivity extends AppCompatActivity {
         forwardBtn.setOnClickListener(listener);
     }
 
+
+
     private void checkIfCapturing(Move move) {
         if (boardLogic.isCapturing(move)) {
             for (int i = 0; i < boardLogic.deadStones.size(); ++i) {
@@ -275,8 +291,8 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    private void updateScoreLabel() {
-        testLabel.setText("score: " + String.valueOf(boardLogic.score));
+    private void updateScoreLabel(float percentage) {
+        scoreLabel.setText("score: " + String.valueOf((int)percentage) + "%");
         LinearLayout fill = (LinearLayout) findViewById(R.id.scoreFill);
         LinearLayout bkg = (LinearLayout) findViewById(R.id.scoreBkg);
         ViewGroup.LayoutParams paramsBkg =  bkg.getLayoutParams();
@@ -404,12 +420,14 @@ public class MainActivity extends AppCompatActivity {
     }
 
 
-
     private void loadGame(String sgf) {
         clearBoard();
         String title = boardLogic.getBlackPlayer() + " vs " + boardLogic.getWhitePlayer();
         updateGameInfo(title);
+        updateScoreLabel(0);
         gamesStorage.addRecentGame(title, sgf);
+        tries = 0;
+        currentScore = 0;
     }
 
     private void showRecentGamesList() {
