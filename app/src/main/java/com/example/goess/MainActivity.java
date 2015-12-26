@@ -35,6 +35,13 @@ import java.lang.reflect.Field;
 import java.util.ArrayList;
 import com.nbsp.materialfilepicker.ui.FilePickerActivity;
 
+import org.achartengine.ChartFactory;
+import org.achartengine.GraphicalView;
+import org.achartengine.chart.PointStyle;
+import org.achartengine.model.XYMultipleSeriesDataset;
+import org.achartengine.model.XYSeries;
+import org.achartengine.renderer.XYMultipleSeriesRenderer;
+import org.achartengine.renderer.XYSeriesRenderer;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -48,6 +55,7 @@ public class MainActivity extends AppCompatActivity {
     Bitmap rawBoardBitmap;
     ImageView boardImage;
     ImageView stoneImage;
+    ImageView infoImage;
     TextView scoreLabel;
     Context context;
     int boardWidth;
@@ -76,6 +84,11 @@ public class MainActivity extends AppCompatActivity {
     int userMoves = 0;
 
     View[][] stonesImg;
+    View graphView;
+    ImageView deleteImg;
+    TextView deleteTxt;
+
+    XYMultipleSeriesRenderer graphRenderer;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -96,6 +109,7 @@ public class MainActivity extends AppCompatActivity {
         boardImage = (ImageView) findViewById(R.id.backgroundImg);
         rawBoardBitmap = ((BitmapDrawable) boardImage.getDrawable()).getBitmap();
         stoneImage = (ImageView) findViewById(R.id.blackImg);
+        infoImage = (ImageView) findViewById(R.id.infoImg);
         scoreLabel = (TextView) findViewById(R.id.scoreTxtLabel);
         nextBtn = (Button) findViewById(R.id.nextBtn);
         prevBtn = (Button) findViewById(R.id.prevBtn);
@@ -106,8 +120,17 @@ public class MainActivity extends AppCompatActivity {
         gamesStorage = new GamesStorage(context);
         gameReady = false;
 
+        buildGraph();
+
         frameLayout = (FrameLayout)findViewById(R.id.background);
 
+        infoImage.setOnTouchListener(new View.OnTouchListener() {
+            @Override
+            public boolean onTouch(View v, MotionEvent event) {
+                showGameInfo();
+                return false ;
+            }
+        });
 
         ViewTreeObserver vto = boardImage.getViewTreeObserver();
         vto.addOnPreDrawListener(new ViewTreeObserver.OnPreDrawListener() {
@@ -493,6 +516,87 @@ public class MainActivity extends AppCompatActivity {
 
         AlertDialog alert = builder.create();
         alert.show();
+    }
+
+    private void buildGraph() {
+        graphRenderer = new XYMultipleSeriesRenderer();
+
+        XYSeriesRenderer renderer = new XYSeriesRenderer();
+        renderer.setLineWidth(2);
+        renderer.setColor(getResources().getColor(R.color.colorPrimaryDark));
+        renderer.setDisplayBoundingPoints(true);
+        renderer.setPointStyle(PointStyle.CIRCLE);
+        renderer.setPointStrokeWidth(3);
+
+        graphRenderer.addSeriesRenderer(renderer);
+        graphRenderer.setMarginsColor(Color.argb(0x00, 0xff, 0x00, 0x00));
+        graphRenderer.setPanEnabled(false, false);
+        graphRenderer.setYAxisMax(100);
+        graphRenderer.setYAxisMin(0);
+        graphRenderer.setYTitle("Guess %");
+        graphRenderer.setXTitle("Games played");
+        graphRenderer.setShowGrid(true);
+
+        LayoutInflater inflater = getLayoutInflater();
+        graphView = (View) inflater.inflate(R.layout.graph, null);
+
+        deleteImg = (ImageView) graphView.findViewById(R.id.deleteImg);
+        deleteTxt = (TextView) graphView.findViewById(R.id.deleteTxtLabel);
+
+        View.OnTouchListener listener = new View.OnTouchListener() {
+            @Override
+            public boolean onTouch(View v, MotionEvent event) {
+                attemptDeleteHistory();
+                return false;
+            }
+        };
+        deleteImg.setOnTouchListener(listener);
+        deleteTxt.setOnTouchListener(listener);
+    }
+
+    private void attemptDeleteHistory() {
+        AlertDialog alertDialog = new AlertDialog.Builder(this).create();
+        alertDialog.setTitle("Delete game history");
+        alertDialog.setMessage("Are you sure? This cannot be undone.");
+        alertDialog.setButton(AlertDialog.BUTTON_POSITIVE, "OK",
+                new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int which) {
+                        dialog.dismiss();
+                        Toast.makeText(getApplicationContext(), "Game history deleted!",
+                                Toast.LENGTH_SHORT).show();
+
+                    }
+                });
+        alertDialog.setButton(AlertDialog.BUTTON_NEGATIVE, "Cancel",
+                new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int which) {
+                        dialog.dismiss();
+                    }
+                });
+        alertDialog.show();
+    }
+
+    private void showGameInfo() {
+
+        XYSeries series = new XYSeries("Guess history of current game");
+
+        int[] data = {23, 45, 78, 56, 23, 43, 34, 12, 89, 45};
+        int time = 0;
+
+        for (int i : data)
+            series.add(time++, i);
+
+        XYMultipleSeriesDataset mXYMultipleSeriesDataSet = new XYMultipleSeriesDataset();
+        mXYMultipleSeriesDataSet.addSeries(series);
+
+        GraphicalView chartView = ChartFactory.getLineChartView(context, mXYMultipleSeriesDataSet, graphRenderer);
+
+        LinearLayout l = (LinearLayout) graphView.findViewById(R.id.chart);
+        l.addView(chartView, 0);
+
+        AlertDialog.Builder dialog = new AlertDialog.Builder(this);
+        dialog.setView(graphView);
+        dialog.show();
     }
 
     private void showSettings() {

@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    android:layout_width="match_parent"
+    android:layout_height="400dp"
+    android:orientation="vertical"
+    xmlns:android="http://schemas.android.com/apk/res/android" >
+
+        <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="300dp"
+        android:id="@+id/chart"
+        android:orientation="vertical" >
+        </LinearLayout>
+
+        <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="40dp"
+        android:id="@+id/delete"
+        android:orientation="horizontal" >
+
+            <ImageView
+            android:id="@+id/deleteImg"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:paddingBottom="20dp"
+            android:src="@drawable/ic_delete" />
+
+            <TextView
+                android:text="Delete history for this game?"
+                android:id="@+id/deleteTxtLabel"
+                android:textSize="13dp"
+                android:layout_width="wrap_content" android:layout_height="wrap_content" />
+
+        </LinearLayout>
+</LinearLayout>
