@@ -2,7 +2,6 @@ package com.example.goess;
 
 
 import android.content.SharedPreferences;
-import android.util.Log;
 
 public class UserSettings {
 

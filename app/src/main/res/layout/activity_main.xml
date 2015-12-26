@@ -5,6 +5,7 @@
     android:orientation="vertical"
     xmlns:android="http://schemas.android.com/apk/res/android">
 
+
     <android.support.v7.widget.Toolbar
         android:id="@+id/my_toolbar"
         android:minHeight="?android:attr/actionBarSize"
@@ -29,7 +30,6 @@
             android:adjustViewBounds="true"
             android:alpha="0.5"
             android:src="@drawable/dre" />
-
 
 
         <ImageView
@@ -76,13 +76,16 @@
 
     <RelativeLayout
         android:id="@+id/controlsLayout"
-        android:layout_width="fill_parent" android:layout_height="140dp"
+        android:layout_width="fill_parent" android:layout_height="100dp"
         android:layout_centerHorizontal="true">
 
         <TextView
-            android:text="0"
-            android:id="@+id/testLabel"
-            android:layout_width="wrap_content" android:layout_height="30dp" />
+            android:text=""
+            android:id="@+id/scoreTxtLabel"
+            android:paddingLeft="20dp"
+            android:paddingTop="4dp"
+            android:textSize="13dp"
+            android:layout_width="wrap_content" android:layout_height="50dp" />
 
         <LinearLayout
             android:id="@+id/buttonsLayout"

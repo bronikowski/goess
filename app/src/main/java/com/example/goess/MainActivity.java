@@ -1,6 +1,7 @@
 package com.example.goess;
 
 import android.app.AlertDialog;
+import android.app.Dialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -13,16 +14,22 @@ import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
+import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewTreeObserver;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
 import android.widget.Button;
+import android.widget.CheckedTextView;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.ListView;
+import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 import java.lang.reflect.Field;
@@ -33,12 +40,13 @@ import com.nbsp.materialfilepicker.ui.FilePickerActivity;
 public class MainActivity extends AppCompatActivity {
 
     private static String TAG = "MainActivity";
-    private static int GRID_PADDING = 20;
+    private static String APP_PREFERENCES = "GoessSettings";
     private static int STONE_SIZE = 28;
     private static String FILE_EXT = "sgf";
     private static int REQUEST_CODE = 1;
     private static int BOARD_SIZE = 19;
 
+    Bitmap rawBoardBitmap;
     ImageView boardImage;
     ImageView stoneImage;
     TextView scoreLabel;
@@ -58,12 +66,15 @@ public class MainActivity extends AppCompatActivity {
 
     FrameLayout frameLayout;
     Toolbar myToolbar;
+    String gameTitle;
 
     BoardLogic boardLogic;
     GamesStorage gamesStorage;
+    UserSettings userSettings;
     boolean gameReady;
     int tries;
     float currentScore = 0;
+    int userMoves = 0;
 
     View[][] stonesImg;
 
@@ -81,9 +92,12 @@ public class MainActivity extends AppCompatActivity {
         stonesImg = new View[BOARD_SIZE][BOARD_SIZE];
 
         context = this.getApplicationContext();
+        userSettings = new UserSettings(context.getSharedPreferences(APP_PREFERENCES, Context.MODE_PRIVATE));
+
         boardImage = (ImageView) findViewById(R.id.backgroundImg);
+        rawBoardBitmap = ((BitmapDrawable) boardImage.getDrawable()).getBitmap();
         stoneImage = (ImageView) findViewById(R.id.blackImg);
-        scoreLabel = (TextView) findViewById(R.id.testLabel);
+        scoreLabel = (TextView) findViewById(R.id.scoreTxtLabel);
         nextBtn = (Button) findViewById(R.id.nextBtn);
         prevBtn = (Button) findViewById(R.id.prevBtn);
         rewindBtn = (Button) findViewById(R.id.rewindBtn);
@@ -102,8 +116,8 @@ public class MainActivity extends AppCompatActivity {
                 boardImage.getViewTreeObserver().removeOnPreDrawListener(this);
                 boardWidth = boardImage.getMeasuredHeight();
                 boardHeight = boardImage.getMeasuredWidth();
-                offsetW = (boardWidth - (GRID_PADDING * 2)) / 18;
-                offsetH = (boardHeight - (GRID_PADDING * 2)) / 18;
+                offsetW = (boardWidth ) / 20;
+                offsetH = (boardHeight ) / 20;
 
                 stoneWidth = stoneImage.getMeasuredHeight();
                 stoneHeight = stoneImage.getMeasuredWidth();
@@ -111,7 +125,7 @@ public class MainActivity extends AppCompatActivity {
                 Log.i(TAG, "boardWidth: " + String.valueOf(stoneWidth + ", boardHeight: " +
                 String.valueOf(stoneHeight)));
 
-                drawBoardGrid();
+                drawBoardGrid(userSettings.showBoardCoords);
 
                 ViewGroup.LayoutParams params = frameLayout.getLayoutParams();
                 params.height = boardHeight;
@@ -189,11 +203,13 @@ public class MainActivity extends AppCompatActivity {
                                     drawStone(move, v, true);
                                     currentScore += (1.0f / tries);
                                     tries = 0;
+                                    userMoves++;
                                     checkIfCapturing(move);
+                                    updateGameInfo(gameTitle + "  (" + boardLogic.currentIndex + "/" + boardLogic.movesList.size() + ")");
                                 } else
                                     currentScore += 0;
 
-                                float totalScore = (currentScore / boardLogic.currentIndex) * 100;
+                                float totalScore = (currentScore / userMoves) * 100;
                                 updateScoreLabel(totalScore);
                             }
                         }
@@ -261,6 +277,7 @@ public class MainActivity extends AppCompatActivity {
                                     Toast.LENGTH_LONG).show();
                         break;
                 }
+                updateGameInfo(gameTitle + "  (" + (String.valueOf(boardLogic.currentIndex)) + "/" + boardLogic.movesList.size() + ")");
             }
         };
 
@@ -269,7 +286,6 @@ public class MainActivity extends AppCompatActivity {
         rewindBtn.setOnClickListener(listener);
         forwardBtn.setOnClickListener(listener);
     }
-
 
 
     private void checkIfCapturing(Move move) {
@@ -291,8 +307,13 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    private void updateScoreLabel(float percentage) {
-        scoreLabel.setText("score: " + String.valueOf((int)percentage) + "%");
+    private void showIndicator(boolean show) {
+        RelativeLayout fill = (RelativeLayout) findViewById(R.id.scoreLayout);
+        fill.setVisibility(show ? View.VISIBLE : View.INVISIBLE);
+    }
+
+    private void updateScoreLabel(float percentage) { //only from user moves
+        scoreLabel.setText(String.valueOf((int)percentage) + "%");
         LinearLayout fill = (LinearLayout) findViewById(R.id.scoreFill);
         LinearLayout bkg = (LinearLayout) findViewById(R.id.scoreBkg);
         ViewGroup.LayoutParams paramsBkg =  bkg.getLayoutParams();
@@ -321,7 +342,7 @@ public class MainActivity extends AppCompatActivity {
             STONE_SIZE = 28;
 
         FrameLayout.LayoutParams stoneParam = new FrameLayout.LayoutParams(STONE_SIZE, STONE_SIZE);
-        stoneParam.leftMargin = ((int) ((move.x + 1) * offsetW)) - (STONE_SIZE / 2) + 1/*imgpadding*/;
+        stoneParam.leftMargin = ((int) ((move.x + 1) * offsetW)) - (STONE_SIZE / 2);
         stoneParam.topMargin = ((int) ((move.y + 1) * offsetH)) - (STONE_SIZE / 2);
         frameLayout.addView(img, stoneParam);
         currentStoneViewId = frameLayout.indexOfChild(img);
@@ -414,6 +435,9 @@ public class MainActivity extends AppCompatActivity {
             case R.id.action_gamesList:
                 showDefaultGamesList();
                 return true;
+            case R.id.action_settings:
+                showSettings();
+                return true;
             default:
                 return super.onOptionsItemSelected(item);
         }
@@ -422,11 +446,12 @@ public class MainActivity extends AppCompatActivity {
 
     private void loadGame(String sgf) {
         clearBoard();
-        String title = boardLogic.getBlackPlayer() + " vs " + boardLogic.getWhitePlayer();
-        updateGameInfo(title);
+        gameTitle = boardLogic.getBlackPlayer() + " vs " + boardLogic.getWhitePlayer();
+
+        updateGameInfo(gameTitle + "  (" + boardLogic.currentIndex + "/" + boardLogic.movesList.size() + ")");
         updateScoreLabel(0);
-        gamesStorage.addRecentGame(title, sgf);
-        tries = 0;
+        gamesStorage.addRecentGame(gameTitle, sgf);
+        tries = userMoves = 0;
         currentScore = 0;
     }
 
@@ -463,6 +488,48 @@ public class MainActivity extends AppCompatActivity {
         alert.show();
     }
 
+    private void showSettings() {
+        final String[] items = {"Show board coordinators", "Show guess indicator", "Euclidean metrics"};
+
+        AlertDialog.Builder dialog = new AlertDialog.Builder(this);
+        dialog.setTitle("Customize Goess");
+        LayoutInflater inflater = getLayoutInflater();
+        View convertView = (View) inflater.inflate(R.layout.settings, null);
+        dialog.setView(convertView);
+        ListView lv = (ListView) convertView.findViewById(R.id.settingsListView);
+        lv.setChoiceMode(ListView.CHOICE_MODE_MULTIPLE);
+        ArrayAdapter<String> adapter = new ArrayAdapter<String>(this, android.R.layout.simple_list_item_multiple_choice, items);
+        lv.setAdapter(adapter);
+        lv.setItemChecked(0, userSettings.showBoardCoords);
+        lv.setItemChecked(1, userSettings.showIndicator);
+        lv.setItemChecked(2, userSettings.metrics == UserSettings.Metrics.EUCLID);
+        dialog.show();
+
+        lv.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> parent, View v, int position, long id) {
+                CheckedTextView item = (CheckedTextView) v;
+                switch (position) {
+                    case 0:
+                        userSettings.setShowBoardCoords(item.isChecked());
+                        drawBoardGrid(userSettings.showBoardCoords);
+                        break;
+                    case 1:
+                        showIndicator(item.isChecked());
+                        userSettings.setIndicator(item.isChecked());
+                        break;
+                    case 2:
+                        userSettings.setMetrics(item.isChecked());
+                        break;
+                    default:
+                        break;
+                }
+            }
+        });
+
+    }
+
+
     private void showDefaultGamesList() {
         final CharSequence[] items = new CharSequence[gamesStorage.DEFAULT_GAMES_LIST_SIZE];
         int i = 0;
@@ -488,19 +555,36 @@ public class MainActivity extends AppCompatActivity {
         alert.show();
     }
 
-    private void drawBoardGrid() {
+
+
+    private void drawBoardGrid(boolean grid) {
         Paint p = new Paint();
         p.setColor(Color.BLACK);
-        Bitmap bitmap = ((BitmapDrawable) boardImage.getDrawable()).getBitmap();
 
         Bitmap tempBitmap = Bitmap.createBitmap(boardWidth, boardHeight, Bitmap.Config.RGB_565);
         Canvas tempCanvas = new Canvas(tempBitmap);
-        tempCanvas.drawBitmap(bitmap, 0, 0, null);
+        tempCanvas.drawBitmap(rawBoardBitmap, 0, 0, null);
 
-        float offset = (boardWidth - (GRID_PADDING * 2)) / 18;
-        for (float i = 25; i <= (offset * 20); i += offset) {
-            tempCanvas.drawLine(i, 25, i, (offset * 19) + 2, p);
-            tempCanvas.drawLine(25, i, (offset * 19) + 2, i, p);
+        float offset = boardWidth / 20;
+        for (float i = offset; i <= (offset * 20); i += offset) {
+            tempCanvas.drawLine(i, 25, i, (offset * 19) + 0, p);
+            tempCanvas.drawLine(25, i, (offset * 19) + 0, i, p);
+        }
+
+        if (grid) {
+            p.setTextSize(9);
+            int c = 0;
+            String alphabet = "ABCDEFGHJKLMNOPQRST";
+            int padding = 7;
+            for (float i = 20; i <= (offset * 19); i += offset) {
+                tempCanvas.drawText(String.valueOf(alphabet.charAt(c)), i, 10, p);
+                tempCanvas.drawText(String.valueOf(alphabet.charAt(c++)), i, boardHeight - 2, p);
+                tempCanvas.drawText(String.valueOf(c), 1, i + 10, p);
+                if (c > 9)
+                    padding = 12;
+                tempCanvas.drawText(String.valueOf(c), boardWidth - padding, i + 10, p);
+            }
+
         }
         boardImage.setImageDrawable(new BitmapDrawable(getResources(), tempBitmap));
 

@@ -19,5 +19,9 @@
         android:orderInCategory="100"
         android:title="Games repository"
         app:showAsAction="never"/>
+    <item android:id="@+id/action_settings"
+        android:orderInCategory="100"
+        android:title="Settings"
+        app:showAsAction="never"/>
 
 </menu>
