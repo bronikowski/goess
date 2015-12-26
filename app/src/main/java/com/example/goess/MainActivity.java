@@ -90,7 +90,7 @@ public class MainActivity extends AppCompatActivity {
         forwardBtn = (Button) findViewById(R.id.forwardBtn);
 
         boardLogic = new BoardLogic();
-        gamesStorage = new GamesStorage();
+        gamesStorage = new GamesStorage(context);
         gameReady = false;
 
         frameLayout = (FrameLayout)findViewById(R.id.background);
