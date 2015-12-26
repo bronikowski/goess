@@ -65,12 +65,12 @@
             android:id="@+id/horiz"
             android:layout_width="1dp"
             android:layout_height="30dp"
-            android:background="#FF0000" />
+            android:background="#FF0033" />
         <View
             android:id="@+id/vertic"
             android:layout_width="30dp"
             android:layout_height="1dp"
-            android:background="#FF0000" />
+            android:background="#FF0033" />
 
     </FrameLayout>
 

@@ -1,7 +1,6 @@
 package com.example.goess;
 
 import android.app.AlertDialog;
-import android.app.Dialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -160,15 +159,23 @@ public class MainActivity extends AppCompatActivity {
                         owner.removeView(horiz);
                         owner.removeView(vertic);
 
-                        horizParam.leftMargin = (int) event.getX();
+                        int hx = Math.round((float) event.getX() / offsetW);
+                        int vy = Math.round((float) event.getY() / offsetH);
+
+                        if (hx > 19)
+                            hx = 19;
+                        if (vy > 19)
+                            vy = 19;
+
+                        horizParam.leftMargin = ((int) (hx * offsetW));
                         horizParam.bottomMargin = (int) event.getY();
                         horiz.setVisibility(View.VISIBLE);
                         frameLayout.addView(horiz, horizParam);
 
                         verticParam.rightMargin = (int) event.getX();
-                        verticParam.topMargin = (int) event.getY();
+                        verticParam.topMargin = ((int) (vy * offsetH));
                         vertic.setVisibility(View.VISIBLE);
-                        if ((int) event.getY() < boardHeight)
+                        if (verticParam.topMargin < boardHeight && verticParam.topMargin >= offsetH)
                             frameLayout.addView(vertic, verticParam);
 
 
@@ -313,7 +320,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void updateScoreLabel(float percentage) { //only from user moves
-        scoreLabel.setText(String.valueOf((int)percentage) + "%");
+        scoreLabel.setText(String.valueOf((int) percentage) + "%");
         LinearLayout fill = (LinearLayout) findViewById(R.id.scoreFill);
         LinearLayout bkg = (LinearLayout) findViewById(R.id.scoreBkg);
         ViewGroup.LayoutParams paramsBkg =  bkg.getLayoutParams();
