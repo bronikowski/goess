@@ -11,6 +11,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.HashMap;
 import java.util.LinkedList;
+import java.util.Map;
 
 public class GamesStorage {
 
@@ -19,9 +20,10 @@ public class GamesStorage {
     static final int DEFAULT_GAMES_LIST_SIZE = 6;
     static final int RECENT_GAMES_LIST_SIZE = 5;
 
-    HashMap<String, String> recentGamesByName = new HashMap<String, String>();
+    HashMap<String, GameInfo> recentGamesByName = new HashMap<String, GameInfo>();
     HashMap<String, String> defaultGamesByName = new HashMap<String, String>();
     LinkedList<String> recentGamesQueue = new LinkedList<String>();
+    HashMap<String, GameInfo> gamesHistory = new HashMap<String, GameInfo>();
 
     Context context;
 
@@ -77,11 +79,28 @@ public class GamesStorage {
         return defaultGamesByName.get(name);
     }
 
-    public String getRecentGameAt(String name) {
+    public GameInfo getRecentGameAt(String name) {
+        Log.v(TAG, "get recent game " + name + " " + recentGamesByName.get(name).md5);
         return recentGamesByName.get(name);
     }
 
-    public void addRecentGame(String name, String sgf) {
+    public void addToGamesHistory(GameInfo game, int score) {
+        if (gamesHistory.containsKey(game.md5)) {
+            gamesHistory.get(game.md5).score.add(score);
+        } else {
+            game.score.add(score);
+            gamesHistory.put(game.md5, game);
+        }
+
+
+        for (Map.Entry<String, GameInfo> entry : gamesHistory.entrySet()) {
+            Log.v(TAG, "game in history: " + entry.getKey());
+            for (Integer s : entry.getValue().score)
+                Log.v(TAG, "score : " + String.valueOf(s));
+        }
+    }
+
+    public void addRecentGame(String name, GameInfo game) {
 
         if (!recentGamesByName.containsKey(name)) {
             if (recentGamesByName.size() < RECENT_GAMES_LIST_SIZE)
@@ -95,7 +114,15 @@ public class GamesStorage {
             recentGamesQueue.remove(name);
             recentGamesQueue.addFirst(name);
         }
-        recentGamesByName.put(name, sgf);
+        recentGamesByName.put(name, game);
+        Log.v(TAG, "add recent game " + name + " " + game.md5);
     }
 
+    public void updateGameHistory(String sgf) {
+
+    }
+
+    public void updateGameHistory(int md5, int score) {
+
+    }
 }

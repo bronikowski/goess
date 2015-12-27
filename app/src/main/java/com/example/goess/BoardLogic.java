@@ -13,7 +13,7 @@ public class BoardLogic {
     int currentIndex;
     Move.Player currentPlayer;
     Move.Player[][] board;
-    public ArrayList<Move> movesList;
+    GameInfo currentGame;
     public ArrayList<Move> deadStones = new ArrayList<>();
     HashMap<Integer, ArrayList<Move>> captureCache = new HashMap<Integer, ArrayList<Move>>();
     int score;
@@ -23,21 +23,19 @@ public class BoardLogic {
     public BoardLogic() {
         board = new Move.Player[BOARD_SIZE][BOARD_SIZE];
         initBoard();
-        movesList = new ArrayList<Move>();
-
     }
 
     public Move getNextMove() {
         Move move = null;
-        if (currentIndex < movesList.size())
-            move = movesList.get(currentIndex++);
+        if (currentIndex < currentGame.moves.size())
+            move = currentGame.moves.get(currentIndex++);
         return move;
     }
 
     public Move getPreviousMove() {
         Move move = null;
-        if ((currentIndex  > 0) && (currentIndex <= movesList.size()))
-            move = movesList.get(currentIndex - 1);
+        if ((currentIndex  > 0) && (currentIndex <= currentGame.moves.size()))
+            move = currentGame.moves.get(currentIndex - 1);
         return move;
     }
 
@@ -51,24 +49,28 @@ public class BoardLogic {
         currentPlayer = Move.Player.BLACK;
     }
 
-    public boolean parseSGFFile(String filePath) {
+    public GameInfo parseSGFFile(String filePath) {
 
-        movesList = parser.getMovesListFromFile(filePath);
-        return (movesList.size() != 0);
+        currentGame = parser.getGameFromFile(filePath);
+        return currentGame;
     }
 
-    public boolean parseSGFString(String content) {
+    public GameInfo parseSGFString(String content) {
 
-        movesList = parser.getMovesListFromString(content);
-        return (movesList.size() != 0);
+        currentGame = parser.getGameFromString(content);
+        return currentGame;
+    }
+
+    public String getMd5(String input) {
+        return parser.md5(input);
     }
 
     public String getBlackPlayer() {
-        return parser.blackPlayerName;
+        return currentGame.blackPlayerName;
     }
 
     public String getWhitePlayer() {
-        return parser.whitePlayerName;
+        return currentGame.whitePlayerName;
     }
 
     public void clearBoardState() {
@@ -80,7 +82,7 @@ public class BoardLogic {
 
     public void removeLastMoveFromBoardState() {
         if (currentIndex > 0) {
-            Move lastDrawnMove = movesList.get(currentIndex - 1);
+            Move lastDrawnMove = currentGame.moves.get(currentIndex - 1);
             currentIndex--;
             board[lastDrawnMove.x][lastDrawnMove.y] = Move.Player.EMPTY;
             currentPlayer = (currentPlayer == Move.Player.BLACK) ? Move.Player.WHITE : Move.Player.BLACK;
@@ -105,7 +107,7 @@ public class BoardLogic {
     public void addMoveToBoardState(Move move) {
         board[move.x][move.y] = move.player;
         currentPlayer = (move.player == Move.Player.BLACK) ? Move.Player.WHITE : Move.Player.BLACK;
-        Log.i(TAG, "added move, id    " + String.valueOf(movesList.size()));
+     //   Log.i(TAG, "added move, id    " + String.valueOf(currentGame.moves.size()));
     }
 
     private ArrayList<Move> getNeighbours(Move move, Move.Player color) {
@@ -231,8 +233,8 @@ public class BoardLogic {
 
         boolean res = false;
 
-        if (currentIndex < movesList.size()) {
-            Move nextMove = movesList.get(currentIndex);
+        if (currentIndex < currentGame.moves.size()) {
+            Move nextMove = currentGame.moves.get(currentIndex);
             int diffX = Math.abs(nextMove.x - move.x);
             int diffY = Math.abs(nextMove.y - move.y);
             int maxDiff = Math.max(diffX, diffY);

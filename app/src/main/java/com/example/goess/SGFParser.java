@@ -8,6 +8,8 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 
 public class SGFParser {
@@ -18,24 +20,39 @@ public class SGFParser {
     private static String BLACK_PLAYER_NAME = "PB";
     private static String WHITE_PLAYER_NAME = "PW";
 
-    String blackPlayerName = "Black";
-    String whitePlayerName = "White";
-
-    String lastSgf = "";
-
     public SGFParser() {
 
     }
 
-    public String getLastSgf() {
-        return lastSgf;
+    public String md5(String in) {
+        MessageDigest digest;
+        try {
+            digest = MessageDigest.getInstance("MD5");
+            digest.reset();
+            digest.update(in.getBytes());
+            byte[] a = digest.digest();
+            int len = a.length;
+            StringBuilder sb = new StringBuilder(len << 1);
+            for (int i = 0; i < len; i++) {
+                sb.append(Character.forDigit((a[i] & 0xf0) >> 4, 16));
+                sb.append(Character.forDigit(a[i] & 0x0f, 16));
+            }
+            return sb.toString();
+        } catch (NoSuchAlgorithmException e) {
+            e.printStackTrace();
+        }
+        return null;
     }
 
-    private ArrayList<Move> getMovesList(String content) {
+
+    private GameInfo getGame(String content) {
+        String blackPlayerName = "Black";
+        String whitePlayerName = "White";
+        String md5Input = "";
+
         ArrayList<Move> list = new ArrayList<>();
      //   String content = getFileContent(filePath);
         Log.i(TAG, "Content " + content);
-        lastSgf = content;
         int start = content.indexOf(BLACK_PLAYER_NAME);
         int end = content.substring(start).indexOf("]");
         if (start > 0 && end > 0) {
@@ -50,7 +67,7 @@ public class SGFParser {
         start = content.indexOf(";B[");
         if (start < 0) {
             Log.e(TAG, "Could not find first move!");
-            return list;
+            return null;
         }
         int startOffset = 1;
         if (start == 0)
@@ -74,6 +91,8 @@ public class SGFParser {
                     Move move = new Move(a - 'a', b - 'a', content.charAt(i) == BLACK_MOVE ? Move.Player.BLACK : Move.Player.WHITE);
                 //    Log.i(TAG, "add   " + String.valueOf(move.x) + ":" + String.valueOf(move.y));
                     list.add(move);
+                    md5Input += a;
+                    md5Input += b;
                 }
             }
         } catch (IndexOutOfBoundsException e) {
@@ -81,17 +100,23 @@ public class SGFParser {
             list.clear();
         }
 
-        return list;
+        GameInfo gameInfo = new GameInfo();
+        gameInfo.moves.addAll(list);
+        gameInfo.md5 = md5(md5Input);
+        gameInfo.blackPlayerName = blackPlayerName;
+        gameInfo.whitePlayerName = whitePlayerName;
+
+        return gameInfo;
     }
 
-    public ArrayList<Move> getMovesListFromString(String content) {
-        return getMovesList(content);
+    public GameInfo getGameFromString(String content) {
+        return getGame(content);
     }
 
-    public ArrayList<Move> getMovesListFromFile(String filePath) {
+    public GameInfo getGameFromFile(String filePath) {
 
         String content = getFileContent(filePath);
-        return getMovesList(content);
+        return getGame(content);
     }
 
 

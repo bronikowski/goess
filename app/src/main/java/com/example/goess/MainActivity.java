@@ -235,7 +235,7 @@ public class MainActivity extends AppCompatActivity {
                                     tries = 0;
                                     userMoves++;
                                     checkIfCapturing(move);
-                                    updateGameInfo(gameTitle + "  (" + boardLogic.currentIndex + "/" + boardLogic.movesList.size() + ")");
+                                    updateGameInfo(gameTitle + "  (" + boardLogic.currentIndex + "/" + boardLogic.currentGame.moves.size() + ")");
                                 } else
                                     currentScore += 0;
 
@@ -265,9 +265,9 @@ public class MainActivity extends AppCompatActivity {
                                 drawStone(move, v, true);
                                 checkIfCapturing(move);
                             }
-                            else
-                                Toast.makeText(getApplicationContext(), "No more moves!",
-                                        Toast.LENGTH_SHORT).show();
+                         //   else
+                           //     Toast.makeText(getApplicationContext(), "No more moves!",
+                              //          Toast.LENGTH_SHORT).show();
                         } else
                             Toast.makeText(getApplicationContext(), "Please choose a game!",
                                     Toast.LENGTH_LONG).show();
@@ -307,7 +307,7 @@ public class MainActivity extends AppCompatActivity {
                                     Toast.LENGTH_LONG).show();
                         break;
                 }
-                updateGameInfo(gameTitle + "  (" + (String.valueOf(boardLogic.currentIndex)) + "/" + boardLogic.movesList.size() + ")");
+                updateGameInfo(gameTitle + "  (" + (String.valueOf(boardLogic.currentIndex)) + "/" + boardLogic.currentGame.moves.size() + ")");
             }
         };
 
@@ -331,6 +331,8 @@ public class MainActivity extends AppCompatActivity {
 
     private void clearBoard() {
         boardLogic.clearBoardState();
+        updateScoreLabel(0);
+        lastScore = 0;
         if (currentStoneViewId >= 3) {
             frameLayout.removeViews(3, currentStoneViewId - 2);
             currentStoneViewId = 0;
@@ -342,7 +344,10 @@ public class MainActivity extends AppCompatActivity {
         fill.setVisibility(show ? View.VISIBLE : View.INVISIBLE);
     }
 
+    float lastScore = 0;
+
     private void updateScoreLabel(float percentage) { //only from user moves
+        lastScore = percentage;
         scoreLabel.setText(String.valueOf((int) percentage) + "%");
         LinearLayout fill = (LinearLayout) findViewById(R.id.scoreFill);
         LinearLayout bkg = (LinearLayout) findViewById(R.id.scoreBkg);
@@ -414,9 +419,10 @@ public class MainActivity extends AppCompatActivity {
 
             if (filePath.substring(filePath.length() - 3).equals(FILE_EXT)) {
                 Log.i(TAG, "Opening file: " + filePath);
-                gameReady = boardLogic.parseSGFFile(filePath);
+                GameInfo game = boardLogic.parseSGFFile(filePath);
+                gameReady = (game != null && game.moves.size() != 0);
                 if (gameReady) {
-                    loadGame(boardLogic.parser.getLastSgf());
+                    loadGame(game);
                 }
 
             } else {
@@ -431,6 +437,32 @@ public class MainActivity extends AppCompatActivity {
     private void updateGameInfo(String title) {
         getSupportActionBar().setTitle(title);
         setSupportActionBar(myToolbar);
+        if (boardLogic.currentIndex == boardLogic.currentGame.moves.size()) { //not for zero..
+            askIfAddToHistory();
+        }
+    }
+
+    private void askIfAddToHistory() {
+        AlertDialog alertDialog = new AlertDialog.Builder(this).create();
+        alertDialog.setTitle("Game finished with score " + String.valueOf(scoreLabel.getText()));
+        alertDialog.setMessage("Add this score to game history?");
+        alertDialog.setButton(AlertDialog.BUTTON_POSITIVE, "OK",
+                new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int which) {
+                        gamesStorage.addToGamesHistory(boardLogic.currentGame, (int)lastScore);
+                        dialog.dismiss();
+                        Toast.makeText(getApplicationContext(), "Score saved!",
+                                Toast.LENGTH_SHORT).show();
+
+                    }
+                });
+        alertDialog.setButton(AlertDialog.BUTTON_NEGATIVE, "Cancel",
+                new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int which) {
+                        dialog.dismiss();
+                    }
+                });
+        alertDialog.show();
     }
 
     @Override
@@ -474,15 +506,17 @@ public class MainActivity extends AppCompatActivity {
     }
 
 
-    private void loadGame(String sgf) {
+    private void loadGame(GameInfo game) {
         clearBoard();
+        boardLogic.currentGame = game;
         gameTitle = boardLogic.getBlackPlayer() + " vs " + boardLogic.getWhitePlayer();
-
-        updateGameInfo(gameTitle + "  (" + boardLogic.currentIndex + "/" + boardLogic.movesList.size() + ")");
+        updateGameInfo(gameTitle + "  (" + boardLogic.currentIndex + "/" + boardLogic.currentGame.moves.size() + ")");
         updateScoreLabel(0);
-        gamesStorage.addRecentGame(gameTitle, sgf);
+        Log.v(TAG, "load  game " + game.md5);
+        gamesStorage.addRecentGame(gameTitle, game);
         tries = userMoves = 0;
         currentScore = 0;
+
     }
 
     private void showRecentGamesList() {
@@ -502,11 +536,11 @@ public class MainActivity extends AppCompatActivity {
         builder.setItems(items, new DialogInterface.OnClickListener() {
 
             public void onClick(DialogInterface dialog, int item) {
-                String sgf = gamesStorage.getRecentGameAt(items[item].toString());
-                if (sgf != null) {
-                    gameReady = boardLogic.parseSGFString(sgf);
+                GameInfo game = gamesStorage.getRecentGameAt(items[item].toString());
+                if (game != null) {
+                    gameReady = game.moves.size() != 0;
                     if (gameReady) {
-                        loadGame(sgf);
+                        loadGame(game);
                     }
                 } else
                     Toast.makeText(getApplicationContext(), "Could not load game!", Toast.LENGTH_SHORT).show();
@@ -537,21 +571,7 @@ public class MainActivity extends AppCompatActivity {
         graphRenderer.setXTitle("Games played");
         graphRenderer.setShowGrid(true);
 
-        LayoutInflater inflater = getLayoutInflater();
-        graphView = (View) inflater.inflate(R.layout.graph, null);
 
-        deleteImg = (ImageView) graphView.findViewById(R.id.deleteImg);
-        deleteTxt = (TextView) graphView.findViewById(R.id.deleteTxtLabel);
-
-        View.OnTouchListener listener = new View.OnTouchListener() {
-            @Override
-            public boolean onTouch(View v, MotionEvent event) {
-                attemptDeleteHistory();
-                return false;
-            }
-        };
-        deleteImg.setOnTouchListener(listener);
-        deleteTxt.setOnTouchListener(listener);
     }
 
     private void attemptDeleteHistory() {
@@ -576,20 +596,53 @@ public class MainActivity extends AppCompatActivity {
         alertDialog.show();
     }
 
+    private void showAlertMessage(String msg) {
+        AlertDialog alertDialog = new AlertDialog.Builder(MainActivity.this).create();
+        alertDialog.setMessage(msg);
+        alertDialog.show();
+    }
+
     private void showGameInfo() {
 
+        if (!gameReady) {
+            showAlertMessage("No game loaded!");
+            return;
+        }
+
+        if (boardLogic.currentGame.score.size() == 0) {
+            showAlertMessage("No game history yet!");
+            return;
+        }
+
         XYSeries series = new XYSeries("Guess history of current game");
+        int time = 1;
 
-        int[] data = {23, 45, 78, 56, 23, 43, 34, 12, 89, 45};
-        int time = 0;
-
-        for (int i : data)
+        Log.v(TAG, "scores for " + boardLogic.currentGame.md5);
+        for (int i : gamesStorage.gamesHistory.get(boardLogic.currentGame.md5).score) {
             series.add(time++, i);
+            Log.v(TAG, "score " + String.valueOf(i));
+        }
 
         XYMultipleSeriesDataset mXYMultipleSeriesDataSet = new XYMultipleSeriesDataset();
         mXYMultipleSeriesDataSet.addSeries(series);
 
         GraphicalView chartView = ChartFactory.getLineChartView(context, mXYMultipleSeriesDataSet, graphRenderer);
+
+        LayoutInflater inflater = getLayoutInflater();
+        graphView = (View) inflater.inflate(R.layout.graph, null);
+
+        deleteImg = (ImageView) graphView.findViewById(R.id.deleteImg);
+        deleteTxt = (TextView) graphView.findViewById(R.id.deleteTxtLabel);
+
+        View.OnTouchListener listener = new View.OnTouchListener() {
+            @Override
+            public boolean onTouch(View v, MotionEvent event) {
+                attemptDeleteHistory();
+                return false;
+            }
+        };
+        deleteImg.setOnTouchListener(listener);
+        deleteTxt.setOnTouchListener(listener);
 
         LinearLayout l = (LinearLayout) graphView.findViewById(R.id.chart);
         l.addView(chartView, 0);
@@ -654,9 +707,12 @@ public class MainActivity extends AppCompatActivity {
 
             public void onClick(DialogInterface dialog, int item) {
                 String sgf = gamesStorage.getDefaultGameAt(items[item].toString());
-                gameReady = boardLogic.parseSGFString(sgf);
+                GameInfo game = boardLogic.parseSGFString(sgf);
+                if (gamesStorage.gamesHistory.containsKey(game.md5))
+                    game = gamesStorage.gamesHistory.get(game.md5);
+                gameReady = (game != null && game.moves.size() != 0);
                 if (gameReady) {
-                    loadGame(sgf);
+                    loadGame(game);
                 }
             }
 
@@ -665,7 +721,6 @@ public class MainActivity extends AppCompatActivity {
         AlertDialog alert = builder.create();
         alert.show();
     }
-
 
 
     private void drawBoardGrid(boolean grid) {
