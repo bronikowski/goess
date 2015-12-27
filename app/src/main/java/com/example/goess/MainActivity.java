@@ -4,6 +4,7 @@ import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
@@ -33,8 +34,9 @@ import android.widget.TextView;
 import android.widget.Toast;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
+import java.util.HashMap;
+import com.google.gson.Gson;
 import com.nbsp.materialfilepicker.ui.FilePickerActivity;
-
 import org.achartengine.ChartFactory;
 import org.achartengine.GraphicalView;
 import org.achartengine.chart.PointStyle;
@@ -47,6 +49,7 @@ public class MainActivity extends AppCompatActivity {
 
     private static String TAG = "MainActivity";
     private static String APP_PREFERENCES = "GoessSettings";
+    private static String APP_PREFERENCES_HISTORY = "GoessGameHistory";
     private static int STONE_SIZE = 28;
     private static String FILE_EXT = "sgf";
     private static int REQUEST_CODE = 1;
@@ -118,6 +121,15 @@ public class MainActivity extends AppCompatActivity {
 
         boardLogic = new BoardLogic();
         gamesStorage = new GamesStorage(context);
+        SharedPreferences  prefs = context.getSharedPreferences(APP_PREFERENCES_HISTORY, Context.MODE_PRIVATE);
+        Gson gson = new Gson();
+        HashMap<String, String> map= (HashMap<String, String>) prefs.getAll();
+        for (String s : map.keySet()) {
+            String js = map.get(s);
+            GameInfo g = gson.fromJson(js, GameInfo.class);
+            gamesStorage.gamesHistory.put(g.md5, g);
+        }
+
         gameReady = false;
 
         buildGraph();
@@ -442,6 +454,15 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    private void saveCurrentGameToPrefs() {
+        SharedPreferences.Editor editor = context.getSharedPreferences(APP_PREFERENCES_HISTORY, Context.MODE_PRIVATE).edit();
+        Gson gson = new Gson();
+        String json = gson.toJson(boardLogic.currentGame);
+        editor.putString(boardLogic.currentGame.md5, json);
+        editor.commit();
+
+    }
+
     private void askIfAddToHistory() {
         AlertDialog alertDialog = new AlertDialog.Builder(this).create();
         alertDialog.setTitle("Game finished with score " + String.valueOf(scoreLabel.getText()));
@@ -450,6 +471,7 @@ public class MainActivity extends AppCompatActivity {
                 new DialogInterface.OnClickListener() {
                     public void onClick(DialogInterface dialog, int which) {
                         gamesStorage.addToGamesHistory(boardLogic.currentGame, (int)lastScore);
+                        saveCurrentGameToPrefs();
                         dialog.dismiss();
                         Toast.makeText(getApplicationContext(), "Score saved!",
                                 Toast.LENGTH_SHORT).show();

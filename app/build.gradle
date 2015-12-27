@@ -24,6 +24,7 @@ dependencies {
     testCompile 'junit:junit:4.12'
     compile 'com.android.support:design:23.1.0'
     compile 'com.nbsp:library:1.02'
+    compile 'com.google.code.gson:gson:2.5'
     compile group: 'org.achartengine', name: 'achartengine', version: '1.2.0'
 }
 repositories {

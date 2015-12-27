@@ -3,8 +3,6 @@ package com.example.goess;
 
 import android.content.SharedPreferences;
 
-import java.util.HashMap;
-
 public class UserSettings {
 
     enum Metrics {
@@ -16,8 +14,6 @@ public class UserSettings {
     boolean showIndicator;
     Metrics metrics;
     SharedPreferences preferences;
-    HashMap<String, GameInfo> gamesHistory = new HashMap<String, GameInfo>();
-    HashMap<String, GameInfo> recentGamesByName = new HashMap<String, GameInfo>();
 
     UserSettings(SharedPreferences preferences) {
         this.preferences = preferences;
