@@ -50,6 +50,7 @@ public class MainActivity extends AppCompatActivity {
     private static String TAG = "MainActivity";
     private static String APP_PREFERENCES = "GoessSettings";
     private static String APP_PREFERENCES_HISTORY = "GoessGameHistory";
+    private static String APP_PREFERENCES_RECENT_GAMES = "GoessGameHistory";
     private static int STONE_SIZE = 28;
     private static String FILE_EXT = "sgf";
     private static int REQUEST_CODE = 1;
@@ -121,14 +122,9 @@ public class MainActivity extends AppCompatActivity {
 
         boardLogic = new BoardLogic();
         gamesStorage = new GamesStorage(context);
-        SharedPreferences  prefs = context.getSharedPreferences(APP_PREFERENCES_HISTORY, Context.MODE_PRIVATE);
-        Gson gson = new Gson();
-        HashMap<String, String> map= (HashMap<String, String>) prefs.getAll();
-        for (String s : map.keySet()) {
-            String js = map.get(s);
-            GameInfo g = gson.fromJson(js, GameInfo.class);
-            gamesStorage.gamesHistory.put(g.md5, g);
-        }
+
+        loadGameHistory();
+        loadRecentGames();
 
         gameReady = false;
 
@@ -269,20 +265,17 @@ public class MainActivity extends AppCompatActivity {
 
         View.OnClickListener listener = new View.OnClickListener() {
             public void onClick(View v) {
+                if (!gameReady)
+                    return;
                 switch (v.getId()) {
                     case R.id.nextBtn:
-                        if (gameReady) {
-                            Move move = boardLogic.getNextMove();
-                            if (move != null) {
-                                drawStone(move, v, true);
-                                checkIfCapturing(move);
-                            }
-                         //   else
-                           //     Toast.makeText(getApplicationContext(), "No more moves!",
-                              //          Toast.LENGTH_SHORT).show();
-                        } else
-                            Toast.makeText(getApplicationContext(), "Please choose a game!",
-                                    Toast.LENGTH_LONG).show();
+                        Move move = boardLogic.getNextMove();
+                        if (move != null) {
+                            drawStone(move, v, true);
+                            checkIfCapturing(move);
+                        }
+                          //  Toast.makeText(getApplicationContext(), "Please choose a game!",
+                           //         Toast.LENGTH_LONG).show();
                         break;
                     case R.id.prevBtn:
                         if (currentStoneViewId >= 3) {
@@ -329,6 +322,28 @@ public class MainActivity extends AppCompatActivity {
         forwardBtn.setOnClickListener(listener);
     }
 
+    private void loadGameHistory() {
+        SharedPreferences  prefs = context.getSharedPreferences(APP_PREFERENCES_HISTORY, Context.MODE_PRIVATE);
+        Gson gson = new Gson();
+        HashMap<String, String> map= (HashMap<String, String>) prefs.getAll();
+        for (String s : map.keySet()) {
+            String js = map.get(s);
+            GameInfo g = gson.fromJson(js, GameInfo.class);
+            gamesStorage.gamesHistory.put(g.md5, g);
+        }
+    }
+
+    private void loadRecentGames() {
+        SharedPreferences  prefs = context.getSharedPreferences(APP_PREFERENCES_HISTORY, Context.MODE_PRIVATE);
+        Gson gson = new Gson();
+        HashMap<String, String> map= (HashMap<String, String>) prefs.getAll();
+        for (String s : map.keySet()) {
+            String js = map.get(s);
+            GameInfo g = gson.fromJson(js, GameInfo.class);
+            gameTitle = g.blackPlayerName + " vs " + g.whitePlayerName;
+            gamesStorage.addRecentGame(gameTitle, g);
+        }
+    }
 
     private void checkIfCapturing(Move move) {
         if (boardLogic.isCapturing(move)) {
@@ -454,7 +469,7 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    private void saveCurrentGameToPrefs() {
+    private void saveCurrentGameToHistoryPrefs() {
         SharedPreferences.Editor editor = context.getSharedPreferences(APP_PREFERENCES_HISTORY, Context.MODE_PRIVATE).edit();
         Gson gson = new Gson();
         String json = gson.toJson(boardLogic.currentGame);
@@ -462,6 +477,16 @@ public class MainActivity extends AppCompatActivity {
         editor.commit();
 
     }
+
+    private void saveCurrentGameToRecentPrefs() {
+        SharedPreferences.Editor editor = context.getSharedPreferences(APP_PREFERENCES_RECENT_GAMES, Context.MODE_PRIVATE).edit();
+        Gson gson = new Gson();
+        String json = gson.toJson(boardLogic.currentGame);
+        editor.putString(boardLogic.currentGame.md5, json);
+        editor.commit();
+
+    }
+
 
     private void askIfAddToHistory() {
         AlertDialog alertDialog = new AlertDialog.Builder(this).create();
@@ -471,7 +496,7 @@ public class MainActivity extends AppCompatActivity {
                 new DialogInterface.OnClickListener() {
                     public void onClick(DialogInterface dialog, int which) {
                         gamesStorage.addToGamesHistory(boardLogic.currentGame, (int)lastScore);
-                        saveCurrentGameToPrefs();
+                        saveCurrentGameToHistoryPrefs();
                         dialog.dismiss();
                         Toast.makeText(getApplicationContext(), "Score saved!",
                                 Toast.LENGTH_SHORT).show();
@@ -536,6 +561,7 @@ public class MainActivity extends AppCompatActivity {
         updateScoreLabel(0);
         Log.v(TAG, "load  game " + game.md5);
         gamesStorage.addRecentGame(gameTitle, game);
+        saveCurrentGameToRecentPrefs();
         tries = userMoves = 0;
         currentScore = 0;
 

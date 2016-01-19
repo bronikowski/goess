@@ -91,7 +91,7 @@ public class GamesStorage {
             game.score.add(score);
             gamesHistory.put(game.md5, game);
         }
-        
+
         for (Map.Entry<String, GameInfo> entry : gamesHistory.entrySet()) {
             Log.v(TAG, "game in history: " + entry.getKey());
             for (Integer s : entry.getValue().score)
