@@ -84,13 +84,17 @@ public class GamesStorage {
         return recentGamesByName.get(name);
     }
 
-    public void addToGamesHistory(GameInfo game, int score) {
+    public void removeFromGamesHistory(GameInfo game) {
         if (gamesHistory.containsKey(game.md5)) {
-            gamesHistory.get(game.md5).score.add(score);
-        } else {
-            game.score.add(score);
+            gamesHistory.remove(game.md5);
+        }
+    }
+
+    public void addToGamesHistory(GameInfo game, int score) {
+        if (!gamesHistory.containsKey(game.md5)) {
             gamesHistory.put(game.md5, game);
         }
+        gamesHistory.get(game.md5).score.add(score);
 
         for (Map.Entry<String, GameInfo> entry : gamesHistory.entrySet()) {
             Log.v(TAG, "game in history: " + entry.getKey());
@@ -114,14 +118,7 @@ public class GamesStorage {
             recentGamesQueue.addFirst(name);
         }
         recentGamesByName.put(name, game);
-        Log.v(TAG, "add recent game " + name + " " + game.md5);
+        Log.v(TAG, "add recent game " + name + " " + game.md5 + " with score " + String.valueOf(game.score.size()));
     }
 
-    public void updateGameHistory(String sgf) {
-
-    }
-
-    public void updateGameHistory(int md5, int score) {
-
-    }
 }

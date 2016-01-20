@@ -35,6 +35,8 @@ import android.widget.Toast;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Map;
+
 import com.google.gson.Gson;
 import com.nbsp.materialfilepicker.ui.FilePickerActivity;
 import org.achartengine.ChartFactory;
@@ -50,7 +52,7 @@ public class MainActivity extends AppCompatActivity {
     private static String TAG = "MainActivity";
     private static String APP_PREFERENCES = "GoessSettings";
     private static String APP_PREFERENCES_HISTORY = "GoessGameHistory";
-    private static String APP_PREFERENCES_RECENT_GAMES = "GoessGameHistory";
+    private static String APP_PREFERENCES_RECENT_GAMES = "GoessRecentGame";
     private static int STONE_SIZE = 28;
     private static String FILE_EXT = "sgf";
     private static int REQUEST_CODE = 1;
@@ -331,16 +333,27 @@ public class MainActivity extends AppCompatActivity {
             GameInfo g = gson.fromJson(js, GameInfo.class);
             gamesStorage.gamesHistory.put(g.md5, g);
         }
+
+        for (Map.Entry<String, GameInfo> entry : gamesStorage.gamesHistory.entrySet()) {
+            for (Integer s : entry.getValue().score)
+                Log.v(TAG, "score : " + String.valueOf(s));
+        }
     }
 
     private void loadRecentGames() {
-        SharedPreferences  prefs = context.getSharedPreferences(APP_PREFERENCES_HISTORY, Context.MODE_PRIVATE);
+        SharedPreferences  prefs = context.getSharedPreferences(APP_PREFERENCES_RECENT_GAMES, Context.MODE_PRIVATE);
         Gson gson = new Gson();
         HashMap<String, String> map= (HashMap<String, String>) prefs.getAll();
         for (String s : map.keySet()) {
             String js = map.get(s);
             GameInfo g = gson.fromJson(js, GameInfo.class);
+
             gameTitle = g.blackPlayerName + " vs " + g.whitePlayerName;
+            if (gamesStorage.gamesHistory.containsKey(g.md5)) {
+                g.score.clear();
+                g.score.addAll(gamesStorage.gamesHistory.get(g.md5).score);
+            }
+            Log.v(TAG, "read recent  games, game score:  " + String.valueOf(g.score.size()));
             gamesStorage.addRecentGame(gameTitle, g);
         }
     }
@@ -391,8 +404,8 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void drawStone(Move move, View view, boolean mark) {
-        Log.i(TAG, "Putting stone at " + String.valueOf(move.x) + ":" + String.valueOf(move.y)
-                + " nr " + String.valueOf(boardLogic.currentIndex));
+    //    Log.i(TAG, "Putting stone at " + String.valueOf(move.x) + ":" + String.valueOf(move.y)
+      //          + " nr " + String.valueOf(boardLogic.currentIndex));
 
         ImageView img = new ImageView(context);
         img.setImageDrawable(view.getResources().getDrawable(
@@ -421,7 +434,7 @@ public class MainActivity extends AppCompatActivity {
 
         Move lastDrawnMove = boardLogic.getPreviousMove();
         if (lastDrawnMove != null) {
-            Log.i(TAG, "last drawn stone at " + String.valueOf(lastDrawnMove.x) + ":" + String.valueOf(lastDrawnMove.y));
+         //   Log.i(TAG, "last drawn stone at " + String.valueOf(lastDrawnMove.x) + ":" + String.valueOf(lastDrawnMove.y));
 
             ImageView iv = (ImageView) stonesImg[lastDrawnMove.x][lastDrawnMove.y];
             iv.setImageResource(boardLogic.currentPlayer == Move.Player.BLACK ?
@@ -478,13 +491,12 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
-    private void saveCurrentGameToRecentPrefs() {
+    private void saveCurrentGameToRecentPrefs() { //remove from prefs
         SharedPreferences.Editor editor = context.getSharedPreferences(APP_PREFERENCES_RECENT_GAMES, Context.MODE_PRIVATE).edit();
         Gson gson = new Gson();
         String json = gson.toJson(boardLogic.currentGame);
         editor.putString(boardLogic.currentGame.md5, json);
         editor.commit();
-
     }
 
 
@@ -495,7 +507,8 @@ public class MainActivity extends AppCompatActivity {
         alertDialog.setButton(AlertDialog.BUTTON_POSITIVE, "OK",
                 new DialogInterface.OnClickListener() {
                     public void onClick(DialogInterface dialog, int which) {
-                        gamesStorage.addToGamesHistory(boardLogic.currentGame, (int)lastScore);
+                        gamesStorage.addToGamesHistory(boardLogic.currentGame, (int) lastScore);
+                        boardLogic.currentGame.score.add((int) lastScore);
                         saveCurrentGameToHistoryPrefs();
                         dialog.dismiss();
                         Toast.makeText(getApplicationContext(), "Score saved!",
@@ -555,11 +568,13 @@ public class MainActivity extends AppCompatActivity {
 
     private void loadGame(GameInfo game) {
         clearBoard();
+
         boardLogic.currentGame = game;
+
         gameTitle = boardLogic.getBlackPlayer() + " vs " + boardLogic.getWhitePlayer();
         updateGameInfo(gameTitle + "  (" + boardLogic.currentIndex + "/" + boardLogic.currentGame.moves.size() + ")");
         updateScoreLabel(0);
-        Log.v(TAG, "load  game " + game.md5);
+        Log.v(TAG, "load  game " + game.md5 + "   score " + String.valueOf(game.score.size()));
         gamesStorage.addRecentGame(gameTitle, game);
         saveCurrentGameToRecentPrefs();
         tries = userMoves = 0;
@@ -629,6 +644,8 @@ public class MainActivity extends AppCompatActivity {
         alertDialog.setButton(AlertDialog.BUTTON_POSITIVE, "OK",
                 new DialogInterface.OnClickListener() {
                     public void onClick(DialogInterface dialog, int which) {
+                        boardLogic.currentGame.score.clear();
+                        gamesStorage.removeFromGamesHistory(boardLogic.currentGame);
                         dialog.dismiss();
                         Toast.makeText(getApplicationContext(), "Game history deleted!",
                                 Toast.LENGTH_SHORT).show();
