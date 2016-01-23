@@ -53,7 +53,6 @@ public class MainActivity extends AppCompatActivity {
     private static String APP_PREFERENCES = "GoessSettings";
     private static String APP_PREFERENCES_HISTORY = "GoessGameHistory";
     private static String APP_PREFERENCES_RECENT_GAMES = "GoessRecentGames";
-    private static int STONE_SIZE = 28;
     private static String FILE_EXT = "sgf";
     private static int REQUEST_CODE = 1;
     private static int BOARD_SIZE = 19;
@@ -145,20 +144,18 @@ public class MainActivity extends AppCompatActivity {
         vto.addOnPreDrawListener(new ViewTreeObserver.OnPreDrawListener() {
             public boolean onPreDraw() {
                 boardImage.getViewTreeObserver().removeOnPreDrawListener(this);
-                boardWidth = boardImage.getMeasuredHeight();
-                boardHeight = boardImage.getMeasuredWidth();
+                boardWidth = boardImage.getMeasuredWidth();
+                boardHeight = boardImage.getMeasuredHeight();
                 offsetW = (boardWidth ) / 20;
                 offsetH = (boardHeight ) / 20;
 
-                stoneWidth = stoneImage.getMeasuredHeight();
-                stoneHeight = stoneImage.getMeasuredWidth();
-
-                Log.i(TAG, "boardWidth: " + String.valueOf(stoneWidth + ", boardHeight: " +
-                String.valueOf(stoneHeight)));
+           //     Log.i(TAG, "stoneWidth: " + String.valueOf(stoneParams.width + ", stoneHeight: " +
+            //            String.valueOf(stoneParams.height)));
 
                 drawBoardGrid(userSettings.showBoardCoords);
 
                 ViewGroup.LayoutParams params = frameLayout.getLayoutParams();
+
                 params.height = boardHeight;
                 params.width = boardWidth;
 
@@ -411,16 +408,19 @@ public class MainActivity extends AppCompatActivity {
         img.setImageDrawable(view.getResources().getDrawable(
                 move.player == Move.Player.BLACK ? R.drawable.black : R.drawable.white));
 
-        if (move.player == Move.Player.WHITE)
-            STONE_SIZE = 30;
-        else
-            STONE_SIZE = 28;
 
-        FrameLayout.LayoutParams stoneParam = new FrameLayout.LayoutParams(STONE_SIZE, STONE_SIZE);
-        stoneParam.leftMargin = ((int) ((move.x + 1) * offsetW)) - (STONE_SIZE / 2);
-        stoneParam.topMargin = ((int) ((move.y + 1) * offsetH)) - (STONE_SIZE / 2);
+        int stoneSize = (int)(boardWidth) / 18;
+        if (move.player == Move.Player.WHITE)
+            stoneSize += stoneSize / 12;
+
+        FrameLayout.LayoutParams stoneParam = new FrameLayout.LayoutParams(stoneSize, stoneSize);
+        stoneParam.leftMargin = ((int) ((move.x + 1) * offsetW)) - ((int)stoneSize / 2);
+        stoneParam.topMargin = ((int) ((move.y + 1) * offsetH)) - ((int)stoneSize / 2);
         frameLayout.addView(img, stoneParam);
         currentStoneViewId = frameLayout.indexOfChild(img);
+
+   //     Log.i(TAG, "stoneWidth: " + String.valueOf(stoneParam.width + ", stoneHeight: " +
+    //                     String.valueOf(stoneParam.height)));
 
         boardLogic.addMoveToBoardState(move);
         stonesImg[move.x][move.y] = img;
@@ -806,9 +806,9 @@ public class MainActivity extends AppCompatActivity {
         tempCanvas.drawBitmap(rawBoardBitmap, 0, 0, null);
 
         float offset = boardWidth / 20;
-        for (float i = offset; i <= (offset * 20); i += offset) {
-            tempCanvas.drawLine(i, 25, i, (offset * 19) + 0, p);
-            tempCanvas.drawLine(25, i, (offset * 19) + 0, i, p);
+        for (float i = offset; i <= (offset * 19); i += offset) {
+            tempCanvas.drawLine(i, offset, i, (offset * 19) + 0, p);
+            tempCanvas.drawLine(offset, i, (offset * 19) + 0, i, p);
         }
 
         if (grid) {
@@ -816,13 +816,13 @@ public class MainActivity extends AppCompatActivity {
             int c = 0;
             String alphabet = "ABCDEFGHJKLMNOPQRST";
             int padding = 7;
-            for (float i = 20; i <= (offset * 19); i += offset) {
-                tempCanvas.drawText(String.valueOf(alphabet.charAt(c)), i, 10, p);
-                tempCanvas.drawText(String.valueOf(alphabet.charAt(c++)), i, boardHeight - 2, p);
-                tempCanvas.drawText(String.valueOf(c), 1, i + 10, p);
+            for (float i = offset; i <= (offset * 19); i += offset) {
+                tempCanvas.drawText(String.valueOf(alphabet.charAt(c)), i - 3, 10, p);
+                tempCanvas.drawText(String.valueOf(alphabet.charAt(c++)), i - 3, boardHeight - 2, p);
+                tempCanvas.drawText(String.valueOf(c), 1, i + 5, p);
                 if (c > 9)
                     padding = 12;
-                tempCanvas.drawText(String.valueOf(c), boardWidth - padding, i + 10, p);
+                tempCanvas.drawText(String.valueOf(c), boardWidth - padding, i + 5, p);
             }
 
         }

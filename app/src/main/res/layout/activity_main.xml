@@ -21,12 +21,13 @@
         android:layout_width="fill_parent"
         android:layout_height="fill_parent"
         android:orientation="vertical"
+        android:layout_gravity="center"
         >
 
         <ImageView
             android:id="@+id/backgroundImg"
             android:layout_width="wrap_content"
-            android:layout_height="320dp"
+            android:layout_height="wrap_content"
             android:adjustViewBounds="true"
             android:alpha="0.5"
             android:src="@drawable/dre" />
@@ -34,8 +35,8 @@
 
         <ImageView
             android:id="@+id/blackImg"
-            android:layout_width="28dp"
-            android:layout_height="28dp"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
             android:adjustViewBounds="true"
             android:visibility="invisible"
             android:src="@drawable/black" />
