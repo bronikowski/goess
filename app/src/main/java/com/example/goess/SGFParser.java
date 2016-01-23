@@ -17,8 +17,10 @@ public class SGFParser {
     private static String TAG = "SGFParser";
     private static char BLACK_MOVE = 'B';
     private static char WHITE_MOVE = 'W';
-    private static String BLACK_PLAYER_NAME = "PB";
-    private static String WHITE_PLAYER_NAME = "PW";
+    static String BLACK_PLAYER_NAME = "PB";
+    static String WHITE_PLAYER_NAME = "PW";
+    static String BLACK_PLAYER_RANK = "BR";
+    static String WHITE_PLAYER_RANK = "WR";
 
     public SGFParser() {
 
@@ -44,6 +46,26 @@ public class SGFParser {
         return null;
     }
 
+    public String getPlayerInfo(String content, String player) {
+        int start = content.indexOf(player);
+        String name = "";
+        if (start > 0) {
+            int end = content.substring(start).indexOf("]");
+            if (end > 0) {
+                name = content.substring(start + 3, start + end);
+            }
+        }
+        return name;
+    }
+
+    public String getFullName(String content, String player) {
+        String name = getPlayerInfo(content, player);
+        String rank = getPlayerInfo(content, player == BLACK_PLAYER_NAME ? BLACK_PLAYER_RANK : WHITE_PLAYER_RANK);
+        if (rank.length() > 0) {
+            name += " [" + rank + "]";
+        }
+        return name;
+    }
 
     private GameInfo getGame(String content) {
         String blackPlayerName = "Black";
@@ -53,18 +75,12 @@ public class SGFParser {
         ArrayList<Move> list = new ArrayList<>();
      //   String content = getFileContent(filePath);
         Log.i(TAG, "Content " + content);
-        int start = content.indexOf(BLACK_PLAYER_NAME);
-        int end = content.substring(start).indexOf("]");
-        if (start > 0 && end > 0) {
-            blackPlayerName = content.substring(start + 3, start + end);
-        }
-        start = content.indexOf(WHITE_PLAYER_NAME);
-        end = content.substring(start).indexOf("]");
-        if (start > 0 && end > 0) {
-            whitePlayerName = content.substring(start + 3, start + end);
-        }
 
-        start = content.indexOf(";B[");
+        blackPlayerName = getFullName(content, BLACK_PLAYER_NAME);
+        whitePlayerName = getFullName(content, WHITE_PLAYER_NAME);
+
+
+        int start = content.indexOf(";B[");
         if (start < 0) {
             Log.e(TAG, "Could not find first move!");
             return null;

@@ -40,6 +40,8 @@ public class GamesStorage {
         } catch (IOException e) {
             e.printStackTrace();
         }
+
+
         for (int i = 0; i < paths.length; ++i) {
             if (paths[i].endsWith(".sgf")) {
                 Log.i(TAG, "Reading " + paths[i]);
@@ -50,9 +52,18 @@ public class GamesStorage {
                     e.printStackTrace();
                 }
                 Log.i(TAG, "Content " + ((content != null) ? String.valueOf(content.length()) : "(null)"));
-                defaultGamesByName.put(paths[i], content);
+
+                defaultGamesByName.put(getNameFromContent(content), content);
             }
         }
+    }
+
+    private String getNameFromContent(String content) {
+        SGFParser parser = new SGFParser();
+        String blackPlayerName = parser.getFullName(content, SGFParser.BLACK_PLAYER_NAME);
+        String whitePlayerName = parser.getFullName(content, SGFParser.WHITE_PLAYER_NAME);
+
+        return blackPlayerName + " vs " + whitePlayerName;
     }
 
     private String getFileContent(InputStream inputStream) {

@@ -14,6 +14,10 @@ public class GameInfo {
 
     }
 
+    public String getGameTitle() {
+        return blackPlayerName + " vs " + whitePlayerName;
+    }
+
     public GameInfo(GameInfo game) {
         this.score.clear();
         this.score.addAll(game.score);

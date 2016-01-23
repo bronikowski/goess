@@ -79,7 +79,6 @@ public class MainActivity extends AppCompatActivity {
 
     FrameLayout frameLayout;
     Toolbar myToolbar;
-    String gameTitle;
 
     BoardLogic boardLogic;
     GamesStorage gamesStorage;
@@ -105,7 +104,7 @@ public class MainActivity extends AppCompatActivity {
         getSupportActionBar().setTitle("Choose a game!");
         setSupportActionBar(myToolbar);
         TextView title = getActionBarTextView();
-        title.setTextSize(16);
+        title.setTextSize(14);
 
         stonesImg = new View[BOARD_SIZE][BOARD_SIZE];
 
@@ -245,7 +244,8 @@ public class MainActivity extends AppCompatActivity {
                                     tries = 0;
                                     userMoves++;
                                     checkIfCapturing(move);
-                                    updateGameInfo(gameTitle + "  (" + boardLogic.currentIndex + "/" + boardLogic.currentGame.moves.size() + ")");
+                                    updateGameInfo(boardLogic.currentGame.getGameTitle() +
+                                            "  (" + boardLogic.currentIndex + "/" + boardLogic.currentGame.moves.size() + ")");
                                 } else
                                     currentScore += 0;
 
@@ -314,7 +314,8 @@ public class MainActivity extends AppCompatActivity {
                                     Toast.LENGTH_LONG).show();
                         break;
                 }
-                updateGameInfo(gameTitle + "  (" + (String.valueOf(boardLogic.currentIndex)) + "/" + boardLogic.currentGame.moves.size() + ")");
+                updateGameInfo(boardLogic.currentGame.getGameTitle()
+                        + "  (" + (String.valueOf(boardLogic.currentIndex)) + "/" + boardLogic.currentGame.moves.size() + ")");
             }
         };
 
@@ -348,13 +349,12 @@ public class MainActivity extends AppCompatActivity {
             String js = map.get(s);
             GameInfo g = gson.fromJson(js, GameInfo.class);
 
-            gameTitle = g.blackPlayerName + " vs " + g.whitePlayerName;
             if (gamesStorage.gamesHistory.containsKey(g.md5)) {
                 g.score.clear();
                 g.score.addAll(gamesStorage.gamesHistory.get(g.md5).score);
             }
             Log.v(TAG, "read recent  games, game score:  " + String.valueOf(g.score.size()));
-            gamesStorage.addRecentGame(gameTitle, g);
+            gamesStorage.addRecentGame(g.getGameTitle(), g);
         }
     }
 
@@ -460,6 +460,9 @@ public class MainActivity extends AppCompatActivity {
             if (filePath.substring(filePath.length() - 3).equals(FILE_EXT)) {
                 Log.i(TAG, "Opening file: " + filePath);
                 GameInfo game = boardLogic.parseSGFFile(filePath);
+                if (gamesStorage.gamesHistory.containsKey(game.md5)) {
+                    game = gamesStorage.gamesHistory.get(game.md5);
+                }
                 gameReady = (game != null && game.moves.size() != 0);
                 if (gameReady) {
                     loadGame(game);
@@ -576,11 +579,10 @@ public class MainActivity extends AppCompatActivity {
 
         boardLogic.currentGame = game;
 
-        gameTitle = boardLogic.getBlackPlayer() + " vs " + boardLogic.getWhitePlayer();
-        updateGameInfo(gameTitle + "  (" + boardLogic.currentIndex + "/" + boardLogic.currentGame.moves.size() + ")");
+        updateGameInfo(game.getGameTitle() + "  (" + boardLogic.currentIndex + "/" + boardLogic.currentGame.moves.size() + ")");
         updateScoreLabel(0);
         Log.v(TAG, "load  game " + game.md5 + "   score size " + String.valueOf(boardLogic.currentGame.score.size()));
-        gamesStorage.addRecentGame(gameTitle, game);
+        gamesStorage.addRecentGame(game.getGameTitle(), game);
         saveCurrentGameToRecentPrefs();
         tries = userMoves = 0;
         currentScore = 0;
@@ -779,8 +781,9 @@ public class MainActivity extends AppCompatActivity {
             public void onClick(DialogInterface dialog, int item) {
                 String sgf = gamesStorage.getDefaultGameAt(items[item].toString());
                 GameInfo game = boardLogic.parseSGFString(sgf);
-                if (gamesStorage.gamesHistory.containsKey(game.md5))
+                if (gamesStorage.gamesHistory.containsKey(game.md5)) {
                     game = gamesStorage.gamesHistory.get(game.md5);
+                }
                 gameReady = (game != null && game.moves.size() != 0);
                 if (gameReady) {
                     loadGame(game);
