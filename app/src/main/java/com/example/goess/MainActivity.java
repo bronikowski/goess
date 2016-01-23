@@ -52,7 +52,7 @@ public class MainActivity extends AppCompatActivity {
     private static String TAG = "MainActivity";
     private static String APP_PREFERENCES = "GoessSettings";
     private static String APP_PREFERENCES_HISTORY = "GoessGameHistory";
-    private static String APP_PREFERENCES_RECENT_GAMES = "GoessRecentGame";
+    private static String APP_PREFERENCES_RECENT_GAMES = "GoessRecentGames";
     private static int STONE_SIZE = 28;
     private static String FILE_EXT = "sgf";
     private static int REQUEST_CODE = 1;
@@ -508,7 +508,6 @@ public class MainActivity extends AppCompatActivity {
                 new DialogInterface.OnClickListener() {
                     public void onClick(DialogInterface dialog, int which) {
                         gamesStorage.addToGamesHistory(boardLogic.currentGame, (int) lastScore);
-                        boardLogic.currentGame.score.add((int) lastScore);
                         saveCurrentGameToHistoryPrefs();
                         dialog.dismiss();
                         Toast.makeText(getApplicationContext(), "Score saved!",
@@ -574,7 +573,7 @@ public class MainActivity extends AppCompatActivity {
         gameTitle = boardLogic.getBlackPlayer() + " vs " + boardLogic.getWhitePlayer();
         updateGameInfo(gameTitle + "  (" + boardLogic.currentIndex + "/" + boardLogic.currentGame.moves.size() + ")");
         updateScoreLabel(0);
-        Log.v(TAG, "load  game " + game.md5 + "   score " + String.valueOf(game.score.size()));
+        Log.v(TAG, "load  game " + game.md5 + "   score size " + String.valueOf(boardLogic.currentGame.score.size()));
         gamesStorage.addRecentGame(gameTitle, game);
         saveCurrentGameToRecentPrefs();
         tries = userMoves = 0;

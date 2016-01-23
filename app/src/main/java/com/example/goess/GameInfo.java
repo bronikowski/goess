@@ -1,6 +1,5 @@
 package com.example.goess;
 
-
 import java.util.ArrayList;
 
 public class GameInfo {
@@ -16,7 +15,8 @@ public class GameInfo {
     }
 
     public GameInfo(GameInfo game) {
-        this.score = game.score;
+        this.score.clear();
+        this.score.addAll(game.score);
         this.moves = game.moves;
         this.md5 = game.md5;
         this.blackPlayerName = game.blackPlayerName;
