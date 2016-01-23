@@ -800,6 +800,8 @@ public class MainActivity extends AppCompatActivity {
     private void drawBoardGrid(boolean grid) {
         Paint p = new Paint();
         p.setColor(Color.BLACK);
+        if (boardWidth > 500)
+            p.setStrokeWidth(2);
 
         Bitmap tempBitmap = Bitmap.createBitmap(boardWidth, boardHeight, Bitmap.Config.RGB_565);
         Canvas tempCanvas = new Canvas(tempBitmap);
@@ -812,16 +814,17 @@ public class MainActivity extends AppCompatActivity {
         }
 
         if (grid) {
-            p.setTextSize(9);
+            p.setTextSize((offsetW / 2) - 3);
+            p.setFakeBoldText(true);
             int c = 0;
             String alphabet = "ABCDEFGHJKLMNOPQRST";
-            int padding = 7;
+            int padding = (int)(offsetW / 4) + 4;
             for (float i = offset; i <= (offset * 19); i += offset) {
-                tempCanvas.drawText(String.valueOf(alphabet.charAt(c)), i - 3, 10, p);
-                tempCanvas.drawText(String.valueOf(alphabet.charAt(c++)), i - 3, boardHeight - 2, p);
+                tempCanvas.drawText(String.valueOf(alphabet.charAt(c)), i - 3, (offsetW / 3) + 2, p);
+                tempCanvas.drawText(String.valueOf(alphabet.charAt(c++)), i - 3, boardHeight - 4, p);
                 tempCanvas.drawText(String.valueOf(c), 1, i + 5, p);
                 if (c > 9)
-                    padding = 12;
+                    padding = (int)(offsetW / 2);
                 tempCanvas.drawText(String.valueOf(c), boardWidth - padding, i + 5, p);
             }
 
