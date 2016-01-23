@@ -491,6 +491,12 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
+    private void deleteCurrentGameHistoryFromPrefs() {
+        SharedPreferences.Editor editor = context.getSharedPreferences(APP_PREFERENCES_HISTORY, Context.MODE_PRIVATE).edit();
+        editor.remove(boardLogic.currentGame.md5);
+        editor.commit();
+    }
+
     private void saveCurrentGameToRecentPrefs() { //remove from prefs
         SharedPreferences.Editor editor = context.getSharedPreferences(APP_PREFERENCES_RECENT_GAMES, Context.MODE_PRIVATE).edit();
         Gson gson = new Gson();
@@ -645,6 +651,7 @@ public class MainActivity extends AppCompatActivity {
                     public void onClick(DialogInterface dialog, int which) {
                         boardLogic.currentGame.score.clear();
                         gamesStorage.removeFromGamesHistory(boardLogic.currentGame);
+                        deleteCurrentGameHistoryFromPrefs();
                         dialog.dismiss();
                         Toast.makeText(getApplicationContext(), "Game history deleted!",
                                 Toast.LENGTH_SHORT).show();
