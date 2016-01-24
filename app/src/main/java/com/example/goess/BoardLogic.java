@@ -107,7 +107,7 @@ public class BoardLogic {
     public void addMoveToBoardState(Move move) {
         board[move.x][move.y] = move.player;
         currentPlayer = (move.player == Move.Player.BLACK) ? Move.Player.WHITE : Move.Player.BLACK;
-     //   Log.i(TAG, "added move, id    " + String.valueOf(currentGame.moves.size()));
+        Log.i(TAG, "added move, id    " + String.valueOf(currentGame.moves.size()));
     }
 
     private ArrayList<Move> getNeighbours(Move move, Move.Player color) {
@@ -227,10 +227,12 @@ public class BoardLogic {
     }
 
     public boolean isValid(Move move) {
-
-        if (board[move.x][move.y] != Move.Player.EMPTY)
+Log.v("fsdfads", "> check  valid," + String.valueOf(move.x)
+                                        + "  "  + String.valueOf(move.y) );
+        if (board[move.x][move.y] != Move.Player.EMPTY) {
+            Log.i(TAG, "not valid move ");
             return false;
-
+        }
         boolean res = false;
 
         if (currentIndex < currentGame.moves.size()) {
@@ -243,11 +245,12 @@ public class BoardLogic {
             else
                 score = 0;
             res = (score == 10);
+            Log.i(TAG, "check  valid move " + res + " ind " + String.valueOf(score));
         }
 
         if (res)
             currentIndex++;
-
+        Log.i(TAG, "check  valid move " + res + " ind " + String.valueOf(currentIndex) + " size " + String.valueOf(currentGame.moves.size()));
         return res;
     }
 }

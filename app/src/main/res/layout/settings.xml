@@ -54,11 +54,11 @@
                 android:textColor="@android:color/background_dark"  />
 
             <RadioButton
-                android:id="@+id/linefat"
+                android:id="@+id/linethick"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:onClick="lineFatHandler"
-                android:text="Fat"
+                android:onClick="lineThickHandler"
+                android:text="Thick"
                 android:textSize="12dp"
                 android:layout_gravity="center"
                 android:gravity="center"
@@ -99,7 +99,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:onClick="normalMetricHandler"
-            android:text="Normal"
+            android:text="Standard"
             android:textSize="12dp"
             android:layout_gravity="center"
             android:checked="true"

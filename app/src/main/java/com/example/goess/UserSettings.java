@@ -12,12 +12,12 @@ public class UserSettings {
     enum LineSize {
         TINY ,
         NORMAL,
-        FAT
+        THICK
     }
-
 
     boolean showBoardCoords;
     boolean showIndicator;
+    boolean doubleclick;
     Metrics metrics;
     LineSize lineSize;
     SharedPreferences preferences;
@@ -27,6 +27,7 @@ public class UserSettings {
         if (preferences != null) {
             showBoardCoords = preferences.getBoolean("showBoardCoords", false);
             showIndicator = preferences.getBoolean("showIndicator", true);
+            doubleclick = preferences.getBoolean("doubleclick", false);
             String metric = preferences.getString("metric", Metrics.STANDARD.toString());
             metrics = Metrics.valueOf(metric);
             String line = preferences.getString("lineSize", LineSize.NORMAL.toString());
@@ -43,6 +44,11 @@ public class UserSettings {
     public void setIndicator(boolean show) {
         showIndicator = show;
         preferences.edit().putBoolean("showIndicator", show).apply();
+    }
+
+    public void setDoubleClick(boolean click) {
+        doubleclick = click;
+        preferences.edit().putBoolean("doubleclick", click).apply();
     }
 
     public void setMetrics(Metrics metric) {
