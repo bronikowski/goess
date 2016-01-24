@@ -9,10 +9,17 @@ public class UserSettings {
         EUCLID,
         STANDARD
     }
+    enum LineSize {
+        TINY ,
+        NORMAL,
+        FAT
+    }
+
 
     boolean showBoardCoords;
     boolean showIndicator;
     Metrics metrics;
+    LineSize lineSize;
     SharedPreferences preferences;
 
     UserSettings(SharedPreferences preferences) {
@@ -20,7 +27,10 @@ public class UserSettings {
         if (preferences != null) {
             showBoardCoords = preferences.getBoolean("showBoardCoords", false);
             showIndicator = preferences.getBoolean("showIndicator", true);
-            metrics = preferences.getBoolean("euclidean", false) ? Metrics.EUCLID : Metrics.STANDARD;
+            String metric = preferences.getString("metric", Metrics.STANDARD.toString());
+            metrics = Metrics.valueOf(metric);
+            String line = preferences.getString("lineSize", LineSize.NORMAL.toString());
+            lineSize = LineSize.valueOf(line);
         } else
             setIndicator(true);
     }
@@ -35,9 +45,14 @@ public class UserSettings {
         preferences.edit().putBoolean("showIndicator", show).apply();
     }
 
-    public void setMetrics(boolean euclid) {
-        this.metrics = euclid ? Metrics.EUCLID : Metrics.STANDARD;
-        preferences.edit().putBoolean("euclidean", euclid).apply();
+    public void setMetrics(Metrics metric) {
+        this.metrics = metric;
+        preferences.edit().putString("metric", metric.toString()).apply();
+    }
+
+    public void setLineSize(LineSize size) {
+        this.lineSize = size;
+        preferences.edit().putString("lineSize", size.toString()).apply();
     }
 
 }

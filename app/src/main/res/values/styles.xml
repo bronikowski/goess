@@ -17,5 +17,5 @@
     <style name="Toolbar.TitleText" parent="TextAppearance.Widget.AppCompat.Toolbar.Title">
         <item name="android:textSize">4sp</item>
     </style>
-
+    
 </resources>

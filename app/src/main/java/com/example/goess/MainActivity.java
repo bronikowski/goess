@@ -29,6 +29,7 @@ import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ListView;
+import android.widget.RadioGroup;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -36,7 +37,6 @@ import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
-
 import com.google.gson.Gson;
 import com.nbsp.materialfilepicker.ui.FilePickerActivity;
 import org.achartengine.ChartFactory;
@@ -167,6 +167,7 @@ public class MainActivity extends AppCompatActivity {
 
         final View horiz = (View) findViewById(R.id.horiz);
         final View vertic = (View) findViewById(R.id.vertic);
+
         horiz.setVisibility(View.INVISIBLE);
         vertic.setVisibility(View.INVISIBLE);
 
@@ -174,8 +175,27 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public boolean onTouch(View v, MotionEvent event) {
 
-                FrameLayout.LayoutParams horizParam = new FrameLayout.LayoutParams(2, boardWidth);
-                FrameLayout.LayoutParams verticParam = new FrameLayout.LayoutParams(boardHeight, 2);
+                int lineSize = 2;
+                if (userSettings.lineSize == UserSettings.LineSize.FAT)
+                    if (boardWidth > 500)
+                        lineSize = 4;
+                    else
+                        lineSize = 3;
+                else if (userSettings.lineSize == UserSettings.LineSize.NORMAL) {
+                    if (boardWidth > 500)
+                        lineSize = 3;
+                    else
+                        lineSize = 2;
+
+                } else if (userSettings.lineSize == UserSettings.LineSize.TINY) {
+                    if (boardWidth > 500)
+                        lineSize = 2;
+                    else
+                        lineSize = 1;
+                }
+
+                FrameLayout.LayoutParams horizParam = new FrameLayout.LayoutParams(lineSize, boardWidth);
+                FrameLayout.LayoutParams verticParam = new FrameLayout.LayoutParams(boardHeight, lineSize);
 
                 ViewGroup owner = (ViewGroup) stoneImage.getParent();
 
@@ -726,20 +746,49 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void showSettings() {
-        final String[] items = {"Show board coordinators", "Show guess indicator", "Euclidean metrics"};
+        final String[] items = {"Show board coordinators", "Show guess indicator"};
+        final String[] radioItemLineSize = {"Board line size"};
+        final String[] radioItemMetrics = {"Metrics"};
 
         AlertDialog.Builder dialog = new AlertDialog.Builder(this);
         dialog.setTitle("Customize Goess");
-        LayoutInflater inflater = getLayoutInflater();
-        View convertView = (View) inflater.inflate(R.layout.settings, null);
-        dialog.setView(convertView);
-        ListView lv = (ListView) convertView.findViewById(R.id.settingsListView);
+
+           LayoutInflater inflater = getLayoutInflater();
+            View settingsView = (View) inflater.inflate(R.layout.settings, null);
+              dialog.setView(settingsView);
+
+        ListView lv = (ListView) settingsView.findViewById(R.id.settingsListView);
         lv.setChoiceMode(ListView.CHOICE_MODE_MULTIPLE);
         ArrayAdapter<String> adapter = new ArrayAdapter<String>(this, android.R.layout.simple_list_item_multiple_choice, items);
         lv.setAdapter(adapter);
         lv.setItemChecked(0, userSettings.showBoardCoords);
         lv.setItemChecked(1, userSettings.showIndicator);
-        lv.setItemChecked(2, userSettings.metrics == UserSettings.Metrics.EUCLID);
+
+        ListView lv2 = (ListView) settingsView.findViewById(R.id.settingsListView2);
+        ArrayAdapter<String> adapter2 = new ArrayAdapter<String>(this, android.R.layout.simple_list_item_1, radioItemLineSize);
+        lv2.setAdapter(adapter2);
+        lv2.addHeaderView(new View(lv2.getContext()));
+
+        ListView lv3 = (ListView) settingsView.findViewById(R.id.settingsListView3);
+        ArrayAdapter<String> adapter3 = new ArrayAdapter<String>(this, android.R.layout.simple_list_item_1, radioItemMetrics);
+        lv3.setAdapter(adapter3);
+        lv3.addHeaderView(new View(lv3.getContext()));
+
+        RadioGroup lineRadioGroup = (RadioGroup)settingsView.findViewById(R.id.linesize);
+        if (userSettings.lineSize == UserSettings.LineSize.FAT)
+            lineRadioGroup.check(R.id.linefat);
+        else if (userSettings.lineSize == UserSettings.LineSize.NORMAL)
+            lineRadioGroup.check(R.id.linenormal);
+        else
+            lineRadioGroup.check(R.id.linetiny);
+
+        RadioGroup metricRadioGroup = (RadioGroup)settingsView.findViewById(R.id.radiometrics);
+        if (userSettings.metrics == UserSettings.Metrics.STANDARD)
+            metricRadioGroup.check(R.id.metricnormal);
+        else
+            metricRadioGroup.check(R.id.metriceuclid);
+
+
         dialog.show();
 
         lv.setOnItemClickListener(new AdapterView.OnItemClickListener() {
@@ -755,17 +804,36 @@ public class MainActivity extends AppCompatActivity {
                         showIndicator(item.isChecked());
                         userSettings.setIndicator(item.isChecked());
                         break;
-                    case 2:
-                        userSettings.setMetrics(item.isChecked());
-                        break;
                     default:
                         break;
                 }
             }
         });
 
+        }
+
+    public void lineTinyHandler(View v) {
+        userSettings.setLineSize(UserSettings.LineSize.TINY);
+        drawBoardGrid(userSettings.showBoardCoords);
     }
 
+    public void lineNormalHandler(View v) {
+        userSettings.setLineSize(UserSettings.LineSize.NORMAL);
+        drawBoardGrid(userSettings.showBoardCoords);
+    }
+
+    public void lineFatHandler(View v) {
+        userSettings.setLineSize(UserSettings.LineSize.FAT);
+        drawBoardGrid(userSettings.showBoardCoords);
+    }
+
+    public void normalMetricHandler(View v) {
+        userSettings.setMetrics(UserSettings.Metrics.STANDARD);
+    }
+
+    public void euclidMetricHandler(View v) {
+        userSettings.setMetrics(UserSettings.Metrics.EUCLID);
+    }
 
     private void showDefaultGamesList() {
         final CharSequence[] items = new CharSequence[gamesStorage.DEFAULT_GAMES_LIST_SIZE];
@@ -800,8 +868,23 @@ public class MainActivity extends AppCompatActivity {
     private void drawBoardGrid(boolean grid) {
         Paint p = new Paint();
         p.setColor(Color.BLACK);
-        if (boardWidth > 500)
-            p.setStrokeWidth(2);
+        if (userSettings.lineSize == UserSettings.LineSize.FAT)
+            if (boardWidth > 500)
+                p.setStrokeWidth(3);
+            else
+                p.setStrokeWidth(2);
+        else if (userSettings.lineSize == UserSettings.LineSize.NORMAL) {
+            if (boardWidth > 500)
+                p.setStrokeWidth(2);
+            else
+                p.setStrokeWidth(1);
+
+        } else if (userSettings.lineSize == UserSettings.LineSize.TINY) {
+            if (boardWidth > 500)
+                p.setStrokeWidth(0);
+            else
+                p.setAlpha(140);
+        }
 
         Bitmap tempBitmap = Bitmap.createBitmap(boardWidth, boardHeight, Bitmap.Config.RGB_565);
         Canvas tempCanvas = new Canvas(tempBitmap);
