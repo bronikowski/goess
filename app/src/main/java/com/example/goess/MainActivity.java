@@ -262,10 +262,11 @@ public class MainActivity extends AppCompatActivity {
                                             checkIfCapturing(move);
                                             updateGameInfo(boardLogic.currentGame.getGameTitle() +
                                                     "  (" + boardLogic.currentIndex + "/" + boardLogic.currentGame.moves.size() + ")");
-
                                         } else {
                                             currentScore += 0;
                                         }
+                                        float totalScore = (currentScore / userMoves) * 100;
+                                        updateScoreLabel(totalScore);
                                     }
                                     else if (putDummy) {
                                         removeLastDummyStone(true);
@@ -289,6 +290,8 @@ public class MainActivity extends AppCompatActivity {
                                                 currentScore += 0;
                                                 removeLastDummyStone(true);
                                             }
+                                            float totalScore = (currentScore / userMoves) * 100;
+                                            updateScoreLabel(totalScore);
                                         } else {
                                             removeLastDummyStone(true);
                                             lastDummyMove = new Move(move.x, move.y, move.player);
@@ -327,7 +330,7 @@ public class MainActivity extends AppCompatActivity {
                            //         Toast.LENGTH_LONG).show();
                         break;
                     case R.id.prevBtn:
-                            removeLastDummyStone(true); //?
+                            removeLastDummyStone(true);
                         if (currentStoneViewId >= 3) {
 
                             Move lastDrawnMove = boardLogic.getPreviousMove();
@@ -413,6 +416,7 @@ public class MainActivity extends AppCompatActivity {
             for (int i = 0; i < boardLogic.deadStones.size(); ++i) {
                 Move m = boardLogic.deadStones.get(i);
                 frameLayout.removeView(stonesImg[m.x][m.y]);
+                stonesImg[m.x][m.y] = null;
                 currentStoneViewId--;
                 boardLogic.removeFromBoardState(m);
             }
@@ -433,6 +437,7 @@ public class MainActivity extends AppCompatActivity {
         for (int i = 0; i < BOARD_SIZE; ++i)
             for (int j = 0; j < BOARD_SIZE; ++j) {
                 stonesImg[i][j] = null;
+                removeLastDummyStone(false);
                 dummyStonesImg[i][j] = null;
             }
 
@@ -562,9 +567,6 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void updateGameInfo(String title) {
-
-        float totalScore = (currentScore / userMoves) * 100;
-        updateScoreLabel(totalScore);
 
         getSupportActionBar().setTitle(title);
         setSupportActionBar(myToolbar);
@@ -942,33 +944,62 @@ public class MainActivity extends AppCompatActivity {
     private void drawBoardGrid(boolean grid) {
         Paint p = new Paint();
         p.setColor(Color.BLACK);
-        if (userSettings.lineSize == UserSettings.LineSize.THICK)
-            if (boardWidth > 500)
-                p.setStrokeWidth(3);
-            else
-                p.setStrokeWidth(2);
-        else if (userSettings.lineSize == UserSettings.LineSize.NORMAL) {
-            if (boardWidth > 500)
-                p.setStrokeWidth(2);
-            else
-                p.setStrokeWidth(1);
+        float ratio = 1.0f/boardWidth;
+        float off = 0.5f;
+        float radius = 0.0f;
 
+        if (userSettings.lineSize == UserSettings.LineSize.THICK) {
+            if (boardWidth > 500) {
+                ratio = 4.0f / boardWidth;
+                off = 0.0f;
+                radius += 2.5f;
+            } else {
+                ratio = 2.7f / boardWidth;
+                off = 0.0f;
+            }
+
+        } else if (userSettings.lineSize == UserSettings.LineSize.NORMAL) {
+            if (boardWidth > 500) {
+                ratio = 2.5f / boardWidth;
+                off = 0.0f;
+                radius += 1.0f;
+            } else {
+                ratio = 1.0f / boardWidth;
+                off = 0.5f;
+            }
         } else if (userSettings.lineSize == UserSettings.LineSize.TINY) {
-            if (boardWidth > 500)
-                p.setStrokeWidth(0);
-            else
-                p.setAlpha(140);
+            if (boardWidth > 500) {
+                ratio = 1.5f / boardWidth;
+                off = 0.0f;
+                radius += 1.0f;
+            } else {
+                ratio = 1.0f / boardWidth;
+                off = 0.5f;
+            }
+            p.setAlpha(140);
         }
+
+        p.setStrokeWidth(ratio * boardWidth);
+        radius += boardWidth * ratio + 1.3f;
 
         Bitmap tempBitmap = Bitmap.createBitmap(boardWidth, boardHeight, Bitmap.Config.RGB_565);
         Canvas tempCanvas = new Canvas(tempBitmap);
         tempCanvas.drawBitmap(rawBoardBitmap, 0, 0, null);
 
         float offset = boardWidth / 20;
+
         for (float i = offset; i <= (offset * 19); i += offset) {
             tempCanvas.drawLine(i, offset, i, (offset * 19) + 0, p);
             tempCanvas.drawLine(offset, i, (offset * 19) + 0, i, p);
         }
+
+        for (float i = offset * 4; i <= (offset * 19); i += (offset * 6)) {
+            for (float j = offset * 4; j <= (offset * 19); j += (offset * 6))
+                tempCanvas.drawCircle(i + off , j + off, radius, p);
+
+
+        }
+
 
         if (grid) {
             p.setTextSize((offsetW / 2) - 3);
@@ -979,10 +1010,12 @@ public class MainActivity extends AppCompatActivity {
             for (float i = offset; i <= (offset * 19); i += offset) {
                 tempCanvas.drawText(String.valueOf(alphabet.charAt(c)), i - 3, (offsetW / 3) + 2, p);
                 tempCanvas.drawText(String.valueOf(alphabet.charAt(c++)), i - 3, boardHeight - 4, p);
-                tempCanvas.drawText(String.valueOf(c), 1, i + 5, p);
-                if (c > 9)
+                tempCanvas.drawText(String.valueOf(20 - c), 1, i + 5, p);
+                if ((19 - c) > 8)
                     padding = (int)(offsetW / 2);
-                tempCanvas.drawText(String.valueOf(c), boardWidth - padding, i + 5, p);
+                else
+                    padding = (int)(offsetW / 4) + 2;
+                tempCanvas.drawText(String.valueOf(20 - c), boardWidth - padding, i + 5, p);
             }
 
         }
@@ -990,5 +1023,6 @@ public class MainActivity extends AppCompatActivity {
 
         Log.i(TAG, "boardWidth: " + String.valueOf(boardWidth + ", boardHeight: " +
                 String.valueOf(boardHeight)) + ", offset:" + offset);
+
     }
 }
