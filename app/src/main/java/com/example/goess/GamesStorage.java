@@ -9,6 +9,8 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Map;
@@ -17,13 +19,19 @@ public class GamesStorage {
 
     private static String TAG = "GamesStorage";
 
-    static final int DEFAULT_GAMES_LIST_SIZE = 6;
     static final int RECENT_GAMES_LIST_SIZE = 5;
 
+    String[] folders = {"classic", "japanese", "chinese", "european", "korean"};
     HashMap<String, GameInfo> recentGamesByName = new HashMap<String, GameInfo>();
     HashMap<String, String> defaultGamesByName = new HashMap<String, String>();
     LinkedList<String> recentGamesQueue = new LinkedList<String>();
     HashMap<String, GameInfo> gamesHistory = new HashMap<String, GameInfo>();
+
+    ArrayList<String> classic = new ArrayList<>();
+    ArrayList<String> japanese = new ArrayList<>();
+    ArrayList<String> korean = new ArrayList<>();
+    ArrayList<String> chinese = new ArrayList<>();
+    ArrayList<String> european = new ArrayList<>();
 
     Context context;
 
@@ -41,21 +49,43 @@ public class GamesStorage {
             e.printStackTrace();
         }
 
-
         for (int i = 0; i < paths.length; ++i) {
-            if (paths[i].endsWith(".sgf")) {
-                Log.i(TAG, "Reading " + paths[i]);
-                String content = null;
+            Log.i(TAG, "Reading " + paths[i]);
+            if (Arrays.asList(folders).contains(paths[i])) {
+                Log.i(TAG, "Reading >>  " + paths[i]);
+
+                String[] subpaths = new String[0];
                 try {
-                    content = getFileContent(am.open(paths[i]));
+                    subpaths = am.list(paths[i]);
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
-                Log.i(TAG, "Content " + ((content != null) ? String.valueOf(content.length()) : "(null)"));
-
-                defaultGamesByName.put(getNameFromContent(content), content);
+                for (int j = 0; j < subpaths.length; ++j) {
+                    if (subpaths[j].endsWith(".sgf")) {
+                        Log.i(TAG, "Reading game " + subpaths[j]);
+                        String content = null;
+                        try {
+                            content = getFileContent(am.open(paths[i] + "/" + subpaths[j]));
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
+                        Log.i(TAG, "Content " + ((content != null) ? String.valueOf(content.length()) : "(null)"));
+                        if (paths[i].equals("classic"))
+                            classic.add(getNameFromContent(content));
+                        else if (paths[i].equals("japanese"))
+                            japanese.add(getNameFromContent(content));
+                        else if (paths[i].equals("korean"))
+                            korean.add(getNameFromContent(content));
+                        else if (paths[i].equals("european"))
+                            european.add(getNameFromContent(content));
+                        else if (paths[i].equals("chinese"))
+                            chinese.add(getNameFromContent(content));
+                        defaultGamesByName.put(getNameFromContent(content), content);
+                    }
+                }
             }
         }
+
     }
 
     private String getNameFromContent(String content) {

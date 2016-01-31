@@ -563,7 +563,21 @@ public class MainActivity extends AppCompatActivity {
                 Intent intent = new Intent(this, FilePickerActivity.class);
                 startActivityForResult(intent, REQUEST_CODE);
             }
-        }
+        } else if (requestCode == 2 && resultCode == RESULT_OK) {
+            String name = data.getStringExtra("gamename");
+
+            String sgf = gamesStorage.getDefaultGameAt(name);
+            GameInfo game = boardLogic.parseSGFString(sgf);
+            if (gamesStorage.gamesHistory.containsKey(game.md5)) {
+                game = gamesStorage.gamesHistory.get(game.md5);
+            }
+            gameReady = (game != null && game.moves.size() != 0);
+            if (gameReady) {
+                loadGame(game);
+            }
+        } else
+            Toast.makeText(getApplicationContext(), "Could not load the game!",
+                    Toast.LENGTH_LONG).show();
     }
 
     private void updateGameInfo(String title) {
@@ -912,7 +926,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void showDefaultGamesList() {
-        final CharSequence[] items = new CharSequence[gamesStorage.DEFAULT_GAMES_LIST_SIZE];
+      /*  final CharSequence[] items = new CharSequence[gamesStorage.DEFAULT_GAMES_LIST_SIZE];
         int i = 0;
         for (String key : gamesStorage.defaultGamesByName.keySet()) {
             items[i++] = key;
@@ -937,7 +951,15 @@ public class MainActivity extends AppCompatActivity {
         });
 
         AlertDialog alert = builder.create();
-        alert.show();
+        alert.show(); */
+        Intent intent = new Intent(this, RepoActivity.class);
+        intent.putStringArrayListExtra("classic", gamesStorage.classic);
+        intent.putStringArrayListExtra("japanese", gamesStorage.japanese);
+        intent.putStringArrayListExtra("korean", gamesStorage.korean);
+        intent.putStringArrayListExtra("chinese", gamesStorage.chinese);
+        intent.putStringArrayListExtra("european", gamesStorage.european);
+
+        startActivityForResult(intent, 2);
     }
 
 

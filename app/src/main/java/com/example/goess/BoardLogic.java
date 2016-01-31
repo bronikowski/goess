@@ -227,8 +227,6 @@ public class BoardLogic {
     }
 
     public boolean isValid(Move move) {
-Log.v("fsdfads", "> check  valid," + String.valueOf(move.x)
-                                        + "  "  + String.valueOf(move.y) );
         if (board[move.x][move.y] != Move.Player.EMPTY) {
             Log.i(TAG, "not valid move ");
             return false;
@@ -245,12 +243,10 @@ Log.v("fsdfads", "> check  valid," + String.valueOf(move.x)
             else
                 score = 0;
             res = (score == 10);
-            Log.i(TAG, "check  valid move " + res + " ind " + String.valueOf(score));
         }
 
         if (res)
             currentIndex++;
-        Log.i(TAG, "check  valid move " + res + " ind " + String.valueOf(currentIndex) + " size " + String.valueOf(currentGame.moves.size()));
         return res;
     }
 }
