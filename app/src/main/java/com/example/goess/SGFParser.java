@@ -21,6 +21,7 @@ public class SGFParser {
     static String WHITE_PLAYER_NAME = "PW";
     static String BLACK_PLAYER_RANK = "BR";
     static String WHITE_PLAYER_RANK = "WR";
+    static String RESULT = "RE";
 
     public SGFParser() {
 
@@ -46,8 +47,8 @@ public class SGFParser {
         return null;
     }
 
-    public String getPlayerInfo(String content, String player) {
-        int start = content.indexOf(player);
+    public String getSgfTag(String content, String tag) {
+        int start = content.indexOf(tag);
         String name = "";
         if (start > 0) {
             int end = content.substring(start).indexOf("]");
@@ -59,12 +60,16 @@ public class SGFParser {
     }
 
     public String getFullName(String content, String player) {
-        String name = getPlayerInfo(content, player);
-        String rank = getPlayerInfo(content, player == BLACK_PLAYER_NAME ? BLACK_PLAYER_RANK : WHITE_PLAYER_RANK);
+        String name = getSgfTag(content, player);
+        String rank = getSgfTag(content, player == BLACK_PLAYER_NAME ? BLACK_PLAYER_RANK : WHITE_PLAYER_RANK);
         if (rank.length() > 0) {
             name += " [" + rank + "]";
         }
         return name;
+    }
+
+    public String getResult(String content) {
+        return getSgfTag(content, RESULT);
     }
 
     private GameInfo getGame(String content) {
@@ -78,7 +83,7 @@ public class SGFParser {
 
         blackPlayerName = getFullName(content, BLACK_PLAYER_NAME);
         whitePlayerName = getFullName(content, WHITE_PLAYER_NAME);
-
+        String result = getResult(content);
 
         int start = content.indexOf(";B[");
         if (start < 0) {
@@ -121,6 +126,7 @@ public class SGFParser {
         gameInfo.md5 = md5(md5Input);
         gameInfo.blackPlayerName = blackPlayerName;
         gameInfo.whitePlayerName = whitePlayerName;
+        gameInfo.result = result;
 
         return gameInfo;
     }

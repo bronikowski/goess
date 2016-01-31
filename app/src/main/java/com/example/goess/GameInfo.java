@@ -9,10 +9,9 @@ public class GameInfo {
     String md5;
     String blackPlayerName = "Black";
     String whitePlayerName = "White";
+    String result = "";
 
-    GameInfo() {
-
-    }
+    GameInfo() {}
 
     public String getGameTitle() {
         return blackPlayerName + " vs " + whitePlayerName;
@@ -25,6 +24,7 @@ public class GameInfo {
         this.md5 = game.md5;
         this.blackPlayerName = game.blackPlayerName;
         this.whitePlayerName = game.whitePlayerName;
+        this.result = game.result;
     }
 
 }

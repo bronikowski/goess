@@ -67,6 +67,7 @@ public class MainActivity extends AppCompatActivity {
     ImageView stoneImage;
     ImageView infoImage;
     TextView scoreLabel;
+    TextView moveLabel;
     Context context;
     int boardWidth;
     int boardHeight;
@@ -122,6 +123,7 @@ public class MainActivity extends AppCompatActivity {
         stoneImage = (ImageView) findViewById(R.id.blackImg);
         infoImage = (ImageView) findViewById(R.id.infoImg);
         scoreLabel = (TextView) findViewById(R.id.scoreTxtLabel);
+        moveLabel = (TextView) findViewById(R.id.moveTxtLabel);
         nextBtn = (Button) findViewById(R.id.nextBtn);
         prevBtn = (Button) findViewById(R.id.prevBtn);
         rewindBtn = (Button) findViewById(R.id.rewindBtn);
@@ -265,8 +267,7 @@ public class MainActivity extends AppCompatActivity {
                                             tries = 0;
                                             userMoves++;
                                             checkIfCapturing(move);
-                                            updateGameInfo(boardLogic.currentGame.getGameTitle() +
-                                                    "  (" + boardLogic.currentIndex + "/" + boardLogic.currentGame.moves.size() + ")");
+                                            updateGameInfo(boardLogic.currentGame.getGameTitle());
                                         } else {
                                             currentScore += 0;
                                         }
@@ -289,8 +290,7 @@ public class MainActivity extends AppCompatActivity {
                                                 tries = 0;
                                                 userMoves++;
                                                 checkIfCapturing(move);
-                                                updateGameInfo(boardLogic.currentGame.getGameTitle() +
-                                                        "  (" + boardLogic.currentIndex + "/" + boardLogic.currentGame.moves.size() + ")");
+                                                updateGameInfo(boardLogic.currentGame.getGameTitle());
                                             } else {
                                                 currentScore += 0;
                                                 removeLastDummyStone(true);
@@ -372,8 +372,7 @@ public class MainActivity extends AppCompatActivity {
                                     Toast.LENGTH_LONG).show();
                         break;
                 }
-                updateGameInfo(boardLogic.currentGame.getGameTitle()
-                        + "  (" + (String.valueOf(boardLogic.currentIndex)) + "/" + boardLogic.currentGame.moves.size() + ")");
+                updateGameInfo(boardLogic.currentGame.getGameTitle());
             }
         };
 
@@ -461,9 +460,9 @@ public class MainActivity extends AppCompatActivity {
         LinearLayout fill = (LinearLayout) findViewById(R.id.scoreFill);
         LinearLayout bkg = (LinearLayout) findViewById(R.id.scoreBkg);
         ViewGroup.LayoutParams paramsBkg =  bkg.getLayoutParams();
-        ViewGroup.LayoutParams params =  fill.getLayoutParams();
+        ViewGroup.LayoutParams params = fill.getLayoutParams();
         params.width = boardLogic.score * ((paramsBkg.width - 10) / 10);
-        View v = findViewById(R.id.scoreFillEnd);
+        View v = (View)findViewById(R.id.scoreFillEnd);
         if (boardLogic.score == 10) {
             v.setVisibility(View.VISIBLE);
         } else
@@ -584,11 +583,15 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void updateGameInfo(String title) {
-
+        scoreLabel.setText(scoreLabel.getText());
+        String moves = "(" + (String.valueOf(boardLogic.currentIndex)) + "/" + boardLogic.currentGame.moves.size() + ")";
+        moveLabel.setText(moves);
         getSupportActionBar().setTitle(title);
         setSupportActionBar(myToolbar);
         if (boardLogic.currentIndex == boardLogic.currentGame.moves.size()) {
             askIfAddToHistory();
+            String result = boardLogic.currentGame.result;
+            moveLabel.setText(result);
         }
     }
 
@@ -686,7 +689,7 @@ public class MainActivity extends AppCompatActivity {
 
         boardLogic.currentGame = game;
 
-        updateGameInfo(game.getGameTitle() + "  (" + boardLogic.currentIndex + "/" + boardLogic.currentGame.moves.size() + ")");
+        updateGameInfo(game.getGameTitle());
         updateScoreLabel(0);
         Log.v(TAG, "load  game " + game.md5 + "   score size " + String.valueOf(boardLogic.currentGame.score.size()));
         gamesStorage.addRecentGame(game.getGameTitle(), game);
@@ -728,8 +731,6 @@ public class MainActivity extends AppCompatActivity {
         AlertDialog alert = builder.create();
         alert.setOnShowListener(new RecentGamesListener());
         alert.show();
-
-
     }
 
     private void buildGraph() {

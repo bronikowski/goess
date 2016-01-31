@@ -80,14 +80,29 @@
         android:layout_width="fill_parent" android:layout_height="100dp"
         android:layout_centerHorizontal="true">
 
-        <TextView
-            android:text=""
-            android:id="@+id/scoreTxtLabel"
-            android:paddingLeft="20dp"
-            android:paddingTop="4dp"
-            android:textSize="13dp"
-            android:layout_width="wrap_content" android:layout_height="50dp" />
+        <LinearLayout
+            android:id="@+id/buttonsLayout"
+            android:orientation="vertical"
+            android:layout_width="wrap_content" android:layout_height="50dp"
+             >
 
+            <TextView
+                android:text=""
+                android:id="@+id/scoreTxtLabel"
+
+                android:paddingLeft="20dp"
+                android:paddingTop="4dp"
+                android:textSize="13dp"
+                android:layout_width="wrap_content" android:layout_height="25dp" />
+            <TextView
+                android:text=""
+                android:id="@+id/moveTxtLabel"
+
+                android:paddingLeft="20dp"
+                android:paddingTop="4dp"
+                android:textSize="13dp"
+                android:layout_width="wrap_content" android:layout_height="25dp" />
+        </LinearLayout>
 
         <LinearLayout
             android:id="@+id/buttonsLayout"
@@ -118,9 +133,7 @@
                 android:layout_width="0.0dip" android:layout_height="fill_parent"
                 android:background="@android:drawable/ic_media_ff"
                 android:layout_weight="0.8" />
-
         </LinearLayout>
-
 
 
         <ImageView
@@ -162,7 +175,9 @@
                 android:layout_height="22dp"
                 android:layout_centerInParent="true"
                 android:layout_alignParentRight="true"
-                android:visibility="invisible"/>
+                android:visibility="invisible"
+                android:background="@drawable/score_fill_end"
+                />
 
         </RelativeLayout>
 
