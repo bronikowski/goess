@@ -5,15 +5,19 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.database.DataSetObserver;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
+import android.graphics.Typeface;
 import android.graphics.drawable.BitmapDrawable;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
+import android.view.ContextThemeWrapper;
+import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -28,6 +32,7 @@ import android.widget.CheckedTextView;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.ListAdapter;
 import android.widget.ListView;
 import android.widget.RadioGroup;
 import android.widget.RelativeLayout;
@@ -575,9 +580,7 @@ public class MainActivity extends AppCompatActivity {
             if (gameReady) {
                 loadGame(game);
             }
-        } else
-            Toast.makeText(getApplicationContext(), "Could not load the game!",
-                    Toast.LENGTH_LONG).show();
+        }
     }
 
     private void updateGameInfo(String title) {
@@ -723,7 +726,10 @@ public class MainActivity extends AppCompatActivity {
         });
 
         AlertDialog alert = builder.create();
+        alert.setOnShowListener(new RecentGamesListener());
         alert.show();
+
+
     }
 
     private void buildGraph() {
