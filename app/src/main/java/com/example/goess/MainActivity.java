@@ -261,7 +261,7 @@ public class MainActivity extends AppCompatActivity {
                                 if (stonesImg[move.x][move.y] == null) {
                                     if (!userSettings.doubleclick) {
                                         tries++;
-                                        if (boardLogic.isValid(move)) {
+                                        if (boardLogic.isValid(move, userSettings.metrics)) {
                                             drawStone(move, v, true, false);
                                             currentScore += (1.0f / tries);
                                             tries = 0;
@@ -283,7 +283,7 @@ public class MainActivity extends AppCompatActivity {
                                         ImageView im = (ImageView) dummyStonesImg[move.x][move.y];
                                         if (im != null) {
                                             tries++;
-                                            if (boardLogic.isValid(move)) {
+                                            if (boardLogic.isValid(move, userSettings.metrics)) {
                                                 putDummy = true;
                                                 drawStone(move, v, true, false);
                                                 currentScore += (1.0f / tries);
@@ -461,12 +461,13 @@ public class MainActivity extends AppCompatActivity {
         LinearLayout bkg = (LinearLayout) findViewById(R.id.scoreBkg);
         ViewGroup.LayoutParams paramsBkg =  bkg.getLayoutParams();
         ViewGroup.LayoutParams params = fill.getLayoutParams();
-        params.width = boardLogic.score * ((paramsBkg.width - 10) / 10);
+        double padding = (boardLogic.score == 10) ? 10 : 0;
+        params.width = (int)(boardLogic.score * ((double)(paramsBkg.width - padding) / 10.0d));
         View v = (View)findViewById(R.id.scoreFillEnd);
         if (boardLogic.score == 10) {
             v.setVisibility(View.VISIBLE);
         } else
-            v.setVisibility(View.INVISIBLE);
+            v.setVisibility(View.GONE);
 
         fill.setLayoutParams(params);
     }
@@ -837,7 +838,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void showSettings() {
-        final String[] items = {"Show board coordinators", "Show guess indicator", "Double-click move"};
+        final String[] items = {"Show board coordinates", "Show guess indicator", "Double-click move"};
         final String[] radioItemLineSize = {"Board lines thickness"};
         final String[] radioItemMetrics = {"Metrics"};
 
@@ -875,7 +876,7 @@ public class MainActivity extends AppCompatActivity {
             lineRadioGroup.check(R.id.linetiny);
 
         RadioGroup metricRadioGroup = (RadioGroup)settingsView.findViewById(R.id.radiometrics);
-        if (userSettings.metrics == UserSettings.Metrics.STANDARD)
+        if (userSettings.metrics == UserSettings.Metrics.TAXICAB)
             metricRadioGroup.check(R.id.metricnormal);
         else
             metricRadioGroup.check(R.id.metriceuclid);
@@ -925,7 +926,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void normalMetricHandler(View v) {
-        userSettings.setMetrics(UserSettings.Metrics.STANDARD);
+        userSettings.setMetrics(UserSettings.Metrics.TAXICAB);
     }
 
     public void euclidMetricHandler(View v) {

@@ -16,7 +16,7 @@ public class BoardLogic {
     GameInfo currentGame;
     public ArrayList<Move> deadStones = new ArrayList<>();
     HashMap<Integer, ArrayList<Move>> captureCache = new HashMap<Integer, ArrayList<Move>>();
-    int score;
+    double score;
     SGFParser parser = new SGFParser();
     int[][] visited = new int[BOARD_SIZE][BOARD_SIZE];
 
@@ -226,7 +226,7 @@ public class BoardLogic {
         return deadStones.size() > 0;
     }
 
-    public boolean isValid(Move move) {
+    public boolean isValid(Move move, UserSettings.Metrics metrics) {
         if (board[move.x][move.y] != Move.Player.EMPTY) {
             Log.i(TAG, "not valid move ");
             return false;
@@ -235,18 +235,37 @@ public class BoardLogic {
 
         if (currentIndex < currentGame.moves.size()) {
             Move nextMove = currentGame.moves.get(currentIndex);
-            int diffX = Math.abs(nextMove.x - move.x);
-            int diffY = Math.abs(nextMove.y - move.y);
-            int maxDiff = Math.max(diffX, diffY);
-            if (maxDiff <= 10)
-                score = 10 - maxDiff;
-            else
-                score = 0;
+            if (metrics == UserSettings.Metrics.TAXICAB)
+                calculateStandard(nextMove, move);
+            else if (metrics == UserSettings.Metrics.EUCLID)
+                calculateEuclidean(nextMove, move);
+
             res = (score == 10);
         }
 
         if (res)
             currentIndex++;
         return res;
+    }
+
+    private void calculateEuclidean(Move nextMove, Move move) {
+        double diffX = Math.abs(nextMove.x - move.x);
+        double diffY = Math.abs(nextMove.y - move.y);
+        if (diffX < 10 && diffY < 10) {
+            double maxDiff = Math.sqrt((diffX * diffX) + (diffY * diffY));
+            if (maxDiff <= 10)
+                score = 10 - maxDiff;
+        } else
+            score = 0;
+    }
+
+    private void calculateStandard(Move nextMove, Move move) {
+        double diffX = Math.abs(nextMove.x - move.x);
+        double diffY = Math.abs(nextMove.y - move.y);
+        double maxDiff = Math.max(diffX, diffY);
+        if (maxDiff <= 10)
+            score = 10 - maxDiff;
+        else
+            score = 0;
     }
 }

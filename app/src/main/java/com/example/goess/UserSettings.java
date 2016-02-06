@@ -7,7 +7,7 @@ public class UserSettings {
 
     enum Metrics {
         EUCLID,
-        STANDARD
+        TAXICAB
     }
     enum LineSize {
         TINY ,
@@ -28,7 +28,7 @@ public class UserSettings {
             showBoardCoords = preferences.getBoolean("showBoardCoords", false);
             showIndicator = preferences.getBoolean("showIndicator", true);
             doubleclick = preferences.getBoolean("doubleclick", false);
-            String metric = preferences.getString("metric", Metrics.STANDARD.toString());
+            String metric = preferences.getString("metric", Metrics.EUCLID.toString());
             metrics = Metrics.valueOf(metric);
             String line = preferences.getString("lineSize", LineSize.NORMAL.toString());
             lineSize = LineSize.valueOf(line);

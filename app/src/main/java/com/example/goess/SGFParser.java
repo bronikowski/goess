@@ -23,9 +23,7 @@ public class SGFParser {
     static String WHITE_PLAYER_RANK = "WR";
     static String RESULT = "RE";
 
-    public SGFParser() {
-
-    }
+    public SGFParser() {}
 
     public String md5(String in) {
         MessageDigest digest;
