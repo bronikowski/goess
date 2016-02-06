@@ -75,6 +75,7 @@ public class BoardLogic {
 
     public void clearBoardState() {
         currentIndex = 0;
+        score = 0;
         initBoard();
         deadStones.clear();
         captureCache.clear();

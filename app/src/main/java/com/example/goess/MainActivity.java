@@ -354,6 +354,8 @@ public class MainActivity extends AppCompatActivity {
                                 }
                             }
                         }
+                        boardLogic.score = 0;
+                        updateScoreLabel(lastScore);
                         break;
                     case R.id.rewindBtn:
                       //  Log.i(TAG, "stones size " + String.valueOf(stonesImg));
