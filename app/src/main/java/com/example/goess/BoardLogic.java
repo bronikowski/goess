@@ -263,7 +263,7 @@ public class BoardLogic {
     private void calculateStandard(Move nextMove, Move move) {
         double diffX = Math.abs(nextMove.x - move.x);
         double diffY = Math.abs(nextMove.y - move.y);
-        double maxDiff = Math.max(diffX, diffY);
+        double maxDiff = diffX + diffY;
         if (maxDiff <= 10)
             score = 10 - maxDiff;
         else
