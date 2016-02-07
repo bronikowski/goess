@@ -71,7 +71,7 @@
 
     <RelativeLayout
         android:id="@+id/controlsLayout"
-        android:layout_width="fill_parent" android:layout_height="100dp"
+        android:layout_width="wrap_content" android:layout_height="100dp"
         android:layout_centerHorizontal="true">
 
         <LinearLayout
@@ -130,14 +130,21 @@
         </LinearLayout>
 
 
-        <ImageView
-            android:id="@+id/infoImg"
-            android:paddingTop="4dp"
-            android:paddingLeft="20dp"
-            android:layout_width="match_parent"
-            android:layout_height="25dp"
-            android:layout_toRightOf="@id/buttonsLayout"
-            android:src="@drawable/ic_menu_help" />
+        <LinearLayout
+            android:orientation="horizontal"
+            android:layout_width="wrap_content" android:layout_height="50dp"
+            android:paddingBottom="20dp"
+            android:gravity="right"
+            android:layout_alignParentRight="true">
+            <ImageView
+                android:id="@+id/infoImg"
+                android:paddingTop="4dp"
+                android:paddingRight="4dp"
+                android:layout_alignParentRight="true"
+                android:layout_width="match_parent"
+                android:layout_height="25dp"
+                android:src="@drawable/ic_menu_help" />
+        </LinearLayout>
 
         <RelativeLayout
             android:id="@+id/scoreLayout"

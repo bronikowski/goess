@@ -458,9 +458,9 @@ public class MainActivity extends AppCompatActivity {
         scoreLabel.setText(String.valueOf((int) percentage) + "%");
         LinearLayout fill = (LinearLayout) findViewById(R.id.scoreFill);
         LinearLayout bkg = (LinearLayout) findViewById(R.id.scoreBkg);
-        ViewGroup.LayoutParams paramsBkg =  bkg.getLayoutParams();
+        ViewGroup.LayoutParams paramsBkg = bkg.getLayoutParams();
         ViewGroup.LayoutParams params = fill.getLayoutParams();
-        int pad = boardWidth < 350 ? 5 : 10;
+        int pad = boardWidth < 400 ? 5 : 8;
         double padding = (boardLogic.score == 10) ? pad : 0;
         params.width = (int)(boardLogic.score * ((double)(paramsBkg.width - padding) / 10.0d));
         View v = (View)findViewById(R.id.scoreFillEnd);
@@ -651,7 +651,7 @@ public class MainActivity extends AppCompatActivity {
         getMenuInflater().inflate(R.menu.menu_main, menu);
         return true;
     }
-    
+
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
