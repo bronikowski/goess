@@ -27,11 +27,11 @@ public class GamesStorage {
     LinkedList<String> recentGamesQueue = new LinkedList<String>();
     HashMap<String, GameInfo> gamesHistory = new HashMap<String, GameInfo>();
 
-    ArrayList<String> classic = new ArrayList<>();
-    ArrayList<String> japanese = new ArrayList<>();
-    ArrayList<String> korean = new ArrayList<>();
-    ArrayList<String> chinese = new ArrayList<>();
-    ArrayList<String> european = new ArrayList<>();
+    ArrayList<String> classic = new ArrayList<String>();
+    ArrayList<String> japanese = new ArrayList<String>();
+    ArrayList<String> korean = new ArrayList<String>();
+    ArrayList<String> chinese = new ArrayList<String>();
+    ArrayList<String> european = new ArrayList<String>();
 
     Context context;
 

@@ -75,7 +75,7 @@ public class SGFParser {
         String whitePlayerName = "White";
         String md5Input = "";
 
-        ArrayList<Move> list = new ArrayList<>();
+        ArrayList<Move> list = new ArrayList<Move>();
      //   String content = getFileContent(filePath);
         Log.i(TAG, "Content " + content);
 

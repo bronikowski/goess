@@ -14,7 +14,7 @@ public class BoardLogic {
     Move.Player currentPlayer;
     Move.Player[][] board;
     GameInfo currentGame;
-    public ArrayList<Move> deadStones = new ArrayList<>();
+    public ArrayList<Move> deadStones = new ArrayList<Move>();
     HashMap<Integer, ArrayList<Move>> captureCache = new HashMap<Integer, ArrayList<Move>>();
     double score;
     SGFParser parser = new SGFParser();
@@ -112,7 +112,7 @@ public class BoardLogic {
     }
 
     private ArrayList<Move> getNeighbours(Move move, Move.Player color) {
-        ArrayList<Move> neighbours = new ArrayList<>();
+        ArrayList<Move> neighbours = new ArrayList<Move>();
 
         int x = move.x;
         int y = move.y;
@@ -135,7 +135,7 @@ public class BoardLogic {
     }
 
     private ArrayList<Move> getNeighboursNotVisited(Move move, int[][] visited) {
-        ArrayList<Move> result = new ArrayList<>();
+        ArrayList<Move> result = new ArrayList<Move>();
 
         int x = move.x;
         int y = move.y;
@@ -157,7 +157,7 @@ public class BoardLogic {
     private ArrayList<Move> findGroupAt(Move move) {
 
         ArrayList<Move> group = getNeighboursNotVisited(move, visited);
-        ArrayList<Move> result = new ArrayList<>();
+        ArrayList<Move> result = new ArrayList<Move>();
 
         if (visited[move.x][move.y] == 0) {
             visited[move.x][move.y] = 1;
@@ -215,7 +215,7 @@ public class BoardLogic {
             ArrayList<Move> group = findGroupAt(m);
             if (countLiberties(group) == 0) {
                 deadStones.addAll(group);
-                ArrayList<Move> tmp = new ArrayList<>();
+                ArrayList<Move> tmp = new ArrayList<Move>();
                 tmp.addAll(group);
                 if (captureCache.containsKey(currentIndex))
                     captureCache.get(currentIndex).addAll(tmp);

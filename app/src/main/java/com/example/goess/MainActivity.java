@@ -5,19 +5,17 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.database.DataSetObserver;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
-import android.graphics.Typeface;
 import android.graphics.drawable.BitmapDrawable;
+import android.net.Uri;
 import android.os.Bundle;
+import android.os.Environment;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
-import android.view.ContextThemeWrapper;
-import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -32,7 +30,6 @@ import android.widget.CheckedTextView;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
-import android.widget.ListAdapter;
 import android.widget.ListView;
 import android.widget.RadioGroup;
 import android.widget.RelativeLayout;
@@ -43,7 +40,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 import com.google.gson.Gson;
-import com.nbsp.materialfilepicker.ui.FilePickerActivity;
+import com.nononsenseapps.filepicker.FilePickerActivity;
 import org.achartengine.ChartFactory;
 import org.achartengine.GraphicalView;
 import org.achartengine.chart.PointStyle;
@@ -52,6 +49,7 @@ import org.achartengine.model.XYSeries;
 import org.achartengine.renderer.XYMultipleSeriesRenderer;
 import org.achartengine.renderer.XYSeriesRenderer;
 
+
 public class MainActivity extends AppCompatActivity {
 
     private static String TAG = "MainActivity";
@@ -59,7 +57,8 @@ public class MainActivity extends AppCompatActivity {
     private static String APP_PREFERENCES_HISTORY = "GoessGameHistory";
     private static String APP_PREFERENCES_RECENT_GAMES = "GoessRecentGames";
     private static String FILE_EXT = "sgf";
-    private static int REQUEST_CODE = 1;
+    private static int FILE_PICKER_REQUEST_CODE = 1;
+    private static int GAME_REPO_REQUEST_CODE = 2;
     private static int BOARD_SIZE = 19;
 
     Bitmap rawBoardBitmap;
@@ -105,12 +104,10 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        myToolbar = (Toolbar) findViewById(R.id.my_toolbar);
+        myToolbar = (Toolbar) findViewById(R.id.app_bar);
         setSupportActionBar(myToolbar);
         getSupportActionBar().setTitle("Choose a game!");
         setSupportActionBar(myToolbar);
-        TextView title = getActionBarTextView();
-        title.setTextSize(14);
 
         stonesImg = new View[BOARD_SIZE][BOARD_SIZE];
         dummyStonesImg = new View[BOARD_SIZE][BOARD_SIZE];
@@ -463,7 +460,8 @@ public class MainActivity extends AppCompatActivity {
         LinearLayout bkg = (LinearLayout) findViewById(R.id.scoreBkg);
         ViewGroup.LayoutParams paramsBkg =  bkg.getLayoutParams();
         ViewGroup.LayoutParams params = fill.getLayoutParams();
-        double padding = (boardLogic.score == 10) ? 10 : 0;
+        int pad = boardWidth < 350 ? 5 : 10;
+        double padding = (boardLogic.score == 10) ? pad : 0;
         params.width = (int)(boardLogic.score * ((double)(paramsBkg.width - padding) / 10.0d));
         View v = (View)findViewById(R.id.scoreFillEnd);
         if (boardLogic.score == 10) {
@@ -549,11 +547,13 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
+        String filePath = "";
+        if (requestCode == FILE_PICKER_REQUEST_CODE && resultCode == RESULT_OK) {
 
-        if (requestCode == REQUEST_CODE && resultCode == RESULT_OK) {
-            String filePath = data.getStringExtra(FilePickerActivity.RESULT_FILE_PATH);
+            Uri uri = data.getData();
+            filePath = uri.getPath();
 
-            if (filePath.substring(filePath.length() - 3).equals(FILE_EXT)) {
+            if (filePath.length() >= 0 && filePath.substring(filePath.length() - 3).equals(FILE_EXT)) {
                 Log.i(TAG, "Opening file: " + filePath);
                 GameInfo game = boardLogic.parseSGFFile(filePath);
                 if (gamesStorage.gamesHistory.containsKey(game.md5)) {
@@ -566,13 +566,12 @@ public class MainActivity extends AppCompatActivity {
 
             } else {
                 Toast.makeText(getApplicationContext(), "This is not SGF!",
-                        Toast.LENGTH_LONG).show();
-                Intent intent = new Intent(this, FilePickerActivity.class);
-                startActivityForResult(intent, REQUEST_CODE);
+                            Toast.LENGTH_LONG).show();
+                openFilePicker();
             }
-        } else if (requestCode == 2 && resultCode == RESULT_OK) {
-            String name = data.getStringExtra("gamename");
 
+        } else if (requestCode == GAME_REPO_REQUEST_CODE && resultCode == RESULT_OK) {
+            String name = data.getStringExtra("gamename");
             String sgf = gamesStorage.getDefaultGameAt(name);
             GameInfo game = boardLogic.parseSGFString(sgf);
             if (gamesStorage.gamesHistory.containsKey(game.md5)) {
@@ -591,6 +590,7 @@ public class MainActivity extends AppCompatActivity {
         moveLabel.setText(moves);
         getSupportActionBar().setTitle(title);
         setSupportActionBar(myToolbar);
+        myToolbar.refreshDrawableState();
         if (boardLogic.currentIndex == boardLogic.currentGame.moves.size()) {
             askIfAddToHistory();
             String result = boardLogic.currentGame.result;
@@ -648,29 +648,15 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
-        // Inflate the menu; this adds items to the action bar if it is present.
         getMenuInflater().inflate(R.menu.menu_main, menu);
         return true;
     }
-
-    private TextView getActionBarTextView() {
-        TextView titleTextView = null;
-
-        try {
-            Field f = myToolbar.getClass().getDeclaredField("mTitleTextView");
-            f.setAccessible(true);
-            titleTextView = (TextView) f.get(myToolbar);
-        } catch (NoSuchFieldException e) {
-        } catch (IllegalAccessException e) {
-        }
-        return titleTextView;
-    }
+    
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
             case R.id.action_openGame:
-                Intent intent = new Intent(this, FilePickerActivity.class);
-                startActivityForResult(intent, REQUEST_CODE);
+                openFilePicker();
                 return true;
             case R.id.action_recentlyUsed:
                 showRecentGamesList();
@@ -686,6 +672,14 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    private void openFilePicker() {
+        Intent i = new Intent(context, FilePickerActivity.class);
+        i.putExtra(FilePickerActivity.EXTRA_ALLOW_MULTIPLE, false);
+        i.putExtra(FilePickerActivity.EXTRA_ALLOW_CREATE_DIR, false);
+        i.putExtra(FilePickerActivity.EXTRA_MODE, FilePickerActivity.MODE_FILE);
+        i.putExtra(FilePickerActivity.EXTRA_START_PATH, Environment.getExternalStorageDirectory().getPath());
+        startActivityForResult(i, FILE_PICKER_REQUEST_CODE);
+    }
 
     private void loadGame(GameInfo game) {
         clearBoard();
@@ -936,32 +930,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void showDefaultGamesList() {
-      /*  final CharSequence[] items = new CharSequence[gamesStorage.DEFAULT_GAMES_LIST_SIZE];
-        int i = 0;
-        for (String key : gamesStorage.defaultGamesByName.keySet()) {
-            items[i++] = key;
-        }
 
-        AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        builder.setTitle("Games repository");
-        builder.setItems(items, new DialogInterface.OnClickListener() {
-
-            public void onClick(DialogInterface dialog, int item) {
-                String sgf = gamesStorage.getDefaultGameAt(items[item].toString());
-                GameInfo game = boardLogic.parseSGFString(sgf);
-                if (gamesStorage.gamesHistory.containsKey(game.md5)) {
-                    game = gamesStorage.gamesHistory.get(game.md5);
-                }
-                gameReady = (game != null && game.moves.size() != 0);
-                if (gameReady) {
-                    loadGame(game);
-                }
-            }
-
-        });
-
-        AlertDialog alert = builder.create();
-        alert.show(); */
         Intent intent = new Intent(this, RepoActivity.class);
         intent.putStringArrayListExtra("classic", gamesStorage.classic);
         intent.putStringArrayListExtra("japanese", gamesStorage.japanese);
@@ -969,7 +938,7 @@ public class MainActivity extends AppCompatActivity {
         intent.putStringArrayListExtra("chinese", gamesStorage.chinese);
         intent.putStringArrayListExtra("european", gamesStorage.european);
 
-        startActivityForResult(intent, 2);
+        startActivityForResult(intent, GAME_REPO_REQUEST_CODE);
     }
 
 

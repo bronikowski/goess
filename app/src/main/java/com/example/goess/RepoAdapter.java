@@ -2,12 +2,15 @@ package com.example.goess;
 
 import java.util.ArrayList;
 import android.app.Activity;
+import android.text.Layout;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AbsListView;
 import android.widget.BaseExpandableListAdapter;
 import android.widget.CheckedTextView;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 
 @SuppressWarnings("unchecked")
@@ -50,6 +53,8 @@ public class RepoAdapter extends BaseExpandableListAdapter {
         }
         text = (TextView) convertView.findViewById(R.id.textView);
         text.setText(tempChild.get(childPosition));
+        ViewGroup.LayoutParams params = text.getLayoutParams();
+        text.setLayoutParams(new AbsListView.LayoutParams(params.width, params.height));
         return text;
     }
 
