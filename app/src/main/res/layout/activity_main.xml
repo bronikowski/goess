@@ -172,7 +172,7 @@
 
             <View
                 android:id="@+id/scoreFillEnd"
-                android:layout_width="10dp"
+                android:layout_width="30dp"
                 android:layout_height="22dp"
                 android:layout_centerInParent="true"
                 android:layout_alignParentRight="true"

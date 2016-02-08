@@ -460,11 +460,10 @@ public class MainActivity extends AppCompatActivity {
         LinearLayout bkg = (LinearLayout) findViewById(R.id.scoreBkg);
         ViewGroup.LayoutParams paramsBkg = bkg.getLayoutParams();
         ViewGroup.LayoutParams params = fill.getLayoutParams();
-        int pad = boardWidth < 400 ? 5 : 8;
-        double padding = (boardLogic.score == 10) ? pad : 0;
-        params.width = (int)(boardLogic.score * ((double)(paramsBkg.width - padding) / 10.0d));
+        params.width = (int)(boardLogic.score * ((double)(paramsBkg.width) / 10.0d));
         View v = (View)findViewById(R.id.scoreFillEnd);
         if (boardLogic.score == 10) {
+            params.width -= 20;
             v.setVisibility(View.VISIBLE);
         } else
             v.setVisibility(View.GONE);
@@ -726,6 +725,7 @@ public class MainActivity extends AppCompatActivity {
         });
 
         AlertDialog alert = builder.create();
+        alert.setCanceledOnTouchOutside(true);
         alert.setOnShowListener(new RecentGamesListener());
         alert.show();
     }
@@ -841,9 +841,9 @@ public class MainActivity extends AppCompatActivity {
         AlertDialog.Builder dialog = new AlertDialog.Builder(this);
         dialog.setTitle("Customize Goess");
 
-           LayoutInflater inflater = getLayoutInflater();
-            View settingsView = (View) inflater.inflate(R.layout.settings, null);
-              dialog.setView(settingsView);
+        LayoutInflater inflater = getLayoutInflater();
+        View settingsView = (View) inflater.inflate(R.layout.settings, null);
+        dialog.setView(settingsView);
 
         ListView lv = (ListView) settingsView.findViewById(R.id.settingsListView);
         lv.setChoiceMode(ListView.CHOICE_MODE_MULTIPLE);
@@ -877,8 +877,9 @@ public class MainActivity extends AppCompatActivity {
         else
             metricRadioGroup.check(R.id.metriceuclid);
 
-
-        dialog.show();
+        AlertDialog alert = dialog.create();
+        alert.setCanceledOnTouchOutside(true);
+        alert.show();
 
         lv.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
@@ -904,7 +905,7 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        }
+    }
 
     public void lineTinyHandler(View v) {
         userSettings.setLineSize(UserSettings.LineSize.TINY);
@@ -946,36 +947,29 @@ public class MainActivity extends AppCompatActivity {
         Paint p = new Paint();
         p.setColor(Color.BLACK);
         float ratio = 1.0f/boardWidth;
-        float off = 0.5f;
         float radius = 0.0f;
 
         if (userSettings.lineSize == UserSettings.LineSize.THICK) {
             if (boardWidth > 500) {
                 ratio = 4.0f / boardWidth;
-                off = 0.0f;
                 radius += 2.5f;
             } else {
                 ratio = 2.7f / boardWidth;
-                off = 0.0f;
             }
 
         } else if (userSettings.lineSize == UserSettings.LineSize.NORMAL) {
             if (boardWidth > 500) {
                 ratio = 2.5f / boardWidth;
-                off = 0.0f;
                 radius += 1.0f;
             } else {
                 ratio = 1.0f / boardWidth;
-                off = 0.5f;
             }
         } else if (userSettings.lineSize == UserSettings.LineSize.TINY) {
             if (boardWidth > 500) {
                 ratio = 1.5f / boardWidth;
-                off = 0.0f;
                 radius += 1.0f;
             } else {
                 ratio = 1.0f / boardWidth;
-                off = 0.5f;
             }
             p.setAlpha(140);
         }
@@ -994,13 +988,11 @@ public class MainActivity extends AppCompatActivity {
             tempCanvas.drawLine(offset, i, (offset * 19) + 0, i, p);
         }
 
+        float off = (boardWidth > 500) ? 0.0f : 0.5f;
         for (float i = offset * 4; i <= (offset * 19); i += (offset * 6)) {
             for (float j = offset * 4; j <= (offset * 19); j += (offset * 6))
-                tempCanvas.drawCircle(i + off , j + off, radius, p);
-
-
+                tempCanvas.drawCircle(i + off, j + off, radius, p);
         }
-
 
         if (grid) {
             p.setTextSize((offsetW / 2) - 3);
