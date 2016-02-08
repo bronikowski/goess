@@ -328,8 +328,8 @@ public class MainActivity extends AppCompatActivity {
                             drawStone(move, v, true, false);
                             checkIfCapturing(move);
                         }
-                          //  Toast.makeText(getApplicationContext(), "Please choose a game!",
-                           //         Toast.LENGTH_LONG).show();
+                        boardLogic.score = 0;
+                        updateScoreLabel(lastScore);
                         break;
                     case R.id.prevBtn:
                             removeLastDummyStone(true);
@@ -369,6 +369,8 @@ public class MainActivity extends AppCompatActivity {
                         } else
                             Toast.makeText(getApplicationContext(), "Please choose a game!",
                                     Toast.LENGTH_LONG).show();
+                        boardLogic.score = 0;
+                        updateScoreLabel(lastScore);
                         break;
                 }
                 updateGameInfo(boardLogic.currentGame.getGameTitle());
@@ -830,7 +832,10 @@ public class MainActivity extends AppCompatActivity {
 
         AlertDialog.Builder dialog = new AlertDialog.Builder(this);
         dialog.setView(graphView);
-        dialog.show();
+
+        AlertDialog alert = dialog.create();
+        alert.setCanceledOnTouchOutside(true);
+        alert.show();
     }
 
     private void showSettings() {
