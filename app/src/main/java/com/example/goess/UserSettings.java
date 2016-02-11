@@ -18,6 +18,7 @@ public class UserSettings {
     boolean showBoardCoords;
     boolean showIndicator;
     boolean doubleclick;
+    boolean zoom;
     Metrics metrics;
     LineSize lineSize;
     SharedPreferences preferences;
@@ -28,12 +29,19 @@ public class UserSettings {
             showBoardCoords = preferences.getBoolean("showBoardCoords", false);
             showIndicator = preferences.getBoolean("showIndicator", true);
             doubleclick = preferences.getBoolean("doubleclick", false);
+            zoom = preferences.getBoolean("zoom", true);
             String metric = preferences.getString("metric", Metrics.EUCLID.toString());
             metrics = Metrics.valueOf(metric);
             String line = preferences.getString("lineSize", LineSize.NORMAL.toString());
             lineSize = LineSize.valueOf(line);
-        } else
+        } else {
             setIndicator(true);
+            setDoubleClick(false);
+            setZoom(true);
+            setShowBoardCoords(false);
+            setLineSize(LineSize.NORMAL);
+            setMetrics(Metrics.EUCLID);
+        }
     }
 
     public void setShowBoardCoords(boolean show) {
@@ -44,6 +52,11 @@ public class UserSettings {
     public void setIndicator(boolean show) {
         showIndicator = show;
         preferences.edit().putBoolean("showIndicator", show).apply();
+    }
+
+    public void setZoom(boolean onoff) {
+        zoom = onoff;
+        preferences.edit().putBoolean("zoom", onoff).apply();
     }
 
     public void setDoubleClick(boolean click) {
