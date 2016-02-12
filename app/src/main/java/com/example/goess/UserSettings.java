@@ -28,7 +28,7 @@ public class UserSettings {
         if (preferences != null) {
             showBoardCoords = preferences.getBoolean("showBoardCoords", false);
             showIndicator = preferences.getBoolean("showIndicator", true);
-            doubleclick = preferences.getBoolean("doubleclick", false);
+            doubleclick = preferences.getBoolean("doubleclick", true);
             zoom = preferences.getBoolean("zoom", true);
             String metric = preferences.getString("metric", Metrics.EUCLID.toString());
             metrics = Metrics.valueOf(metric);

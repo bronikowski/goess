@@ -208,92 +208,67 @@ public class MainActivity extends AppCompatActivity {
 
                 int action = event.getAction();
 
-                if (!gameReady)
-                    return true;
-
                 switch (action) {
                     case MotionEvent.ACTION_DOWN:
-                        if (userSettings.zoom && !isZoomed()) {
+                        if (!gameReady) {
+                            Toast.makeText(getApplicationContext(), "Please choose a game!",
+                                    Toast.LENGTH_SHORT).show();
+                        } else if (userSettings.zoom && !isZoomed()) {
                             float toolbarHeight = myToolbar.getHeight();
                             setZoom(event.getX(), event.getY() - toolbarHeight);
                         }
 
                         break;
                     case MotionEvent.ACTION_MOVE:
+                        if (gameReady) {
+                            owner.removeView(horiz);
+                            owner.removeView(vertic);
 
-                        owner.removeView(horiz);
-                        owner.removeView(vertic);
+                            int hx = Math.round((float) event.getX() / offsetW);
+                            int vy = Math.round((float) event.getY() / offsetH);
 
-                        int hx = Math.round((float) event.getX() / offsetW);
-                        int vy = Math.round((float) event.getY() / offsetH);
+                            if (hx > 19)
+                                hx = 19;
+                            if (vy > 19)
+                                vy = 19;
 
-                        if (hx > 19)
-                            hx = 19;
-                        if (vy > 19)
-                            vy = 19;
+                            horizParam.leftMargin = ((int) (hx * offsetW));
+                            horizParam.bottomMargin = (int) event.getY();
+                            horiz.setVisibility(View.VISIBLE);
+                            frameLayout.addView(horiz, horizParam);
 
-                        horizParam.leftMargin = ((int) (hx * offsetW));
-                        horizParam.bottomMargin = (int) event.getY();
-                        horiz.setVisibility(View.VISIBLE);
-                        frameLayout.addView(horiz, horizParam);
-
-                        verticParam.rightMargin = (int) event.getX();
-                        verticParam.topMargin = ((int) (vy * offsetH));
-                        vertic.setVisibility(View.VISIBLE);
-                        if (verticParam.topMargin < boardHeight && verticParam.topMargin >= offsetH)
-                            frameLayout.addView(vertic, verticParam);
-
+                            verticParam.rightMargin = (int) event.getX();
+                            verticParam.topMargin = ((int) (vy * offsetH));
+                            vertic.setVisibility(View.VISIBLE);
+                            if (verticParam.topMargin < boardHeight && verticParam.topMargin >= offsetH)
+                                frameLayout.addView(vertic, verticParam);
+                        }
                         break;
                     case MotionEvent.ACTION_UP:
+                        if (gameReady) {
+                            owner.removeView(horiz);
+                            owner.removeView(vertic);
 
-                        owner.removeView(horiz);
-                        owner.removeView(vertic);
+                            int eventX = (int) event.getX();
+                            int eventY = (int) event.getY();
 
-                        int eventX = (int) event.getX();
-                        int eventY = (int) event.getY();
+                            if (eventX > 15 && eventX < (boardWidth - 10)
+                                    && eventY > 15 && eventY < (boardHeight - 10)) {
 
-                        if (eventX > 15 && eventX < (boardWidth - 10)
-                                && eventY > 15 && eventY < (boardHeight - 10)) {
+                                int x = Math.round((float) eventX / offsetW);
+                                int y = Math.round((float) eventY / offsetH);
 
-                            int x = Math.round((float) eventX / offsetW);
-                            int y = Math.round((float) eventY / offsetH);
+                                if (x > 19)
+                                    x = 19;
+                                if (y > 19)
+                                    y = 19;
 
-                            if (x > 19)
-                                x = 19;
-                            if (y > 19)
-                                y = 19;
+                                Move move = new Move(x - 1, y - 1, boardLogic.currentPlayer);
 
-                            Move move = new Move(x - 1, y - 1, boardLogic.currentPlayer);
-
-                            if (stonesImg[move.x][move.y] == null) {
-                                if (!userSettings.doubleclick) {
-                                    tries++;
-                                    if (boardLogic.isValid(move, userSettings.metrics)) {
-                                        drawStone(move, v, true, false);
-                                        currentScore += (1.0f / tries);
-                                        tries = 0;
-                                        userMoves++;
-                                        checkIfCapturing(move);
-                                        updateGameInfo(boardLogic.currentGame.getGameTitle());
-                                    } else {
-                                        currentScore += 0;
-                                    }
-                                    float totalScore = (currentScore / userMoves) * 100;
-                                    updateScoreLabel(totalScore);
-                                    if (userSettings.zoom)
-                                        resetZoom();
-                                } else if (putDummy) {
-                                    removeLastDummyStone(true);
-                                    lastDummyMove = new Move(move.x, move.y, move.player);
-                                    drawStone(move, v, true, true);
-                                    putDummy = false;
-
-                                } else {
-                                    ImageView im = (ImageView) dummyStonesImg[move.x][move.y];
-                                    if (im != null) {
+                                if (stonesImg[move.x][move.y] == null) {
+                                    if (!userSettings.doubleclick) {
                                         tries++;
                                         if (boardLogic.isValid(move, userSettings.metrics)) {
-                                            putDummy = true;
                                             drawStone(move, v, true, false);
                                             currentScore += (1.0f / tries);
                                             tries = 0;
@@ -302,18 +277,44 @@ public class MainActivity extends AppCompatActivity {
                                             updateGameInfo(boardLogic.currentGame.getGameTitle());
                                         } else {
                                             currentScore += 0;
-                                            removeLastDummyStone(true);
                                         }
                                         float totalScore = (currentScore / userMoves) * 100;
                                         updateScoreLabel(totalScore);
                                         if (userSettings.zoom)
                                             resetZoom();
-                                    } else {
+                                    } else if (putDummy) {
                                         removeLastDummyStone(true);
                                         lastDummyMove = new Move(move.x, move.y, move.player);
                                         drawStone(move, v, true, true);
                                         putDummy = false;
 
+                                    } else {
+                                        ImageView im = (ImageView) dummyStonesImg[move.x][move.y];
+                                        if (im != null) {
+                                            tries++;
+                                            if (boardLogic.isValid(move, userSettings.metrics)) {
+                                                putDummy = true;
+                                                drawStone(move, v, true, false);
+                                                currentScore += (1.0f / tries);
+                                                tries = 0;
+                                                userMoves++;
+                                                checkIfCapturing(move);
+                                                updateGameInfo(boardLogic.currentGame.getGameTitle());
+                                            } else {
+                                                currentScore += 0;
+                                                removeLastDummyStone(true);
+                                            }
+                                            float totalScore = (currentScore / userMoves) * 100;
+                                            updateScoreLabel(totalScore);
+                                            if (userSettings.zoom)
+                                                resetZoom();
+                                        } else {
+                                            removeLastDummyStone(true);
+                                            lastDummyMove = new Move(move.x, move.y, move.player);
+                                            drawStone(move, v, true, true);
+                                            putDummy = false;
+
+                                        }
                                     }
                                 }
                             }
@@ -366,7 +367,6 @@ public class MainActivity extends AppCompatActivity {
                         updateScoreLabel(lastScore);
                         break;
                     case R.id.rewindBtn:
-                      //  Log.i(TAG, "stones size " + String.valueOf(stonesImg));
                         removeLastDummyStone(true);
                         clearBoard();
                         break;
@@ -532,7 +532,7 @@ public class MainActivity extends AppCompatActivity {
         if (dummy)
             img.setAlpha(0.5f);
 
-        int stoneSize = (int)(boardWidth) / 18;
+        int stoneSize = (int)(boardWidth) / 17;
         if (move.player == Move.Player.WHITE)
             stoneSize += stoneSize / 12;
 
@@ -563,14 +563,16 @@ public class MainActivity extends AppCompatActivity {
          //   Log.i(TAG, "last drawn stone at " + String.valueOf(lastDrawnMove.x) + ":" + String.valueOf(lastDrawnMove.y));
 
             ImageView iv = (ImageView) stonesImg[lastDrawnMove.x][lastDrawnMove.y];
-            iv.setImageResource(boardLogic.currentPlayer == Move.Player.BLACK ?
-                    R.drawable.white_marked : R.drawable.black_marked);
-            if (lastMarkedStone == null)
-                lastMarkedStone = iv;
-            else {
-                lastMarkedStone.setImageResource(boardLogic.currentPlayer == Move.Player.BLACK ?
-                        R.drawable.black : R.drawable.white);
-                lastMarkedStone = iv;
+            if (iv != null) {
+                iv.setImageResource(boardLogic.currentPlayer == Move.Player.BLACK ?
+                        R.drawable.white_marked : R.drawable.black_marked);
+                if (lastMarkedStone == null)
+                    lastMarkedStone = iv;
+                else {
+                    lastMarkedStone.setImageResource(boardLogic.currentPlayer == Move.Player.BLACK ?
+                            R.drawable.black : R.drawable.white);
+                    lastMarkedStone = iv;
+                }
             }
         }
     }
@@ -890,7 +892,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void showSettings() {
-        final String[] items = {"Show board coordinates", "Show guess indicator", "Double-click move", "Zoom board on touch"};
+        final String[] items = {"Show board coordinates", "Show guess indicator", "Double-click move", "Zoom board"};
         final String[] radioItemLineSize = {"Board lines thickness"};
         final String[] radioItemMetrics = {"Metrics"};
 
@@ -1048,7 +1050,7 @@ public class MainActivity extends AppCompatActivity {
             tempCanvas.drawLine(offset, i, (offset * 19) + 0, i, p);
         }
 
-        float off = (boardWidth > 500) ? 0.0f : 0.5f;
+        float off = (boardWidth > 500) ? 0.0f : ((userSettings.lineSize == UserSettings.LineSize.THICK) ? 0.0f : 0.5f);
         for (float i = offset * 4; i <= (offset * 19); i += (offset * 6)) {
             for (float j = offset * 4; j <= (offset * 19); j += (offset * 6))
                 tempCanvas.drawCircle(i + off, j + off, radius, p);
