@@ -1,5 +1,6 @@
 package com.example.goess;
 
+import android.graphics.RectF;
 import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -65,6 +66,7 @@ public class MainActivity extends AppCompatActivity {
     private static int BOARD_SIZE = 19;
     private static float BOARD_SCALE_FACTOR = 1.8f;
 
+    GoImages goImages;
     Bitmap rawBoardBitmap;
     ImageView boardImage;
     ImageView stoneImage;
@@ -114,6 +116,7 @@ public class MainActivity extends AppCompatActivity {
         getSupportActionBar().setTitle("Choose a game!");
         setSupportActionBar(myToolbar);
 
+        goImages = new GoImages();
         stonesImg = new View[BOARD_SIZE][BOARD_SIZE];
         dummyStonesImg = new View[BOARD_SIZE][BOARD_SIZE];
 
@@ -156,6 +159,8 @@ public class MainActivity extends AppCompatActivity {
                 boardImage.getViewTreeObserver().removeOnPreDrawListener(this);
                 boardWidth = boardImage.getMeasuredWidth();
                 boardHeight = boardImage.getMeasuredHeight();
+
+                goImages.regenerate(boardWidth, boardWidth / 11);
                 offsetW = (boardWidth ) / 20;
                 offsetH = (boardHeight ) / 20;
 
@@ -268,7 +273,7 @@ public class MainActivity extends AppCompatActivity {
                                 if (stonesImg[move.x][move.y] == null) {
                                     if (!userSettings.doubleclick) {
                                         tries++;
-                                        if (boardLogic.isValid(move, userSettings.metrics)) {
+                                        if (boardLogic.isValid(move, userSettings.metrics)) {Log.v(TAG, ">> 3");
                                             drawStone(move, v, true, false);
                                             currentScore += (1.0f / tries);
                                             tries = 0;
@@ -285,6 +290,7 @@ public class MainActivity extends AppCompatActivity {
                                     } else if (putDummy) {
                                         removeLastDummyStone(true);
                                         lastDummyMove = new Move(move.x, move.y, move.player);
+                                        Log.v(TAG, ">> 2");
                                         drawStone(move, v, true, true);
                                         putDummy = false;
 
@@ -294,6 +300,7 @@ public class MainActivity extends AppCompatActivity {
                                             tries++;
                                             if (boardLogic.isValid(move, userSettings.metrics)) {
                                                 putDummy = true;
+                                                Log.v(TAG, ">> 1");
                                                 drawStone(move, v, true, false);
                                                 currentScore += (1.0f / tries);
                                                 tries = 0;
@@ -310,7 +317,7 @@ public class MainActivity extends AppCompatActivity {
                                                 resetZoom();
                                         } else {
                                             removeLastDummyStone(true);
-                                            lastDummyMove = new Move(move.x, move.y, move.player);
+                                            lastDummyMove = new Move(move.x, move.y, move.player);Log.v(TAG, ">> 4");
                                             drawStone(move, v, true, true);
                                             putDummy = false;
 
@@ -337,6 +344,7 @@ public class MainActivity extends AppCompatActivity {
                     case R.id.nextBtn:
                         Move move = boardLogic.getNextMove();
                         if (move != null) {
+                            Log.v(TAG, ">>>>>>>> draw");
                             drawStone(move, v, true, false);
                             checkIfCapturing(move);
                         }
@@ -516,8 +524,9 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void drawStone(Move move, View view, boolean mark, boolean dummy) {
-    //    Log.i(TAG, "Putting stone at " + String.valueOf(move.x) + ":" + String.valueOf(move.y)
-      //          + " nr " + String.valueOf(boardLogic.currentIndex));
+        Log.i(TAG, "Putting stone at " + String.valueOf(move.x) + ":" + String.valueOf(move.y)
+                + " nr " + String.valueOf(boardLogic.currentIndex) + " of player "
+        + move.player);
 
         if (!dummy) {
             ImageView im = (ImageView)dummyStonesImg[move.x][move.y];
@@ -527,14 +536,19 @@ public class MainActivity extends AppCompatActivity {
             removeLastDummyStone(false);
         }
         ImageView img = new ImageView(context);
-        img.setImageDrawable(view.getResources().getDrawable(
-                move.player == Move.Player.BLACK ? R.drawable.black : R.drawable.white));
+        if (move.player == Move.Player.BLACK) {
+            img.setImageBitmap(goImages._black);
+        } else {
+            img.setImageBitmap(goImages._whites[(move.x * BOARD_SIZE + move.y) % goImages._whites.length]);
+        }
+     //   img.setImageDrawable(view.getResources().getDrawable(
+      //          move.player == Move.Player.BLACK ? R.drawable.black : R.drawable.white));
         if (dummy)
             img.setAlpha(0.5f);
 
-        int stoneSize = (int)(boardWidth) / 17;
-        if (move.player == Move.Player.WHITE)
-            stoneSize += stoneSize / 12;
+        int stoneSize = (int)(boardWidth) / 20;
+    //    if (move.player == Move.Player.WHITE)
+      //      stoneSize += stoneSize / 14;
 
         FrameLayout.LayoutParams stoneParam = new FrameLayout.LayoutParams(stoneSize, stoneSize);
         stoneParam.leftMargin = ((int) ((move.x + 1) * offsetW)) - ((int)stoneSize / 2);
@@ -544,7 +558,9 @@ public class MainActivity extends AppCompatActivity {
         if (!dummy) {
             stonesImg[move.x][move.y] = img;
             currentStoneViewId = frameLayout.indexOfChild(img);
-
+            Log.i(TAG, "Putting stone at " + String.valueOf(move.x) + ":" + String.valueOf(move.y)
+                    + " nr " + String.valueOf(boardLogic.currentIndex) + " of player "
+                    + move.player);
             boardLogic.addMoveToBoardState(move);
 
             if (mark)
@@ -560,17 +576,35 @@ public class MainActivity extends AppCompatActivity {
 
         Move lastDrawnMove = boardLogic.getPreviousMove();
         if (lastDrawnMove != null) {
-         //   Log.i(TAG, "last drawn stone at " + String.valueOf(lastDrawnMove.x) + ":" + String.valueOf(lastDrawnMove.y));
+            Log.i(TAG, "last drawn stone at " + String.valueOf(lastDrawnMove.x) + ":" + String.valueOf(lastDrawnMove.y));
 
-            ImageView iv = (ImageView) stonesImg[lastDrawnMove.x][lastDrawnMove.y];
+            Paint p = new Paint();
+            p.setColor(Color.RED);
+            p.setStrokeWidth(1);
+
+           ImageView iv = (ImageView) stonesImg[lastDrawnMove.x][lastDrawnMove.y];
             if (iv != null) {
-                iv.setImageResource(boardLogic.currentPlayer == Move.Player.BLACK ?
-                        R.drawable.white_marked : R.drawable.black_marked);
+                if (boardLogic.currentPlayer == Move.Player.BLACK) {
+
+                    Bitmap bm = goImages._whites[(lastDrawnMove.x * BOARD_SIZE + lastDrawnMove.y) % goImages._whites.length];
+                    Bitmap tempBitmap = Bitmap.createBitmap(bm.getWidth(), bm.getHeight(), Bitmap.Config.ARGB_8888);
+                    Canvas tempCanvas = new Canvas(tempBitmap);
+                    tempCanvas.drawBitmap(bm, 0, 0, null);
+                    tempCanvas.drawCircle(bm.getWidth() / 2.0f, bm.getHeight() / 2.0f, bm.getHeight() / 5.5f, p);
+                    iv.setImageBitmap(tempBitmap);
+                } else {
+                    Bitmap bm = goImages._black;
+                    Bitmap tempBitmap = Bitmap.createBitmap(bm.getWidth(), bm.getHeight(), Bitmap.Config.ARGB_8888);
+                    Canvas tempCanvas = new Canvas(tempBitmap);
+                    tempCanvas.drawBitmap(bm, 0, 0, null);
+                    tempCanvas.drawCircle(bm.getWidth() / 2.0f, bm.getHeight() / 2.0f, bm.getHeight() / 5.5f, p);
+                    iv.setImageBitmap(tempBitmap);
+                }
                 if (lastMarkedStone == null)
                     lastMarkedStone = iv;
                 else {
-                    lastMarkedStone.setImageResource(boardLogic.currentPlayer == Move.Player.BLACK ?
-                            R.drawable.black : R.drawable.white);
+                    lastMarkedStone.setImageBitmap(boardLogic.currentPlayer == Move.Player.BLACK ?
+                            goImages._black : goImages._whites[(lastDrawnMove.x * BOARD_SIZE + lastDrawnMove.y) % goImages._whites.length]);
                     lastMarkedStone = iv;
                 }
             }
@@ -590,12 +624,14 @@ public class MainActivity extends AppCompatActivity {
             if (filePath.length() >= 0 && filePath.substring(filePath.length() - 3).equals(FILE_EXT)) {
                 Log.i(TAG, "Opening file: " + filePath);
                 GameInfo game = boardLogic.parseSGFFile(filePath);
-                if (gamesStorage.gamesHistory.containsKey(game.md5)) {
-                    game = gamesStorage.gamesHistory.get(game.md5);
-                }
-                gameReady = (game != null && game.moves.size() != 0);
-                if (gameReady) {
-                    loadGame(game);
+                if (game != null) {
+                    if (gamesStorage.gamesHistory.containsKey(game.md5)) {
+                        game = gamesStorage.gamesHistory.get(game.md5);
+                    }
+                    gameReady = (game != null && game.moves.size() != 0);
+                    if (gameReady) {
+                        loadGame(game);
+                    }
                 }
 
             } else {
@@ -608,12 +644,14 @@ public class MainActivity extends AppCompatActivity {
             String name = data.getStringExtra("gamename");
             String sgf = gamesStorage.getDefaultGameAt(name);
             GameInfo game = boardLogic.parseSGFString(sgf);
-            if (gamesStorage.gamesHistory.containsKey(game.md5)) {
-                game = gamesStorage.gamesHistory.get(game.md5);
-            }
-            gameReady = (game != null && game.moves.size() != 0);
-            if (gameReady) {
-                loadGame(game);
+            if (game != null) {
+                if (gamesStorage.gamesHistory.containsKey(game.md5)) {
+                    game = gamesStorage.gamesHistory.get(game.md5);
+                }
+                gameReady = (game != null && game.moves.size() != 0);
+                if (gameReady) {
+                    loadGame(game);
+                }
             }
         }
     }

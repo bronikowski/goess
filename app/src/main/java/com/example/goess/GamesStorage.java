@@ -85,15 +85,11 @@ public class GamesStorage {
                 }
             }
         }
-
     }
 
     private String getNameFromContent(String content) {
         SGFParser parser = new SGFParser();
-        String blackPlayerName = parser.getFullName(content, SGFParser.BLACK_PLAYER_NAME);
-        String whitePlayerName = parser.getFullName(content, SGFParser.WHITE_PLAYER_NAME);
-
-        return blackPlayerName + " vs " + whitePlayerName;
+        return parser.getFullName(content);
     }
 
     private String getFileContent(InputStream inputStream) {

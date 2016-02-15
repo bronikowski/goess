@@ -8,20 +8,17 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.StringReader;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 
+import sgfparser.SGF;
+import sgfparser.SGFException;
+
 public class SGFParser {
 
     private static String TAG = "SGFParser";
-    private static char BLACK_MOVE = 'B';
-    private static char WHITE_MOVE = 'W';
-    static String BLACK_PLAYER_NAME = "PB";
-    static String WHITE_PLAYER_NAME = "PW";
-    static String BLACK_PLAYER_RANK = "BR";
-    static String WHITE_PLAYER_RANK = "WR";
-    static String RESULT = "RE";
 
     public SGFParser() {}
 
@@ -45,124 +42,87 @@ public class SGFParser {
         return null;
     }
 
-    public String getSgfTag(String content, String tag) {
-        int start = content.indexOf(tag);
+    public String getFullName(String content) {
+
+        StringReader sr= new StringReader(content);
+        BufferedReader reader = new BufferedReader(sr);
         String name = "";
-        if (start > 0) {
-            int end = content.substring(start).indexOf("]");
-            if (end > 0) {
-                name = content.substring(start + 3, start + end);
-            }
-        }
-        return name;
-    }
-
-    public String getFullName(String content, String player) {
-        String name = getSgfTag(content, player);
-        String rank = getSgfTag(content, player == BLACK_PLAYER_NAME ? BLACK_PLAYER_RANK : WHITE_PLAYER_RANK);
-        if (rank.length() > 0) {
-            name += " [" + rank + "]";
-        }
-        return name;
-    }
-
-    public String getResult(String content) {
-        return getSgfTag(content, RESULT);
-    }
-
-    private GameInfo getGame(String content) {
-        String blackPlayerName = "Black";
-        String whitePlayerName = "White";
-        String md5Input = "";
-
-        ArrayList<Move> list = new ArrayList<Move>();
-     //   String content = getFileContent(filePath);
-        Log.i(TAG, "Content " + content);
-
-        blackPlayerName = getFullName(content, BLACK_PLAYER_NAME);
-        whitePlayerName = getFullName(content, WHITE_PLAYER_NAME);
-        String result = getResult(content);
-
-        int start = content.indexOf(";B[");
-        if (start < 0) {
-            Log.e(TAG, "Could not find first move!");
-            return null;
-        }
-        int startOffset = 1;
-        if (start == 0)
-            startOffset = 0; //should not happen
-        Log.i(TAG, "start at " + start + "  " + content);
-
-        char next, a, b;
-        int endOffset = content.length() - 4;
-        boolean checked = false;
+        SGF sgf = new SGF(SGF.GAME_TYPE.GO, "Goess");
 
         try {
-            for (int i = start - startOffset; i < endOffset; ++i) {
-                next = content.charAt(i);
-                if (!checked && next == '(') {
-                    checked = true;
-                    endOffset = content.indexOf(")");
-                }
-                if (next == BLACK_MOVE || next == WHITE_MOVE) {
-                    a = content.charAt(i + 2);
-                    b = content.charAt(i + 2 + 1);
-                    Move move = new Move(a - 'a', b - 'a', content.charAt(i) == BLACK_MOVE ? Move.Player.BLACK : Move.Player.WHITE);
-                //    Log.i(TAG, "add   " + String.valueOf(move.x) + ":" + String.valueOf(move.y));
-                    list.add(move);
-                    md5Input += a;
-                    md5Input += b;
-                }
-            }
-        } catch (IndexOutOfBoundsException e) {
-            Log.e(TAG, "IndexOutOfBoundsException: " + e.getMessage());
-            list.clear();
+            sgf.load(reader);
+            reader.close();
+            String blackName = sgf.getBlackName();
+            String blackRank = sgf.getBlackRank();
+            Log.v(TAG, " >>>>>  " + blackRank);
+            blackName += " [" + blackRank + "]";
+            String whiteName = sgf.getWhiteName();
+            String whiteRank = sgf.getWhiteRank();
+            whiteName += " [" + whiteRank + "]";
+            name = blackName + " vs " + whiteName;
+
+        } catch (Exception e) {
+            e.printStackTrace();
         }
 
-        GameInfo gameInfo = new GameInfo();
-        gameInfo.moves.addAll(list);
-        gameInfo.md5 = md5(md5Input);
-        gameInfo.blackPlayerName = blackPlayerName;
-        gameInfo.whitePlayerName = whitePlayerName;
-        gameInfo.result = result;
-
-        return gameInfo;
+        return name;
     }
 
     public GameInfo getGameFromString(String content) {
-        return getGame(content);
+
+        StringReader sr= new StringReader(content);
+        BufferedReader reader = new BufferedReader(sr);
+
+        return parseSGF(reader);
     }
 
     public GameInfo getGameFromFile(String filePath) {
 
-        String content = getFileContent(filePath);
-        return getGame(content);
-    }
-
-
-    private String getFileContent(String filePath) {
-
-        Log.i(TAG, "Reading " + filePath);
-
         File fl = new File(filePath);
-        StringBuilder sb = new StringBuilder();
+        GameInfo gameInfo = null;
 
         try {
             FileInputStream fin = new FileInputStream(fl);
             BufferedReader reader = new BufferedReader(new InputStreamReader(fin));
+            gameInfo = parseSGF(reader);
 
-            String line = null;
-            while ((line = reader.readLine()) != null)
-                sb.append(line);
-
-            reader.close();
-
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
+        } catch (Exception e) {
             e.printStackTrace();
         }
-        return sb.toString();
+        return gameInfo;
     }
 
+    private GameInfo parseSGF(BufferedReader reader) {
+        SGF sgf = new SGF(SGF.GAME_TYPE.GO, "Goess");
+        GameInfo gameInfo = new GameInfo();
+        try {
+            sgf.load(reader);
+            reader.close();
+            ArrayList<SGF.Coord> coordsList = sgf.getMainLine();
+            ArrayList<Move> list = new ArrayList<Move>();
+
+            SGF.Player player = sgf.firstToMove();
+            String md5Input = "";
+
+            for (SGF.Coord coord : coordsList) {
+                if (!coord.equals(SGF.PASS)) {
+                    Move move = new Move(coord.col(), coord.row(), player == SGF.Player.BLACK ? Move.Player.BLACK : Move.Player.WHITE);
+                    player = (player == SGF.Player.BLACK) ? SGF.Player.WHITE : SGF.Player.BLACK;
+                    list.add(move);
+                    md5Input += coord.data();
+                }
+            }
+            gameInfo.moves.addAll(list);
+            gameInfo.md5 = md5(md5Input);
+            gameInfo.blackPlayerName = sgf.getBlackName();
+            gameInfo.whitePlayerName = sgf.getWhiteName();
+            gameInfo.blackPlayerRank = sgf.getBlackRank();
+            gameInfo.whitePlayerRank = sgf.getWhiteRank();
+            gameInfo.result = sgf.getVerbatimResult();
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return gameInfo;
+    }
 }

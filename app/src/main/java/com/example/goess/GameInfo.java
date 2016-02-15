@@ -10,11 +10,14 @@ public class GameInfo {
     String blackPlayerName = "Black";
     String whitePlayerName = "White";
     String result = "";
+    String blackPlayerRank = "";
+    String whitePlayerRank = "";
 
     GameInfo() {}
 
     public String getGameTitle() {
-        return blackPlayerName + " vs " + whitePlayerName;
+        return blackPlayerName + (blackPlayerRank.length() > 0 ? ( " [" + blackPlayerRank + "]") : "") +
+                " vs " + whitePlayerName + (whitePlayerRank.length() > 0 ? (" [" + whitePlayerRank + "]") : "");
     }
 
     public GameInfo(GameInfo game) {

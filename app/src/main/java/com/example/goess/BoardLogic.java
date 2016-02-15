@@ -29,6 +29,7 @@ public class BoardLogic {
         Move move = null;
         if (currentIndex < currentGame.moves.size())
             move = currentGame.moves.get(currentIndex++);
+
         return move;
     }
 
@@ -108,7 +109,8 @@ public class BoardLogic {
     public void addMoveToBoardState(Move move) {
         board[move.x][move.y] = move.player;
         currentPlayer = (move.player == Move.Player.BLACK) ? Move.Player.WHITE : Move.Player.BLACK;
-        Log.i(TAG, "added move, id    " + String.valueOf(currentGame.moves.size()));
+        Log.i(TAG, "added move, id    " + String.valueOf(currentGame.moves.size()) + " "
+        + currentPlayer);
     }
 
     private ArrayList<Move> getNeighbours(Move move, Move.Player color) {
