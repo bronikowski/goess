@@ -1,5 +1,6 @@
 /*
- * Shamelessly ripped from qgo.
+ * Taken from
+ * https://raw.githubusercontent.com/AmokHuginnsson/gameground/master/java_client/GoImages.java
  */
 
 package com.example.goess;
