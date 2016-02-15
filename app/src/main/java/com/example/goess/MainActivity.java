@@ -402,6 +402,14 @@ public class MainActivity extends AppCompatActivity {
         forwardBtn.setOnClickListener(listener);
     }
 
+    @Override
+    public void onBackPressed() {
+        if (isZoomed()) {
+            resetZoom();
+        } else
+            super.onBackPressed();
+    }
+
     private void setZoom(float x, float y) {
         frameLayout.setPivotX(x);
         frameLayout.setPivotY(y);
