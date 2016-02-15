@@ -231,7 +231,7 @@ public class BoardLogic {
 
     public boolean isValid(Move move, UserSettings.Metrics metrics) {
         if (board[move.x][move.y] != Move.Player.EMPTY) {
-            Log.i(TAG, "not valid move ");
+        //    Log.i(TAG, "not valid move ");
             return false;
         }
         boolean res = false;
@@ -242,7 +242,6 @@ public class BoardLogic {
                 calculateStandard(nextMove, move);
             else if (metrics == UserSettings.Metrics.EUCLID)
                 calculateEuclidean(nextMove, move);
-
             res = (score == 10);
         }
 
@@ -254,21 +253,21 @@ public class BoardLogic {
     private void calculateEuclidean(Move nextMove, Move move) {
         double diffX = Math.abs(nextMove.x - move.x);
         double diffY = Math.abs(nextMove.y - move.y);
+        score = 0;
         if (diffX < 10 && diffY < 10) {
             double maxDiff = Math.sqrt((diffX * diffX) + (diffY * diffY));
             if (maxDiff <= 10)
                 score = 10 - maxDiff;
-        } else
-            score = 0;
+        }
     }
 
     private void calculateStandard(Move nextMove, Move move) {
         double diffX = Math.abs(nextMove.x - move.x);
         double diffY = Math.abs(nextMove.y - move.y);
+        score = 0;
         double maxDiff = diffX + diffY;
         if (maxDiff <= 10)
             score = 10 - maxDiff;
-        else
-            score = 0;
+
     }
 }
