@@ -1,6 +1,6 @@
 package com.example.goess;
 
-import android.graphics.RectF;
+import android.text.Html;
 import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -52,6 +52,8 @@ import org.achartengine.model.XYMultipleSeriesDataset;
 import org.achartengine.model.XYSeries;
 import org.achartengine.renderer.XYMultipleSeriesRenderer;
 import org.achartengine.renderer.XYSeriesRenderer;
+
+import sgfparser.SGF;
 
 
 public class MainActivity extends AppCompatActivity {
@@ -273,7 +275,8 @@ public class MainActivity extends AppCompatActivity {
                                 if (stonesImg[move.x][move.y] == null) {
                                     if (!userSettings.doubleclick) {
                                         tries++;
-                                        if (boardLogic.isValid(move, userSettings.metrics)) {Log.v(TAG, ">> 3");
+                                        if (boardLogic.isValid(move, userSettings.metrics)) {
+                                            Log.v(TAG, ">> 3");
                                             drawStone(move, v, true, false);
                                             currentScore += (1.0f / tries);
                                             tries = 0;
@@ -317,7 +320,8 @@ public class MainActivity extends AppCompatActivity {
                                                 resetZoom();
                                         } else {
                                             removeLastDummyStone(true);
-                                            lastDummyMove = new Move(move.x, move.y, move.player);Log.v(TAG, ">> 4");
+                                            lastDummyMove = new Move(move.x, move.y, move.player);
+                                            Log.v(TAG, ">> 4");
                                             drawStone(move, v, true, true);
                                             putDummy = false;
 
@@ -400,6 +404,11 @@ public class MainActivity extends AppCompatActivity {
         prevBtn.setOnClickListener(listener);
         rewindBtn.setOnClickListener(listener);
         forwardBtn.setOnClickListener(listener);
+
+        if (userSettings.showAbout) {
+            showAbout();
+            userSettings.setShowAbout(false);
+        }
     }
 
     @Override
@@ -747,6 +756,9 @@ public class MainActivity extends AppCompatActivity {
             case R.id.action_settings:
                 showSettings();
                 return true;
+            case R.id.action_about:
+                showAbout();
+                return true;
             default:
                 return super.onOptionsItemSelected(item);
         }
@@ -774,6 +786,22 @@ public class MainActivity extends AppCompatActivity {
         tries = userMoves = 0;
         currentScore = 0;
 
+    }
+
+    private void showAbout() {
+        String quote = "“To follow the path, look to the master, follow the master, " +
+                "walk with the master, see through the master, become the master.”";
+
+        String msg = "<b>How to play</b><br><br>Load a game and try to guess the next move!<br><br>" +
+                    "Skipped moves are not counted against the score.<br><br>" +
+                    "You can save current score when the game is finished.<br>";
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setMessage(Html.fromHtml("<i><font color=grey>" + quote + "</font></i><br><br><br>" + msg));
+      //  builder.setNeutralButton("Ok", null);
+
+        AlertDialog alert = builder.create();
+        alert.setCanceledOnTouchOutside(true);
+        alert.show();
     }
 
     private void showRecentGamesList() {

@@ -15,6 +15,7 @@ public class UserSettings {
         THICK
     }
 
+    boolean showAbout;
     boolean showBoardCoords;
     boolean showIndicator;
     boolean doubleclick;
@@ -26,6 +27,7 @@ public class UserSettings {
     UserSettings(SharedPreferences preferences) {
         this.preferences = preferences;
         if (preferences != null) {
+            showAbout = preferences.getBoolean("showAbout", true);
             showBoardCoords = preferences.getBoolean("showBoardCoords", false);
             showIndicator = preferences.getBoolean("showIndicator", true);
             doubleclick = preferences.getBoolean("doubleclick", true);
@@ -35,6 +37,7 @@ public class UserSettings {
             String line = preferences.getString("lineSize", LineSize.NORMAL.toString());
             lineSize = LineSize.valueOf(line);
         } else {
+            setShowAbout(true);
             setIndicator(true);
             setDoubleClick(false);
             setZoom(true);
@@ -42,6 +45,11 @@ public class UserSettings {
             setLineSize(LineSize.NORMAL);
             setMetrics(Metrics.EUCLID);
         }
+    }
+
+    public void setShowAbout(boolean show) {
+        showAbout = show;
+        preferences.edit().putBoolean("showAbout", show).apply();
     }
 
     public void setShowBoardCoords(boolean show) {

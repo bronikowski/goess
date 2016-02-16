@@ -32,29 +32,25 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:adjustViewBounds="true"
-            android:visibility="invisible"
-            android:src="@drawable/black" />
+            android:visibility="invisible"/>
         <ImageView
             android:id="@+id/whiteImg"
             android:layout_width="28dp"
             android:layout_height="28dp"
             android:adjustViewBounds="true"
-            android:visibility="invisible"
-            android:src="@drawable/white" />
+            android:visibility="invisible" />
         <ImageView
             android:id="@+id/blackMarked"
             android:layout_width="28dp"
             android:layout_height="28dp"
             android:adjustViewBounds="true"
-            android:visibility="invisible"
-            android:src="@drawable/black_marked" />
+            android:visibility="invisible" />
         <ImageView
             android:id="@+id/whiteMarked"
             android:layout_width="28dp"
             android:layout_height="28dp"
             android:adjustViewBounds="true"
-            android:visibility="invisible"
-            android:src="@drawable/white_marked" />
+            android:visibility="invisible" />
 
         <View
             android:id="@+id/horiz"
