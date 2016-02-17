@@ -16,7 +16,7 @@
 
         <activity
             android:screenOrientation="portrait"
-            android:name=".MainActivity"
+            android:name="org.happydroid.goess.MainActivity"
             android:label="Goess"
             android:theme="@style/AppTheme">
             <intent-filter>
@@ -26,7 +26,7 @@
             </intent-filter>
         </activity>
         <activity
-            android:name=".RepoActivity"
+            android:name="org.happydroid.goess.RepoActivity"
             android:label="Game repository"
             android:theme="@style/Theme.AppCompat.Light.Dialog" >
 

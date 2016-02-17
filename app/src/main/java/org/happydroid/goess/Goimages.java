@@ -3,7 +3,7 @@
  * https://raw.githubusercontent.com/AmokHuginnsson/gameground/master/java_client/GoImages.java
  */
 
-package com.example.goess;
+package org.happydroid.goess;
 
 import android.graphics.Bitmap;
 

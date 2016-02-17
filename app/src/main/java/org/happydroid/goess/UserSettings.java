@@ -1,4 +1,4 @@
-package com.example.goess;
+package org.happydroid.goess;
 
 
 import android.content.SharedPreferences;

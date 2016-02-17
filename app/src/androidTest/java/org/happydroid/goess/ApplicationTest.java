@@ -1,4 +1,4 @@
-package com.example.goess;
+package org.happydroid.goess;
 
 import android.app.Application;
 import android.test.ApplicationTestCase;

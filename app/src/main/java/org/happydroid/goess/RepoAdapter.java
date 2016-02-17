@@ -1,8 +1,7 @@
-package com.example.goess;
+package org.happydroid.goess;
 
 import java.util.ArrayList;
 import android.app.Activity;
-import android.text.Layout;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -10,7 +9,6 @@ import android.widget.AbsListView;
 import android.widget.BaseExpandableListAdapter;
 import android.widget.CheckedTextView;
 import android.widget.ImageView;
-import android.widget.LinearLayout;
 import android.widget.TextView;
 
 @SuppressWarnings("unchecked")

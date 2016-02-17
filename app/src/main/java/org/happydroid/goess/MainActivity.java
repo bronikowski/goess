@@ -1,4 +1,4 @@
-package com.example.goess;
+package org.happydroid.goess;
 
 import android.text.Html;
 import android.app.AlertDialog;
@@ -23,7 +23,6 @@ import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.MotionEvent;
-import android.view.ScaleGestureDetector;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewTreeObserver;
@@ -52,8 +51,6 @@ import org.achartengine.model.XYMultipleSeriesDataset;
 import org.achartengine.model.XYSeries;
 import org.achartengine.renderer.XYMultipleSeriesRenderer;
 import org.achartengine.renderer.XYSeriesRenderer;
-
-import sgfparser.SGF;
 
 
 public class MainActivity extends AppCompatActivity {
@@ -797,8 +794,6 @@ public class MainActivity extends AppCompatActivity {
                     "You can save current score when the game is finished.<br>";
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder.setMessage(Html.fromHtml("<i><font color=grey>" + quote + "</font></i><br><br><br>" + msg));
-      //  builder.setNeutralButton("Ok", null);
-
         AlertDialog alert = builder.create();
         alert.setCanceledOnTouchOutside(true);
         alert.show();
