@@ -268,7 +268,7 @@ public class MainActivity extends AppCompatActivity {
                                     y = 19;
 
                                 Move move = new Move(x - 1, y - 1, boardLogic.currentPlayer);
-
+                                boolean valid = false;
                                 if (stonesImg[move.x][move.y] == null) {
                                     if (!userSettings.doubleclick) {
                                         tries++;
@@ -279,7 +279,7 @@ public class MainActivity extends AppCompatActivity {
                                             tries = 0;
                                             userMoves++;
                                             checkIfCapturing(move);
-                                            updateGameInfo(boardLogic.currentGame.getGameTitle());
+                                            valid = true;
                                         } else {
                                             currentScore += 0;
                                         }
@@ -306,13 +306,14 @@ public class MainActivity extends AppCompatActivity {
                                                 tries = 0;
                                                 userMoves++;
                                                 checkIfCapturing(move);
-                                                updateGameInfo(boardLogic.currentGame.getGameTitle());
+                                                valid = true;
                                             } else {
                                                 currentScore += 0;
                                                 removeLastDummyStone(true);
                                             }
                                             float totalScore = (currentScore / userMoves) * 100;
                                             updateScoreLabel(totalScore);
+
                                             if (userSettings.zoom)
                                                 resetZoom();
                                         } else {
@@ -324,6 +325,8 @@ public class MainActivity extends AppCompatActivity {
 
                                         }
                                     }
+                                    if (valid)
+                                        updateGameInfo(boardLogic.currentGame.getGameTitle());
                                 }
                             }
                         }
@@ -710,7 +713,7 @@ public class MainActivity extends AppCompatActivity {
 
     private void askIfAddToHistory() {
         AlertDialog alertDialog = new AlertDialog.Builder(this).create();
-        alertDialog.setTitle("Game finished with score " + String.valueOf(scoreLabel.getText()));
+        alertDialog.setTitle("Game finished with score " + String.valueOf((int)lastScore) + "%");
         alertDialog.setMessage("Add this score to game history?");
         alertDialog.setButton(AlertDialog.BUTTON_POSITIVE, "OK",
                 new DialogInterface.OnClickListener() {
