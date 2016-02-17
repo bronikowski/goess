@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.example.goess"
+    package="org.happydroid.goess"
     xmlns:tools="http://schemas.android.com/tools">
     <uses-sdk  android:minSdkVersion="19" android:targetSdkVersion="23"/>
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
@@ -16,7 +16,7 @@
 
         <activity
             android:screenOrientation="portrait"
-            android:name="org.happydroid.goess.MainActivity"
+            android:name=".MainActivity"
             android:label="Goess"
             android:theme="@style/AppTheme">
             <intent-filter>
@@ -26,7 +26,7 @@
             </intent-filter>
         </activity>
         <activity
-            android:name="org.happydroid.goess.RepoActivity"
+            android:name=".RepoActivity"
             android:label="Game repository"
             android:theme="@style/Theme.AppCompat.Light.Dialog" >
 

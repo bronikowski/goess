@@ -11,7 +11,7 @@ import android.widget.CheckedTextView;
 import android.widget.ImageView;
 import android.widget.TextView;
 
-@SuppressWarnings("unchecked")
+
 public class RepoAdapter extends BaseExpandableListAdapter {
 
     public ArrayList<String> groupItem, tempChild;
