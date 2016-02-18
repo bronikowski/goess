@@ -285,7 +285,7 @@ public class SGF {
         if ( _currentMove.value().setup() == null ) {
             _currentMove.value().setSetup( new Setup() );
         }
-        _currentMove.value().addPosition( $position, $coord );
+        _currentMove.value().addPosition($position, $coord);
         return;
     }
 
@@ -450,6 +450,14 @@ public class SGF {
 
     public String getVerbatimResult() {
         return ( _verbatimResult );
+    }
+
+    public String getDate() {
+        return ( _date );
+    }
+
+    public String getEvent() {
+        return ( _event );
     }
 
     public ArrayList<Coord> getMainLine() {

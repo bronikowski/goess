@@ -12,12 +12,18 @@ public class GameInfo {
     String result = "";
     String blackPlayerRank = "";
     String whitePlayerRank = "";
+    String date = "";
+    String event = "";
 
     GameInfo() {}
 
-    public String getGameTitle() {
+    public String getGameTitleWithRanks() {
         return blackPlayerName + (blackPlayerRank.length() > 0 ? ( " [" + blackPlayerRank + "]") : "") +
                 " vs " + whitePlayerName + (whitePlayerRank.length() > 0 ? (" [" + whitePlayerRank + "]") : "");
+    }
+
+    public String getGameTitle() {
+        return blackPlayerName + " vs " + whitePlayerName;
     }
 
     public GameInfo(GameInfo game) {
@@ -28,6 +34,8 @@ public class GameInfo {
         this.blackPlayerName = game.blackPlayerName;
         this.whitePlayerName = game.whitePlayerName;
         this.result = game.result;
+        this.date = game.date;
+        this.event = game.event;
     }
 
 }

@@ -298,7 +298,6 @@ public class MainActivity extends AppCompatActivity {
                                             tries++;
                                             if (boardLogic.isValid(move, userSettings.metrics)) {
                                                 putDummy = true;
-                                                Log.v(TAG, ">> 1");
                                                 drawStone(move, v, true, false);
                                                 currentScore += (1.0f / tries);
                                                 tries = 0;
@@ -345,7 +344,6 @@ public class MainActivity extends AppCompatActivity {
                     case R.id.nextBtn:
                         Move move = boardLogic.getNextMove();
                         if (move != null) {
-                            Log.v(TAG, ">>>>>>>> draw");
                             drawStone(move, v, true, false);
                             checkIfCapturing(move);
                         }
@@ -478,7 +476,7 @@ public class MainActivity extends AppCompatActivity {
                 g.score.addAll(gamesStorage.gamesHistory.get(g.md5).score);
             }
             Log.v(TAG, "read recent  games, game score:  " + String.valueOf(g.score.size()));
-            gamesStorage.addRecentGame(g.getGameTitle(), g);
+            gamesStorage.addRecentGame(g.getGameTitleWithRanks(), g);
         }
     }
 
@@ -785,13 +783,13 @@ public class MainActivity extends AppCompatActivity {
 
     private void loadGame(GameInfo game) {
         clearBoard();
-
         boardLogic.currentGame = game;
-
         updateGameInfo(game.getGameTitle());
         updateScoreLabel(0);
+        ImageView view = (ImageView) findViewById(R.id.gameInfoImg);
+        view.setVisibility(View.VISIBLE);
         Log.v(TAG, "load  game " + game.md5 + "   score size " + String.valueOf(boardLogic.currentGame.score.size()));
-        gamesStorage.addRecentGame(game.getGameTitle(), game);
+        gamesStorage.addRecentGame(game.getGameTitleWithRanks(), game);
         saveCurrentGameToRecentPrefs();
         tries = userMoves = 0;
         currentScore = 0;
@@ -845,6 +843,32 @@ public class MainActivity extends AppCompatActivity {
         alert.setCanceledOnTouchOutside(true);
         alert.setOnShowListener(new RecentGamesListener());
         alert.show();
+    }
+
+    public void onGameInfoImgClicked(View v) {
+        if (gameReady) {
+            String black = "Black: " + boardLogic.currentGame.blackPlayerName +
+                    (boardLogic.currentGame.blackPlayerRank.length() > 0 ?
+                            (" [" + boardLogic.currentGame.blackPlayerRank + "]") : "");
+            String white = "White: " + boardLogic.currentGame.whitePlayerName +
+                    (boardLogic.currentGame.whitePlayerRank.length() > 0 ?
+                            (" [" + boardLogic.currentGame.whitePlayerRank + "]") : "");
+            String result = boardLogic.currentGame.result;
+
+            if (result.length() > 0) {
+                result = "\nResult: " + result;
+            }
+            String date = boardLogic.currentGame.date;
+            if (date.length() > 0) {
+                date = "\nDate: " + date;
+            }
+            String event =  boardLogic.currentGame.event;
+            if (event.length() > 0) {
+                event = "\nEvent: " + event;
+            }
+
+            showAlertMessage(black + "\n" + white + result + date + event);
+        }
     }
 
     private void buildGraph() {

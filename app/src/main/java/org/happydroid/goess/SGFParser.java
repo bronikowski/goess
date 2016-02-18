@@ -116,6 +116,8 @@ public class SGFParser {
             gameInfo.blackPlayerRank = sgf.getBlackRank();
             gameInfo.whitePlayerRank = sgf.getWhiteRank();
             gameInfo.result = sgf.getVerbatimResult();
+            gameInfo.date = sgf.getDate();
+            gameInfo.event = sgf.getEvent();
 
         } catch (Exception e) {
             e.printStackTrace();

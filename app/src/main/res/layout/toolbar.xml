@@ -8,4 +8,17 @@
     android:layout_height="wrap_content"
     android:background="@color/colorPrimary"
     android:theme="@style/ThemeOverlay.AppCompat.Dark.ActionBar"
-    app:titleTextAppearance="@style/ToolbarTitle" />
+    app:subtitleTextAppearance="@style/ToolbarSubtitle"
+    app:titleTextAppearance="@style/ToolbarTitle">
+
+
+    <ImageView
+        android:id="@+id/gameInfoImg"
+        android:layout_width="20dp"
+        android:visibility="gone"
+        android:layout_height="wrap_content"
+        android:layout_gravity="right"
+        android:onClick="onGameInfoImgClicked"
+        android:src="@drawable/ic_dialog_info" />
+
+</android.support.v7.widget.Toolbar>
