@@ -273,7 +273,6 @@ public class MainActivity extends AppCompatActivity {
                                     if (!userSettings.doubleclick) {
                                         tries++;
                                         if (boardLogic.isValid(move, userSettings.metrics)) {
-                                            Log.v(TAG, ">> 3");
                                             drawStone(move, v, true, false);
                                             currentScore += (1.0f / tries);
                                             tries = 0;
@@ -290,7 +289,6 @@ public class MainActivity extends AppCompatActivity {
                                     } else if (putDummy) {
                                         removeLastDummyStone(true);
                                         lastDummyMove = new Move(move.x, move.y, move.player);
-                                        Log.v(TAG, ">> 2");
                                         drawStone(move, v, true, true);
                                         putDummy = false;
 
@@ -319,7 +317,6 @@ public class MainActivity extends AppCompatActivity {
                                         } else {
                                             removeLastDummyStone(true);
                                             lastDummyMove = new Move(move.x, move.y, move.player);
-                                            Log.v(TAG, ">> 4");
                                             drawStone(move, v, true, true);
                                             putDummy = false;
 
@@ -420,6 +417,19 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void setZoom(float x, float y) {
+
+        if (x >= (boardWidth / 2)) {
+            int diff = ((int)x - (boardWidth / 2));
+            x += (diff * 2);
+            if (x > boardWidth)
+                x = boardWidth;
+        } else {
+            int diff = ((boardWidth / 2) - (int) x);
+            x -= (diff * 2);
+            if (x < 0)
+                x = 0;
+        }
+
         frameLayout.setPivotX(x);
         frameLayout.setPivotY(y);
         frameLayout.setScaleX(BOARD_SCALE_FACTOR);
