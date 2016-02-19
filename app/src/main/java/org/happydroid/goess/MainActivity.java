@@ -186,30 +186,6 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public boolean onTouch(View v, MotionEvent event) {
 
-                int lineSize = 2;
-                if (userSettings.lineSize == UserSettings.LineSize.THICK)
-                    if (boardWidth > 500)
-                        lineSize = 4;
-                    else
-                        lineSize = 3;
-                else if (userSettings.lineSize == UserSettings.LineSize.NORMAL) {
-                    if (boardWidth > 500)
-                        lineSize = 3;
-                    else
-                        lineSize = 2;
-
-                } else if (userSettings.lineSize == UserSettings.LineSize.TINY) {
-                    if (boardWidth > 500)
-                        lineSize = 2;
-                    else
-                        lineSize = 1;
-                }
-
-                FrameLayout.LayoutParams horizParam = new FrameLayout.LayoutParams(lineSize, boardWidth);
-                FrameLayout.LayoutParams verticParam = new FrameLayout.LayoutParams(boardHeight, lineSize);
-
-                ViewGroup owner = (ViewGroup) stoneImage.getParent();
-
                 int action = event.getAction();
 
                 switch (action) {
@@ -220,36 +196,18 @@ public class MainActivity extends AppCompatActivity {
                         } else if (userSettings.zoom && !isZoomed()) {
                             float toolbarHeight = myToolbar.getHeight();
                             setZoom(event.getX(), event.getY() - toolbarHeight);
-                        }
+                        } else //red lines not showing on first touch if zoom is on
+                            drawRedLines(event.getX(), event.getY(), horiz, vertic);
 
                         break;
                     case MotionEvent.ACTION_MOVE:
                         if (gameReady) {
-                            owner.removeView(horiz);
-                            owner.removeView(vertic);
-
-                            int hx = Math.round((float) event.getX() / offsetW);
-                            int vy = Math.round((float) event.getY() / offsetH);
-
-                            if (hx > 19)
-                                hx = 19;
-                            if (vy > 19)
-                                vy = 19;
-
-                            horizParam.leftMargin = ((int) (hx * offsetW));
-                            horizParam.bottomMargin = (int) event.getY();
-                            horiz.setVisibility(View.VISIBLE);
-                            frameLayout.addView(horiz, horizParam);
-
-                            verticParam.rightMargin = (int) event.getX();
-                            verticParam.topMargin = ((int) (vy * offsetH));
-                            vertic.setVisibility(View.VISIBLE);
-                            if (verticParam.topMargin < boardHeight && verticParam.topMargin >= offsetH)
-                                frameLayout.addView(vertic, verticParam);
+                            drawRedLines(event.getX(), event.getY(), horiz, vertic);
                         }
                         break;
                     case MotionEvent.ACTION_UP:
                         if (gameReady) {
+                            ViewGroup owner = (ViewGroup) stoneImage.getParent();
                             owner.removeView(horiz);
                             owner.removeView(vertic);
 
@@ -404,6 +362,56 @@ public class MainActivity extends AppCompatActivity {
             showAbout();
             userSettings.setShowAbout(false);
         }
+    }
+
+    private int getLineSize() {
+        int lineSize = 3;
+        if (userSettings.lineSize == UserSettings.LineSize.THICK)
+            if (boardWidth > 500)
+                lineSize = 5;
+            else
+                lineSize = 4;
+        else if (userSettings.lineSize == UserSettings.LineSize.NORMAL) {
+            if (boardWidth > 500)
+                lineSize = 4;
+            else
+                lineSize = 3;
+
+        } else if (userSettings.lineSize == UserSettings.LineSize.TINY) {
+            if (boardWidth > 500)
+                lineSize = 3;
+            else
+                lineSize = 2;
+        }
+        return lineSize;
+    }
+
+    private void drawRedLines(float x, float y, View horiz, View vertic) {
+        ViewGroup owner = (ViewGroup) stoneImage.getParent();
+        owner.removeView(horiz);
+        owner.removeView(vertic);
+
+        int hx = Math.round(x / offsetW);
+        int vy = Math.round(y / offsetH);
+
+        if (hx > 19)
+            hx = 19;
+        if (vy > 19)
+            vy = 19;
+
+        FrameLayout.LayoutParams horizParam = new FrameLayout.LayoutParams(getLineSize(), boardWidth);
+        FrameLayout.LayoutParams verticParam = new FrameLayout.LayoutParams(boardHeight, getLineSize());
+
+        horizParam.leftMargin = ((int) (hx * offsetW));
+        horizParam.bottomMargin = (int) y;
+        horiz.setVisibility(View.VISIBLE);
+        frameLayout.addView(horiz, horizParam);
+
+        verticParam.rightMargin = (int) x;
+        verticParam.topMargin = ((int) (vy * offsetH));
+        vertic.setVisibility(View.VISIBLE);
+        if (verticParam.topMargin < boardHeight && verticParam.topMargin >= offsetH)
+            frameLayout.addView(vertic, verticParam);
     }
 
     @Override

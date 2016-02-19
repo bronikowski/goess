@@ -14,7 +14,8 @@
 
     <ImageView
         android:id="@+id/gameInfoImg"
-        android:layout_width="20dp"
+        android:layout_width="25dp"
+        android:paddingRight="7dp"
         android:visibility="gone"
         android:layout_height="wrap_content"
         android:layout_gravity="right"
