@@ -193,11 +193,24 @@ public class MainActivity extends AppCompatActivity {
                         if (!gameReady) {
                             Toast.makeText(getApplicationContext(), "Please choose a game!",
                                     Toast.LENGTH_SHORT).show();
-                        } else if (userSettings.zoom && !isZoomed()) {
-                            float toolbarHeight = myToolbar.getHeight();
-                            setZoom(event.getX(), event.getY() - toolbarHeight);
-                        } else //red lines not showing on first touch if zoom is on
-                            drawRedLines(event.getX(), event.getY(), horiz, vertic);
+                        } else {
+                           if (userSettings.doubleclick) {
+
+                               int x = getXCoord(event.getX());
+                               int y = getYCoord(event.getY());
+
+
+                               Move move = new Move(x - 1, y - 1, boardLogic.currentPlayer);
+                               ImageView im = (ImageView) dummyStonesImg[move.x][move.y];
+                               if (im == null)
+                                   removeLastDummyStone(true);
+                           }
+                            if (userSettings.zoom && !isZoomed()) {
+                                float toolbarHeight = myToolbar.getHeight();
+                                setZoom(event.getX(), event.getY() - toolbarHeight);
+                            } else //red lines not showing on first touch if zoom is on
+                                drawRedLines(event.getX(), event.getY(), horiz, vertic);
+                        }
 
                         break;
                     case MotionEvent.ACTION_MOVE:
@@ -217,13 +230,8 @@ public class MainActivity extends AppCompatActivity {
                             if (eventX > 15 && eventX < (boardWidth - 10)
                                     && eventY > 15 && eventY < (boardHeight - 10)) {
 
-                                int x = Math.round((float) eventX / offsetW);
-                                int y = Math.round((float) eventY / offsetH);
-
-                                if (x > 19)
-                                    x = 19;
-                                if (y > 19)
-                                    y = 19;
+                                int x = getXCoord(eventX);
+                                int y = getXCoord(eventY);
 
                                 Move move = new Move(x - 1, y - 1, boardLogic.currentPlayer);
                                 boolean valid = false;
@@ -245,7 +253,6 @@ public class MainActivity extends AppCompatActivity {
                                         if (userSettings.zoom)
                                             resetZoom();
                                     } else if (putDummy) {
-                                        removeLastDummyStone(true);
                                         lastDummyMove = new Move(move.x, move.y, move.player);
                                         drawStone(move, v, true, true);
                                         putDummy = false;
@@ -386,18 +393,29 @@ public class MainActivity extends AppCompatActivity {
         return lineSize;
     }
 
+    private int getXCoord(float eventX) {
+        int x = Math.round(eventX / offsetW);
+        if (x > 19)
+            x = 19;
+
+        return x;
+    }
+
+    private int getYCoord(float eventY) {
+        int y = Math.round(eventY / offsetH);
+        if (y > 19)
+            y = 19;
+
+        return y;
+    }
+
     private void drawRedLines(float x, float y, View horiz, View vertic) {
         ViewGroup owner = (ViewGroup) stoneImage.getParent();
         owner.removeView(horiz);
         owner.removeView(vertic);
 
-        int hx = Math.round(x / offsetW);
-        int vy = Math.round(y / offsetH);
-
-        if (hx > 19)
-            hx = 19;
-        if (vy > 19)
-            vy = 19;
+        int hx = getXCoord(x);
+        int vy = getYCoord(y);
 
         FrameLayout.LayoutParams horizParam = new FrameLayout.LayoutParams(getLineSize(), boardWidth);
         FrameLayout.LayoutParams verticParam = new FrameLayout.LayoutParams(boardHeight, getLineSize());
