@@ -10,18 +10,24 @@ public class UserSettings {
         TAXICAB
     }
     enum LineSize {
-        TINY ,
+        TINY,
         NORMAL,
         THICK
+    }
+
+    enum Zoom {
+        CENTER_TOUCH,
+        CENTER_CANVAS,
+        NONE
     }
 
     boolean showAbout;
     boolean showBoardCoords;
     boolean showIndicator;
     boolean doubleclick;
-    boolean zoom;
     Metrics metrics;
     LineSize lineSize;
+    Zoom zoom;
     SharedPreferences preferences;
 
     UserSettings(SharedPreferences preferences) {
@@ -31,19 +37,20 @@ public class UserSettings {
             showBoardCoords = preferences.getBoolean("showBoardCoords", false);
             showIndicator = preferences.getBoolean("showIndicator", true);
             doubleclick = preferences.getBoolean("doubleclick", true);
-            zoom = preferences.getBoolean("zoom", true);
             String metric = preferences.getString("metric", Metrics.EUCLID.toString());
             metrics = Metrics.valueOf(metric);
             String line = preferences.getString("lineSize", LineSize.NORMAL.toString());
             lineSize = LineSize.valueOf(line);
+            String zoomkind = preferences.getString("zoom", Zoom.CENTER_TOUCH.toString());
+            zoom = Zoom.valueOf(zoomkind);
         } else {
             setShowAbout(true);
             setIndicator(true);
             setDoubleClick(false);
-            setZoom(true);
             setShowBoardCoords(false);
             setLineSize(LineSize.NORMAL);
             setMetrics(Metrics.EUCLID);
+            setZoom(Zoom.CENTER_TOUCH);
         }
     }
 
@@ -62,9 +69,9 @@ public class UserSettings {
         preferences.edit().putBoolean("showIndicator", show).apply();
     }
 
-    public void setZoom(boolean onoff) {
-        zoom = onoff;
-        preferences.edit().putBoolean("zoom", onoff).apply();
+    public void setZoom(Zoom zoom) {
+        this.zoom = zoom;
+        preferences.edit().putString("zoom", zoom.toString()).apply();
     }
 
     public void setDoubleClick(boolean click) {

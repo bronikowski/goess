@@ -199,13 +199,12 @@ public class MainActivity extends AppCompatActivity {
                                int x = getXCoord(event.getX());
                                int y = getYCoord(event.getY());
 
-
                                Move move = new Move(x - 1, y - 1, boardLogic.currentPlayer);
                                ImageView im = (ImageView) dummyStonesImg[move.x][move.y];
                                if (im == null)
                                    removeLastDummyStone(true);
                            }
-                            if (userSettings.zoom && !isZoomed()) {
+                            if ((userSettings.zoom != UserSettings.Zoom.NONE) && !isZoomed()) {
                                 float toolbarHeight = myToolbar.getHeight();
                                 setZoom(event.getX(), event.getY() - toolbarHeight);
                             } else //red lines not showing on first touch if zoom is on
@@ -250,7 +249,7 @@ public class MainActivity extends AppCompatActivity {
                                         }
                                         float totalScore = (currentScore / userMoves) * 100;
                                         updateScoreLabel(totalScore);
-                                        if (userSettings.zoom)
+                                        if (userSettings.zoom != UserSettings.Zoom.NONE)
                                             resetZoom();
                                     } else if (putDummy) {
                                         lastDummyMove = new Move(move.x, move.y, move.player);
@@ -276,7 +275,7 @@ public class MainActivity extends AppCompatActivity {
                                             float totalScore = (currentScore / userMoves) * 100;
                                             updateScoreLabel(totalScore);
 
-                                            if (userSettings.zoom)
+                                            if (userSettings.zoom != UserSettings.Zoom.NONE)
                                                 resetZoom();
                                         } else {
                                             removeLastDummyStone(true);
@@ -442,16 +441,18 @@ public class MainActivity extends AppCompatActivity {
 
     private void setZoom(float x, float y) {
 
-        if (x >= (boardWidth / 2)) {
-            int diff = ((int)x - (boardWidth / 2));
-            x += (diff * 2);
-            if (x > boardWidth)
-                x = boardWidth;
-        } else {
-            int diff = ((boardWidth / 2) - (int) x);
-            x -= (diff * 2);
-            if (x < 0)
-                x = 0;
+        if (userSettings.zoom == UserSettings.Zoom.CENTER_TOUCH) {
+            if (x >= (boardWidth / 2)) {
+                int diff = ((int) x - (boardWidth / 2));
+                x += (diff * 2);
+                if (x > boardWidth)
+                    x = boardWidth;
+            } else {
+                int diff = ((boardWidth / 2) - (int) x);
+                x -= (diff * 2);
+                if (x < 0)
+                    x = 0;
+            }
         }
 
         frameLayout.setPivotX(x);
@@ -592,14 +593,11 @@ public class MainActivity extends AppCompatActivity {
         } else {
             img.setImageBitmap(goImages._whites[(move.x * BOARD_SIZE + move.y) % goImages._whites.length]);
         }
-     //   img.setImageDrawable(view.getResources().getDrawable(
-      //          move.player == Move.Player.BLACK ? R.drawable.black : R.drawable.white));
+
         if (dummy)
             img.setAlpha(0.5f);
 
         int stoneSize = (int)(boardWidth) / 20;
-    //    if (move.player == Move.Player.WHITE)
-      //      stoneSize += stoneSize / 14;
 
         FrameLayout.LayoutParams stoneParam = new FrameLayout.LayoutParams(stoneSize, stoneSize);
         stoneParam.leftMargin = ((int) ((move.x + 1) * offsetW)) - ((int)stoneSize / 2);
@@ -1024,9 +1022,10 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void showSettings() {
-        final String[] items = {"Show board coordinates", "Show guess indicator", "Double-click move", "Zoom board"};
+        final String[] items = {"Show board coordinates", "Show guess indicator", "Double-click move"};
         final String[] radioItemLineSize = {"Board lines thickness"};
         final String[] radioItemMetrics = {"Metrics"};
+        final String[] radioItemZoom = {"Zoom"};
 
         AlertDialog.Builder dialog = new AlertDialog.Builder(this);
         dialog.setTitle("Customize Goess");
@@ -1042,7 +1041,6 @@ public class MainActivity extends AppCompatActivity {
         lv.setItemChecked(0, userSettings.showBoardCoords);
         lv.setItemChecked(1, userSettings.showIndicator);
         lv.setItemChecked(2, userSettings.doubleclick);
-        lv.setItemChecked(3, userSettings.zoom);
 
         ListView lv2 = (ListView) settingsView.findViewById(R.id.settingsListView2);
         ArrayAdapter<String> adapter2 = new ArrayAdapter<String>(this, android.R.layout.simple_list_item_1, radioItemLineSize);
@@ -1053,6 +1051,11 @@ public class MainActivity extends AppCompatActivity {
         ArrayAdapter<String> adapter3 = new ArrayAdapter<String>(this, android.R.layout.simple_list_item_1, radioItemMetrics);
         lv3.setAdapter(adapter3);
         lv3.addHeaderView(new View(lv3.getContext()));
+
+        ListView lv4 = (ListView) settingsView.findViewById(R.id.settingsListView4);
+        ArrayAdapter<String> adapter4 = new ArrayAdapter<String>(this, android.R.layout.simple_list_item_1, radioItemZoom);
+        lv4.setAdapter(adapter4);
+        lv4.addHeaderView(new View(lv4.getContext()));
 
         RadioGroup lineRadioGroup = (RadioGroup)settingsView.findViewById(R.id.linesize);
         if (userSettings.lineSize == UserSettings.LineSize.THICK)
@@ -1067,6 +1070,14 @@ public class MainActivity extends AppCompatActivity {
             metricRadioGroup.check(R.id.metricnormal);
         else
             metricRadioGroup.check(R.id.metriceuclid);
+
+        RadioGroup zoomRadioGroup = (RadioGroup)settingsView.findViewById(R.id.zoomgroup);
+        if (userSettings.zoom == UserSettings.Zoom.CENTER_TOUCH)
+            zoomRadioGroup.check(R.id.zoomcentertouch);
+        else if (userSettings.zoom == UserSettings.Zoom.CENTER_CANVAS)
+            zoomRadioGroup.check(R.id.zoomcentercanvas);
+        else
+            zoomRadioGroup.check(R.id.zoomnone);
 
         AlertDialog alert = dialog.create();
         alert.setCanceledOnTouchOutside(true);
@@ -1089,9 +1100,6 @@ public class MainActivity extends AppCompatActivity {
                         userSettings.setDoubleClick(item.isChecked());
                         removeLastDummyStone(true);
                         putDummy = true;
-                        break;
-                    case 3:
-                        userSettings.setZoom(item.isChecked());
                         break;
                     default:
                         break;
@@ -1124,6 +1132,18 @@ public class MainActivity extends AppCompatActivity {
         userSettings.setMetrics(UserSettings.Metrics.EUCLID);
     }
 
+    public void zoomTouchHandler(View v) {
+        userSettings.setZoom(UserSettings.Zoom.CENTER_TOUCH);
+    }
+
+    public void zoomCanvasHandler(View v) {
+        userSettings.setZoom(UserSettings.Zoom.CENTER_CANVAS);
+    }
+
+    public void zoomNoneHandler(View v) {
+        userSettings.setZoom(UserSettings.Zoom.NONE);
+    }
+
     private void showDefaultGamesList() {
 
         Intent intent = new Intent(this, RepoActivity.class);
@@ -1135,7 +1155,6 @@ public class MainActivity extends AppCompatActivity {
 
         startActivityForResult(intent, GAME_REPO_REQUEST_CODE);
     }
-
 
     private void drawBoardGrid(boolean grid) {
         Paint p = new Paint();

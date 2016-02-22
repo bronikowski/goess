@@ -12,6 +12,108 @@
         android:layout_width="fill_parent"
         android:layout_height="fill_parent" >
     </ListView>
+
+    <ListView
+        android:id="@+id/settingsListView4"
+        android:layout_width="fill_parent"
+        android:layout_height="fill_parent" >
+    </ListView>
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:layout_gravity="center_horizontal">
+        <RadioGroup
+            android:id="@+id/zoomgroup"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:textColor="@android:color/black"  >
+
+            <RadioButton
+                android:id="@+id/zoomcentertouch"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:gravity="center"
+                android:onClick="zoomTouchHandler"
+                android:text="Center touch"
+                android:textSize="12dp"
+                android:textColor="@android:color/background_dark"  />
+
+            <RadioButton
+                android:id="@+id/zoomcentercanvas"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:onClick="zoomCanvasHandler"
+                android:text="Center canvas"
+                android:textSize="12dp"
+                android:layout_gravity="center"
+                android:checked="true"
+                android:gravity="center"
+                android:textColor="@android:color/background_dark"  />
+            <RadioButton
+                android:id="@+id/zoomnone"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:onClick="zoomNoneHandler"
+                android:text="None"
+                android:textSize="12dp"
+                android:layout_gravity="center"
+                android:checked="true"
+                android:gravity="center"
+                android:textColor="@android:color/background_dark"  />
+        </RadioGroup>
+    </LinearLayout>
+
+
+
+
+    <ListView
+        android:id="@+id/settingsListView3"
+        android:layout_width="fill_parent"
+        android:layout_height="fill_parent" >
+    </ListView>
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:layout_gravity="center_horizontal">
+        <RadioGroup
+            android:id="@+id/radiometrics"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:textColor="@android:color/black"  >
+
+            <RadioButton
+                android:id="@+id/metriceuclid"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:gravity="center"
+                android:onClick="euclidMetricHandler"
+                android:text="Euclidean"
+                android:textSize="12dp"
+                android:textColor="@android:color/background_dark"  />
+
+            <RadioButton
+                android:id="@+id/metricnormal"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:onClick="normalMetricHandler"
+                android:text="Taxicab"
+                android:textSize="12dp"
+                android:layout_gravity="center"
+                android:checked="true"
+                android:gravity="center"
+                android:textColor="@android:color/background_dark"  />
+
+
+
+        </RadioGroup>
+    </LinearLayout>
+
     <ListView
         android:id="@+id/settingsListView2"
         android:layout_width="fill_parent"
@@ -65,50 +167,6 @@
                 android:textColor="@android:color/background_dark"  />
 
         </RadioGroup>
-</LinearLayout>
-    <ListView
-        android:id="@+id/settingsListView3"
-        android:layout_width="fill_parent"
-        android:layout_height="fill_parent" >
-    </ListView>
-    <LinearLayout
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:layout_gravity="center_horizontal">
-    <RadioGroup
-        android:id="@+id/radiometrics"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:textColor="@android:color/black"  >
-
-        <RadioButton
-            android:id="@+id/metriceuclid"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_gravity="center"
-            android:gravity="center"
-            android:onClick="euclidMetricHandler"
-            android:text="Euclidean"
-            android:textSize="12dp"
-            android:textColor="@android:color/background_dark"  />
-
-        <RadioButton
-            android:id="@+id/metricnormal"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:onClick="normalMetricHandler"
-            android:text="Taxicab"
-            android:textSize="12dp"
-            android:layout_gravity="center"
-            android:checked="true"
-            android:gravity="center"
-            android:textColor="@android:color/background_dark"  />
-
-
-
-    </RadioGroup>
     </LinearLayout>
 
 </LinearLayout>
