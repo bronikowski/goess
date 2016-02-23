@@ -238,10 +238,8 @@ public class BoardLogic {
 
         if (currentIndex < currentGame.moves.size()) {
             Move nextMove = currentGame.moves.get(currentIndex);
-            if (hint == UserSettings.Hint.DISTANCE)
+        //    if (hint == UserSettings.Hint.DISTANCE)
                 calculateDistance(nextMove, move);
-         //   else if (hint == UserSettings.Hint.AREA)
-         //       calculateEuclidean(nextMove, move);
             res = (score == 10);
         }
 

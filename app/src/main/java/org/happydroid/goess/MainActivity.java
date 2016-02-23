@@ -141,6 +141,9 @@ public class MainActivity extends AppCompatActivity {
         loadGameHistory();
         loadRecentGames();
 
+        if (userSettings.hint != UserSettings.Hint.DISTANCE)
+            showIndicator(false);
+
         gameReady = false;
         userSettings.setState(UserSettings.State.GAME_NOT_LOADED);
 
@@ -250,7 +253,10 @@ public class MainActivity extends AppCompatActivity {
                                                 userSettings.setState(UserSettings.State.GAME_IN_PROGRESS);
                                             valid = true;
                                         } else {
-                                            currentScore += 0;
+                                            if (userSettings.hint == UserSettings.Hint.AREA) {
+                                                //todo
+                                            }
+                                            checkIfShowMove();
                                         }
                                         float totalScore = (currentScore / userMoves) * 100;
                                         updateScoreLabel(totalScore);
@@ -276,8 +282,8 @@ public class MainActivity extends AppCompatActivity {
                                                     userSettings.setState(UserSettings.State.GAME_IN_PROGRESS);
                                                 valid = true;
                                             } else {
-                                                currentScore += 0;
                                                 removeLastDummyStone(true);
+                                                checkIfShowMove();
                                             }
                                             float totalScore = (currentScore / userMoves) * 100;
                                             updateScoreLabel(totalScore);
@@ -313,11 +319,7 @@ public class MainActivity extends AppCompatActivity {
                     return;
                 switch (v.getId()) {
                     case R.id.nextBtn:
-                        Move move = boardLogic.getNextMove();
-                        if (move != null) {
-                            drawStone(move, true, false);
-                            checkIfCapturing(move);
-                        }
+                        makeMove();
                         boardLogic.score = 0;
                         updateScoreLabel(lastScore);
                         break;
@@ -374,6 +376,26 @@ public class MainActivity extends AppCompatActivity {
         if (userSettings.showAbout) {
             showAbout();
             userSettings.setShowAbout(false);
+        }
+    }
+
+    private void checkIfShowMove() {
+        if (tries == 4 && userSettings.autoMove == UserSettings.AutoMove.THREE) {
+            makeMove();
+            updateGameInfo(boardLogic.currentGame.getGameTitle());
+            tries = 0;
+        } else if (tries == 6 && userSettings.autoMove == UserSettings.AutoMove.FIVE) {
+            makeMove();
+            updateGameInfo(boardLogic.currentGame.getGameTitle());
+            tries = 0;
+        }
+    }
+
+    private void makeMove() {
+        Move move = boardLogic.getNextMove();
+        if (move != null) {
+            drawStone(move, true, false);
+            checkIfCapturing(move);
         }
     }
 
@@ -711,10 +733,14 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    private void updateGameInfo(String title) {
-        scoreLabel.setText(scoreLabel.getText());
+    private void updateMoveLabel() {
         String moves = "(" + (String.valueOf(boardLogic.currentIndex)) + "/" + boardLogic.currentGame.moves.size() + ")";
         moveLabel.setText(moves);
+    }
+
+    private void updateGameInfo(String title) {
+        scoreLabel.setText(scoreLabel.getText());
+        updateMoveLabel();
         getSupportActionBar().setTitle(title);
         setSupportActionBar(myToolbar);
         myToolbar.refreshDrawableState();
@@ -834,11 +860,7 @@ public class MainActivity extends AppCompatActivity {
     private void makeFirstMoves() {
         int i = 4;
         while (i-- > 0) {
-            Move move = boardLogic.getNextMove();
-            if (move != null) {
-                drawStone(move, true, false);
-                checkIfCapturing(move);
-            }
+            makeMove();
         }
         String moves = "(" + (String.valueOf(boardLogic.currentIndex)) + "/" + boardLogic.currentGame.moves.size() + ")";
         moveLabel.setText(moves);
@@ -1147,14 +1169,17 @@ public class MainActivity extends AppCompatActivity {
 
     public void hintDistanceHandler(View v) {
         userSettings.setHint(UserSettings.Hint.DISTANCE);
+        showIndicator(true);
     }
 
     public void hintAreaHandler(View v) {
         userSettings.setHint(UserSettings.Hint.AREA);
+        showIndicator(false);
     }
 
     public void hintNoneHandler(View v) {
         userSettings.setHint(UserSettings.Hint.NONE);
+        showIndicator(false);
     }
 
     public void zoomTouchHandler(View v) {
@@ -1167,14 +1192,17 @@ public class MainActivity extends AppCompatActivity {
 
     public void zoomNoneHandler(View v) {
         userSettings.setZoom(UserSettings.Zoom.NONE);
+        tries = 0;
     }
 
     public void threeFailuresHandler(View v) {
         userSettings.setAutoMove(UserSettings.AutoMove.THREE);
+        tries = 0;
     }
 
     public void fiveFailuresHandler(View v) {
         userSettings.setAutoMove(UserSettings.AutoMove.FIVE);
+        tries = 0;
     }
 
     public void noneFailuresHandler(View v) {
