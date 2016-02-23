@@ -229,7 +229,7 @@ public class BoardLogic {
         return deadStones.size() > 0;
     }
 
-    public boolean isValid(Move move, UserSettings.Metrics metrics) {
+    public boolean isValid(Move move, UserSettings.Hint hint) {
         if (board[move.x][move.y] != Move.Player.EMPTY) {
         //    Log.i(TAG, "not valid move ");
             return false;
@@ -238,10 +238,10 @@ public class BoardLogic {
 
         if (currentIndex < currentGame.moves.size()) {
             Move nextMove = currentGame.moves.get(currentIndex);
-            if (metrics == UserSettings.Metrics.TAXICAB)
-                calculateStandard(nextMove, move);
-            else if (metrics == UserSettings.Metrics.EUCLID)
-                calculateEuclidean(nextMove, move);
+            if (hint == UserSettings.Hint.DISTANCE)
+                calculateDistance(nextMove, move);
+         //   else if (hint == UserSettings.Hint.AREA)
+         //       calculateEuclidean(nextMove, move);
             res = (score == 10);
         }
 
@@ -250,7 +250,7 @@ public class BoardLogic {
         return res;
     }
 
-    private void calculateEuclidean(Move nextMove, Move move) {
+    private void calculateDistance(Move nextMove, Move move) {
         double diffX = Math.abs(nextMove.x - move.x);
         double diffY = Math.abs(nextMove.y - move.y);
         score = 0;
@@ -261,13 +261,4 @@ public class BoardLogic {
         }
     }
 
-    private void calculateStandard(Move nextMove, Move move) {
-        double diffX = Math.abs(nextMove.x - move.x);
-        double diffY = Math.abs(nextMove.y - move.y);
-        score = 0;
-        double maxDiff = diffX + diffY;
-        if (maxDiff <= 10)
-            score = 10 - maxDiff;
-
-    }
 }

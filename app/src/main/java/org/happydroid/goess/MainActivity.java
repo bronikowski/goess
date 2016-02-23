@@ -30,6 +30,7 @@ import android.view.WindowManager;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
+import android.widget.CheckBox;
 import android.widget.CheckedTextView;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
@@ -98,6 +99,7 @@ public class MainActivity extends AppCompatActivity {
     boolean putDummy = true;
     Move lastDummyMove = null;
 
+
     View[][] stonesImg;
     View[][] dummyStonesImg;
     View graphView;
@@ -140,6 +142,7 @@ public class MainActivity extends AppCompatActivity {
         loadRecentGames();
 
         gameReady = false;
+        userSettings.setState(UserSettings.State.GAME_NOT_LOADED);
 
         frameLayout = (FrameLayout)findViewById(R.id.background);
         controlsLayout = (RelativeLayout)findViewById(R.id.controlsLayout);
@@ -237,12 +240,14 @@ public class MainActivity extends AppCompatActivity {
                                 if (stonesImg[move.x][move.y] == null) {
                                     if (!userSettings.doubleclick) {
                                         tries++;
-                                        if (boardLogic.isValid(move, userSettings.metrics)) {
-                                            drawStone(move, v, true, false);
+                                        if (boardLogic.isValid(move, userSettings.hint)) {
+                                            drawStone(move, true, false);
                                             currentScore += (1.0f / tries);
                                             tries = 0;
                                             userMoves++;
                                             checkIfCapturing(move);
+                                            if (userSettings.state == UserSettings.State.GAME_LOADED)
+                                                userSettings.setState(UserSettings.State.GAME_IN_PROGRESS);
                                             valid = true;
                                         } else {
                                             currentScore += 0;
@@ -253,20 +258,22 @@ public class MainActivity extends AppCompatActivity {
                                             resetZoom();
                                     } else if (putDummy) {
                                         lastDummyMove = new Move(move.x, move.y, move.player);
-                                        drawStone(move, v, true, true);
+                                        drawStone(move, true, true);
                                         putDummy = false;
 
                                     } else {
                                         ImageView im = (ImageView) dummyStonesImg[move.x][move.y];
                                         if (im != null) {
                                             tries++;
-                                            if (boardLogic.isValid(move, userSettings.metrics)) {
+                                            if (boardLogic.isValid(move, userSettings.hint)) {
                                                 putDummy = true;
-                                                drawStone(move, v, true, false);
+                                                drawStone(move, true, false);
                                                 currentScore += (1.0f / tries);
                                                 tries = 0;
                                                 userMoves++;
                                                 checkIfCapturing(move);
+                                                if (userSettings.state == UserSettings.State.GAME_LOADED)
+                                                    userSettings.setState(UserSettings.State.GAME_IN_PROGRESS);
                                                 valid = true;
                                             } else {
                                                 currentScore += 0;
@@ -280,7 +287,7 @@ public class MainActivity extends AppCompatActivity {
                                         } else {
                                             removeLastDummyStone(true);
                                             lastDummyMove = new Move(move.x, move.y, move.player);
-                                            drawStone(move, v, true, true);
+                                            drawStone(move, true, true);
                                             putDummy = false;
 
                                         }
@@ -308,14 +315,14 @@ public class MainActivity extends AppCompatActivity {
                     case R.id.nextBtn:
                         Move move = boardLogic.getNextMove();
                         if (move != null) {
-                            drawStone(move, v, true, false);
+                            drawStone(move, true, false);
                             checkIfCapturing(move);
                         }
                         boardLogic.score = 0;
                         updateScoreLabel(lastScore);
                         break;
                     case R.id.prevBtn:
-                            removeLastDummyStone(true);
+                        removeLastDummyStone(true);
                         if (currentStoneViewId >= 3) {
 
                             Move lastDrawnMove = boardLogic.getPreviousMove();
@@ -330,7 +337,7 @@ public class MainActivity extends AppCompatActivity {
                             ArrayList<Move> deadStones = boardLogic.restoreBoardState();
                             if (deadStones != null && deadStones.size() > 0) {
                                 for (int i = 0; i < deadStones.size(); ++i) {
-                                    drawStone(deadStones.get(i), v, false, false);
+                                    drawStone(deadStones.get(i), false, false);
                                 }
                             }
                         }
@@ -345,7 +352,7 @@ public class MainActivity extends AppCompatActivity {
                         if (gameReady) {
                             Move m;
                             while ((m = boardLogic.getNextMove()) != null) {
-                                drawStone(m, v, true, false);
+                                drawStone(m, true, false);
                                 checkIfCapturing(m);
                             }
                         } else
@@ -575,7 +582,7 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    private void drawStone(Move move, View view, boolean mark, boolean dummy) {
+    private void drawStone(Move move, boolean mark, boolean dummy) {
         Log.i(TAG, "Putting stone at " + String.valueOf(move.x) + ":" + String.valueOf(move.y)
                 + " nr " + String.valueOf(boardLogic.currentIndex) + " of player "
         + move.player);
@@ -659,7 +666,6 @@ public class MainActivity extends AppCompatActivity {
             }
         }
     }
-
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
@@ -817,8 +823,27 @@ public class MainActivity extends AppCompatActivity {
         saveCurrentGameToRecentPrefs();
         tries = userMoves = 0;
         currentScore = 0;
+        userSettings.setState(UserSettings.State.GAME_LOADED);
+
+        if (userSettings.showFirstMoves) {
+            makeFirstMoves();
+        }
 
     }
+
+    private void makeFirstMoves() {
+        int i = 4;
+        while (i-- > 0) {
+            Move move = boardLogic.getNextMove();
+            if (move != null) {
+                drawStone(move, true, false);
+                checkIfCapturing(move);
+            }
+        }
+        String moves = "(" + (String.valueOf(boardLogic.currentIndex)) + "/" + boardLogic.currentGame.moves.size() + ")";
+        moveLabel.setText(moves);
+    }
+
 
     private void showAbout() {
         String quote = "“To follow the path, look to the master, follow the master, " +
@@ -1022,10 +1047,6 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void showSettings() {
-        final String[] items = {"Show board coordinates", "Show guess indicator", "Double-click move"};
-        final String[] radioItemLineSize = {"Board lines thickness"};
-        final String[] radioItemMetrics = {"Metrics"};
-        final String[] radioItemZoom = {"Zoom"};
 
         AlertDialog.Builder dialog = new AlertDialog.Builder(this);
         dialog.setTitle("Customize Goess");
@@ -1034,30 +1055,24 @@ public class MainActivity extends AppCompatActivity {
         View settingsView = (View) inflater.inflate(R.layout.settings, null);
         dialog.setView(settingsView);
 
-        ListView lv = (ListView) settingsView.findViewById(R.id.settingsListView);
-        lv.setChoiceMode(ListView.CHOICE_MODE_MULTIPLE);
-        ArrayAdapter<String> adapter = new ArrayAdapter<String>(this, android.R.layout.simple_list_item_multiple_choice, items);
-        lv.setAdapter(adapter);
-        lv.setItemChecked(0, userSettings.showBoardCoords);
-        lv.setItemChecked(1, userSettings.showIndicator);
-        lv.setItemChecked(2, userSettings.doubleclick);
+        CheckBox cb = (CheckBox) settingsView.findViewById(R.id.boardCoordsCb);
+        cb.setChecked(userSettings.showBoardCoords);
+        cb = (CheckBox) settingsView.findViewById(R.id.doubleClickCb);
+        cb.setChecked(userSettings.doubleclick);
+        cb = (CheckBox) settingsView.findViewById(R.id.firstMovesCb);
+        cb.setChecked(userSettings.showFirstMoves);
 
-        ListView lv2 = (ListView) settingsView.findViewById(R.id.settingsListView2);
-        ArrayAdapter<String> adapter2 = new ArrayAdapter<String>(this, android.R.layout.simple_list_item_1, radioItemLineSize);
-        lv2.setAdapter(adapter2);
-        lv2.addHeaderView(new View(lv2.getContext()));
 
-        ListView lv3 = (ListView) settingsView.findViewById(R.id.settingsListView3);
-        ArrayAdapter<String> adapter3 = new ArrayAdapter<String>(this, android.R.layout.simple_list_item_1, radioItemMetrics);
-        lv3.setAdapter(adapter3);
-        lv3.addHeaderView(new View(lv3.getContext()));
+        checkRadioGroups(settingsView);
 
-        ListView lv4 = (ListView) settingsView.findViewById(R.id.settingsListView4);
-        ArrayAdapter<String> adapter4 = new ArrayAdapter<String>(this, android.R.layout.simple_list_item_1, radioItemZoom);
-        lv4.setAdapter(adapter4);
-        lv4.addHeaderView(new View(lv4.getContext()));
+        AlertDialog alert = dialog.create();
+        alert.setCanceledOnTouchOutside(true);
+        alert.show();
 
-        RadioGroup lineRadioGroup = (RadioGroup)settingsView.findViewById(R.id.linesize);
+    }
+
+    private void checkRadioGroups(View view) {
+        RadioGroup lineRadioGroup = (RadioGroup)view.findViewById(R.id.linesizegroup);
         if (userSettings.lineSize == UserSettings.LineSize.THICK)
             lineRadioGroup.check(R.id.linethick);
         else if (userSettings.lineSize == UserSettings.LineSize.NORMAL)
@@ -1065,48 +1080,54 @@ public class MainActivity extends AppCompatActivity {
         else
             lineRadioGroup.check(R.id.linetiny);
 
-        RadioGroup metricRadioGroup = (RadioGroup)settingsView.findViewById(R.id.radiometrics);
-        if (userSettings.metrics == UserSettings.Metrics.TAXICAB)
-            metricRadioGroup.check(R.id.metricnormal);
+        RadioGroup hintRadioGroup = (RadioGroup)view.findViewById(R.id.hintgroup);
+        if (userSettings.hint == UserSettings.Hint.DISTANCE)
+            hintRadioGroup.check(R.id.showDistanceRb);
+        else if (userSettings.hint == UserSettings.Hint.AREA)
+            hintRadioGroup.check(R.id.showAreaRb);
         else
-            metricRadioGroup.check(R.id.metriceuclid);
+            hintRadioGroup.check(R.id.hintNoneRb);
 
-        RadioGroup zoomRadioGroup = (RadioGroup)settingsView.findViewById(R.id.zoomgroup);
+        RadioGroup autoMoveRadioGroup = (RadioGroup)view.findViewById(R.id.autoMoveGroup);
+        if (userSettings.autoMove == UserSettings.AutoMove.THREE)
+            autoMoveRadioGroup.check(R.id.threefailuresRb);
+        else if (userSettings.autoMove == UserSettings.AutoMove.FIVE)
+            autoMoveRadioGroup.check(R.id.fivefailuresRb);
+        else
+            autoMoveRadioGroup.check(R.id.noneFailuresRb);
+
+        RadioGroup zoomRadioGroup = (RadioGroup)view.findViewById(R.id.zoomgroup);
         if (userSettings.zoom == UserSettings.Zoom.CENTER_TOUCH)
             zoomRadioGroup.check(R.id.zoomcentertouch);
         else if (userSettings.zoom == UserSettings.Zoom.CENTER_CANVAS)
             zoomRadioGroup.check(R.id.zoomcentercanvas);
         else
             zoomRadioGroup.check(R.id.zoomnone);
+    }
 
-        AlertDialog alert = dialog.create();
-        alert.setCanceledOnTouchOutside(true);
-        alert.show();
+    public void firstMovesHandler(View v) {
+        CheckBox cb = (CheckBox) v;
+        userSettings.setShowFirstMoves(cb.isChecked());
+        if (!userSettings.showFirstMoves && userSettings.state == UserSettings.State.GAME_LOADED) {
+            clearBoard();
+            String moves = "(" + (String.valueOf(boardLogic.currentIndex)) + "/" + boardLogic.currentGame.moves.size() + ")";
+            moveLabel.setText(moves);
+        } else if (userSettings.showFirstMoves && userSettings.state == UserSettings.State.GAME_LOADED) {
+            makeFirstMoves();
+        }
+    }
 
-        lv.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-            @Override
-            public void onItemClick(AdapterView<?> parent, View v, int position, long id) {
-                CheckedTextView item = (CheckedTextView) v;
-                switch (position) {
-                    case 0:
-                        userSettings.setShowBoardCoords(item.isChecked());
-                        drawBoardGrid(userSettings.showBoardCoords);
-                        break;
-                    case 1:
-                        showIndicator(item.isChecked());
-                        userSettings.setIndicator(item.isChecked());
-                        break;
-                    case 2:
-                        userSettings.setDoubleClick(item.isChecked());
-                        removeLastDummyStone(true);
-                        putDummy = true;
-                        break;
-                    default:
-                        break;
-                }
-            }
-        });
+    public void boardCoordsHandler(View v) {
+        CheckBox cb = (CheckBox) v;
+        userSettings.setShowBoardCoords(cb.isChecked());
+        drawBoardGrid(userSettings.showBoardCoords);
+    }
 
+    public void doubleClickHandler(View v) {
+        CheckBox cb = (CheckBox) v;
+        userSettings.setDoubleClick(cb.isChecked());
+        removeLastDummyStone(true);
+        putDummy = true;
     }
 
     public void lineTinyHandler(View v) {
@@ -1124,12 +1145,16 @@ public class MainActivity extends AppCompatActivity {
         drawBoardGrid(userSettings.showBoardCoords);
     }
 
-    public void normalMetricHandler(View v) {
-        userSettings.setMetrics(UserSettings.Metrics.TAXICAB);
+    public void hintDistanceHandler(View v) {
+        userSettings.setHint(UserSettings.Hint.DISTANCE);
     }
 
-    public void euclidMetricHandler(View v) {
-        userSettings.setMetrics(UserSettings.Metrics.EUCLID);
+    public void hintAreaHandler(View v) {
+        userSettings.setHint(UserSettings.Hint.AREA);
+    }
+
+    public void hintNoneHandler(View v) {
+        userSettings.setHint(UserSettings.Hint.NONE);
     }
 
     public void zoomTouchHandler(View v) {
@@ -1142,6 +1167,18 @@ public class MainActivity extends AppCompatActivity {
 
     public void zoomNoneHandler(View v) {
         userSettings.setZoom(UserSettings.Zoom.NONE);
+    }
+
+    public void threeFailuresHandler(View v) {
+        userSettings.setAutoMove(UserSettings.AutoMove.THREE);
+    }
+
+    public void fiveFailuresHandler(View v) {
+        userSettings.setAutoMove(UserSettings.AutoMove.FIVE);
+    }
+
+    public void noneFailuresHandler(View v) {
+        userSettings.setAutoMove(UserSettings.AutoMove.NONE);
     }
 
     private void showDefaultGamesList() {
