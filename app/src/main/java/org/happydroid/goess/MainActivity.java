@@ -27,15 +27,11 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewTreeObserver;
 import android.view.WindowManager;
-import android.widget.AdapterView;
-import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.CheckBox;
-import android.widget.CheckedTextView;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
-import android.widget.ListView;
 import android.widget.RadioGroup;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
@@ -86,7 +82,8 @@ public class MainActivity extends AppCompatActivity {
     Button forwardBtn;
 
     FrameLayout frameLayout;
-    RelativeLayout controlsLayout;
+    RelativeLayout gameModeLayout;
+    RelativeLayout editModeLayout;
     Toolbar myToolbar;
 
     BoardLogic boardLogic;
@@ -130,6 +127,7 @@ public class MainActivity extends AppCompatActivity {
         infoImage = (ImageView) findViewById(R.id.infoImg);
         scoreLabel = (TextView) findViewById(R.id.scoreTxtLabel);
         moveLabel = (TextView) findViewById(R.id.moveTxtLabel);
+
         nextBtn = (Button) findViewById(R.id.nextBtn);
         prevBtn = (Button) findViewById(R.id.prevBtn);
         rewindBtn = (Button) findViewById(R.id.rewindBtn);
@@ -141,14 +139,15 @@ public class MainActivity extends AppCompatActivity {
         loadGameHistory();
         loadRecentGames();
 
-        if (userSettings.hint != UserSettings.Hint.DISTANCE)
-            showIndicator(false);
+        showIndicator(false);
 
         gameReady = false;
         userSettings.setState(UserSettings.State.GAME_NOT_LOADED);
 
         frameLayout = (FrameLayout)findViewById(R.id.background);
-        controlsLayout = (RelativeLayout)findViewById(R.id.controlsLayout);
+        gameModeLayout = (RelativeLayout)findViewById(R.id.gameModeLayout);
+        editModeLayout = (RelativeLayout)findViewById(R.id.editModeLayout);
+        editModeLayout.setVisibility(View.GONE);
 
         infoImage.setOnTouchListener(new View.OnTouchListener() {
             @Override
@@ -266,7 +265,6 @@ public class MainActivity extends AppCompatActivity {
                                         lastDummyMove = new Move(move.x, move.y, move.player);
                                         drawStone(move, true, true);
                                         putDummy = false;
-
                                     } else {
                                         ImageView im = (ImageView) dummyStonesImg[move.x][move.y];
                                         if (im != null) {
@@ -380,11 +378,11 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void checkIfShowMove() {
-        if (tries == 4 && userSettings.autoMove == UserSettings.AutoMove.THREE) {
+        if (tries == 3 && userSettings.autoMove == UserSettings.AutoMove.THREE) {
             makeMove();
             updateGameInfo(boardLogic.currentGame.getGameTitle());
             tries = 0;
-        } else if (tries == 6 && userSettings.autoMove == UserSettings.AutoMove.FIVE) {
+        } else if (tries == 5 && userSettings.autoMove == UserSettings.AutoMove.FIVE) {
             makeMove();
             updateGameInfo(boardLogic.currentGame.getGameTitle());
             tries = 0;
@@ -488,7 +486,7 @@ public class MainActivity extends AppCompatActivity {
         frameLayout.setPivotY(y);
         frameLayout.setScaleX(BOARD_SCALE_FACTOR);
         frameLayout.setScaleY(BOARD_SCALE_FACTOR);
-        controlsLayout.setVisibility(View.GONE);
+        gameModeLayout.setVisibility(View.GONE);
         myToolbar.setVisibility(View.GONE);
     }
 
@@ -499,7 +497,7 @@ public class MainActivity extends AppCompatActivity {
     private void resetZoom() {
         frameLayout.setScaleX(1f);
         frameLayout.setScaleY(1f);
-        controlsLayout.setVisibility(View.VISIBLE);
+        gameModeLayout.setVisibility(View.VISIBLE);
         myToolbar.setVisibility(View.VISIBLE);
     }
 
@@ -844,6 +842,10 @@ public class MainActivity extends AppCompatActivity {
         updateScoreLabel(0);
         ImageView view = (ImageView) findViewById(R.id.gameInfoImg);
         view.setVisibility(View.VISIBLE);
+        view = (ImageView) findViewById(R.id.infoImg);
+        view.setVisibility(View.VISIBLE);
+        if (userSettings.hint == UserSettings.Hint.DISTANCE)
+            showIndicator(true);
         Log.v(TAG, "load  game " + game.md5 + "   score size " + String.valueOf(boardLogic.currentGame.score.size()));
         gamesStorage.addRecentGame(game.getGameTitleWithRanks(), game);
         saveCurrentGameToRecentPrefs();
@@ -1125,6 +1127,12 @@ public class MainActivity extends AppCompatActivity {
             zoomRadioGroup.check(R.id.zoomcentercanvas);
         else
             zoomRadioGroup.check(R.id.zoomnone);
+
+        RadioGroup modeRadioGroup = (RadioGroup)view.findViewById(R.id.modegroup);
+        if (userSettings.mode == UserSettings.Mode.GAME)
+            modeRadioGroup.check(R.id.gameModeRb);
+        else
+            modeRadioGroup.check(R.id.editModeRb);
     }
 
     public void firstMovesHandler(View v) {
@@ -1207,6 +1215,15 @@ public class MainActivity extends AppCompatActivity {
 
     public void noneFailuresHandler(View v) {
         userSettings.setAutoMove(UserSettings.AutoMove.NONE);
+    }
+
+    public void gameModeHandler(View v) {
+        userSettings.setMode(UserSettings.Mode.GAME);
+    }
+
+    public void editModeHandler(View v) {
+        userSettings.setMode(UserSettings.Mode.VIEW_ONLY);
+        
     }
 
     private void showDefaultGamesList() {

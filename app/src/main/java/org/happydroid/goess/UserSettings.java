@@ -35,6 +35,11 @@ public class UserSettings {
         EDIT
     }
 
+    enum Mode {
+        GAME,
+        VIEW_ONLY
+    }
+
     boolean showAbout;
     boolean showBoardCoords;
     boolean showIndicator;
@@ -46,6 +51,7 @@ public class UserSettings {
     AutoMove autoMove;
     SharedPreferences preferences;
     State state;
+    Mode mode;
 
     UserSettings(SharedPreferences preferences) {
         this.preferences = preferences;
@@ -65,6 +71,8 @@ public class UserSettings {
             autoMove = AutoMove.valueOf(automove);
             String sate = preferences.getString("state", State.GAME_NOT_LOADED.toString());
             this.state = State.valueOf(sate);
+            String mode = preferences.getString("mode", Mode.GAME.toString());
+            this.mode = Mode.valueOf(mode);
         } else {
             setShowAbout(true);
             setIndicator(true);
@@ -75,6 +83,7 @@ public class UserSettings {
             setZoom(Zoom.CENTER_TOUCH);
             setAutoMove(AutoMove.THREE);
             setState(State.GAME_NOT_LOADED);
+            setMode(Mode.GAME);
         }
     }
 
@@ -126,5 +135,10 @@ public class UserSettings {
     public void setState(State state) {
         this.state = state;
         preferences.edit().putString("state", state.toString()).apply();
+    }
+
+    public void setMode(Mode mode) {
+        this.mode = mode;
+        preferences.edit().putString("mode", mode.toString()).apply();
     }
 }
