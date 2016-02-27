@@ -32,6 +32,7 @@ import android.widget.CheckBox;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.RadioButton;
 import android.widget.RadioGroup;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
@@ -67,8 +68,10 @@ public class MainActivity extends AppCompatActivity {
     ImageView boardImage;
     ImageView stoneImage;
     ImageView infoImage;
+    ImageView infoImageEdit;
     TextView scoreLabel;
     TextView moveLabel;
+    TextView moveLabelEdit;
     Context context;
     int boardWidth;
     int boardHeight;
@@ -125,8 +128,10 @@ public class MainActivity extends AppCompatActivity {
         rawBoardBitmap = ((BitmapDrawable) boardImage.getDrawable()).getBitmap();
         stoneImage = (ImageView) findViewById(R.id.blackImg);
         infoImage = (ImageView) findViewById(R.id.infoImg);
+        infoImageEdit = (ImageView) findViewById(R.id.infoImgEdit);
         scoreLabel = (TextView) findViewById(R.id.scoreTxtLabel);
         moveLabel = (TextView) findViewById(R.id.moveTxtLabel);
+        moveLabelEdit = (TextView) findViewById(R.id.moveTxtLabelEdit);
 
         nextBtn = (Button) findViewById(R.id.nextBtn);
         prevBtn = (Button) findViewById(R.id.prevBtn);
@@ -148,14 +153,17 @@ public class MainActivity extends AppCompatActivity {
         gameModeLayout = (RelativeLayout)findViewById(R.id.gameModeLayout);
         editModeLayout = (RelativeLayout)findViewById(R.id.editModeLayout);
         editModeLayout.setVisibility(View.GONE);
+        gameModeLayout.setVisibility(View.GONE);
 
-        infoImage.setOnTouchListener(new View.OnTouchListener() {
+        View.OnTouchListener infoImgListener = new View.OnTouchListener() {
             @Override
             public boolean onTouch(View v, MotionEvent event) {
                 showGameInfo();
-                return false ;
+                return false;
             }
-        });
+        };
+        infoImage.setOnTouchListener(infoImgListener);
+        infoImageEdit.setOnTouchListener(infoImgListener);
 
         ViewTreeObserver vto = boardImage.getViewTreeObserver();
         vto.addOnPreDrawListener(new ViewTreeObserver.OnPreDrawListener() {
@@ -192,7 +200,8 @@ public class MainActivity extends AppCompatActivity {
             public boolean onTouch(View v, MotionEvent event) {
 
                 int action = event.getAction();
-
+                if (userSettings.mode == UserSettings.Mode.VIEW_ONLY)
+                    return true;
                 switch (action) {
                     case MotionEvent.ACTION_DOWN:
                         if (!gameReady) {
@@ -386,6 +395,10 @@ public class MainActivity extends AppCompatActivity {
             makeMove();
             updateGameInfo(boardLogic.currentGame.getGameTitle());
             tries = 0;
+        }
+        if (userSettings.autoMove != UserSettings.AutoMove.NONE) {
+            if (userSettings.state == UserSettings.State.GAME_LOADED)
+                userSettings.setState(UserSettings.State.GAME_IN_PROGRESS);
         }
     }
 
@@ -732,8 +745,13 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void updateMoveLabel() {
-        String moves = "(" + (String.valueOf(boardLogic.currentIndex)) + "/" + boardLogic.currentGame.moves.size() + ")";
-        moveLabel.setText(moves);
+        if (gameReady) {
+            String moves = "(" + (String.valueOf(boardLogic.currentIndex)) + "/" + boardLogic.currentGame.moves.size() + ")";
+            if (userSettings.mode == UserSettings.Mode.GAME)
+                moveLabel.setText(moves);
+            else
+                moveLabelEdit.setText(moves);
+        }
     }
 
     private void updateGameInfo(String title) {
@@ -745,7 +763,10 @@ public class MainActivity extends AppCompatActivity {
         if (boardLogic.currentIndex == boardLogic.currentGame.moves.size()) {
             askIfAddToHistory();
             String result = boardLogic.currentGame.result;
-            moveLabel.setText(result);
+            if (userSettings.mode == UserSettings.Mode.GAME)
+                moveLabel.setText(result);
+            else
+                moveLabelEdit.setText(result);
         }
     }
 
@@ -839,23 +860,32 @@ public class MainActivity extends AppCompatActivity {
         clearBoard();
         boardLogic.currentGame = game;
         updateGameInfo(game.getGameTitle());
-        updateScoreLabel(0);
-        ImageView view = (ImageView) findViewById(R.id.gameInfoImg);
-        view.setVisibility(View.VISIBLE);
-        view = (ImageView) findViewById(R.id.infoImg);
-        view.setVisibility(View.VISIBLE);
-        if (userSettings.hint == UserSettings.Hint.DISTANCE)
-            showIndicator(true);
+        if (userSettings.mode == UserSettings.Mode.GAME) {
+            updateScoreLabel(0);
+            ImageView view = (ImageView) findViewById(R.id.gameInfoImg);
+            view.setVisibility(View.VISIBLE);
+            view = (ImageView) findViewById(R.id.infoImg);
+            view.setVisibility(View.VISIBLE);
+            if (userSettings.hint == UserSettings.Hint.DISTANCE)
+                showIndicator(true);
+            tries = userMoves = 0;
+            currentScore = 0;
+
+            if (userSettings.showFirstMoves) {
+                makeFirstMoves();
+            }
+            gameModeLayout.setVisibility(View.VISIBLE);
+        } else {
+            editModeLayout.setVisibility(View.VISIBLE);
+            ImageView view = (ImageView) findViewById(R.id.infoImgEdit);
+            view.setVisibility(View.VISIBLE);
+        }
+
         Log.v(TAG, "load  game " + game.md5 + "   score size " + String.valueOf(boardLogic.currentGame.score.size()));
         gamesStorage.addRecentGame(game.getGameTitleWithRanks(), game);
         saveCurrentGameToRecentPrefs();
-        tries = userMoves = 0;
-        currentScore = 0;
-        userSettings.setState(UserSettings.State.GAME_LOADED);
 
-        if (userSettings.showFirstMoves) {
-            makeFirstMoves();
-        }
+        userSettings.setState(UserSettings.State.GAME_LOADED);
 
     }
 
@@ -1070,13 +1100,15 @@ public class MainActivity extends AppCompatActivity {
         alert.show();
     }
 
+    View settingsView;
+
     private void showSettings() {
 
         AlertDialog.Builder dialog = new AlertDialog.Builder(this);
         dialog.setTitle("Customize Goess");
 
         LayoutInflater inflater = getLayoutInflater();
-        View settingsView = (View) inflater.inflate(R.layout.settings, null);
+        settingsView = (View) inflater.inflate(R.layout.settings, null);
         dialog.setView(settingsView);
 
         CheckBox cb = (CheckBox) settingsView.findViewById(R.id.boardCoordsCb);
@@ -1087,7 +1119,7 @@ public class MainActivity extends AppCompatActivity {
         cb.setChecked(userSettings.showFirstMoves);
 
 
-        checkRadioGroups(settingsView);
+        checkRadioGroups();
 
         AlertDialog alert = dialog.create();
         alert.setCanceledOnTouchOutside(true);
@@ -1095,8 +1127,8 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
-    private void checkRadioGroups(View view) {
-        RadioGroup lineRadioGroup = (RadioGroup)view.findViewById(R.id.linesizegroup);
+    private void checkRadioGroups() {
+        RadioGroup lineRadioGroup = (RadioGroup)settingsView.findViewById(R.id.linesizegroup);
         if (userSettings.lineSize == UserSettings.LineSize.THICK)
             lineRadioGroup.check(R.id.linethick);
         else if (userSettings.lineSize == UserSettings.LineSize.NORMAL)
@@ -1104,7 +1136,7 @@ public class MainActivity extends AppCompatActivity {
         else
             lineRadioGroup.check(R.id.linetiny);
 
-        RadioGroup hintRadioGroup = (RadioGroup)view.findViewById(R.id.hintgroup);
+        RadioGroup hintRadioGroup = (RadioGroup)settingsView.findViewById(R.id.hintgroup);
         if (userSettings.hint == UserSettings.Hint.DISTANCE)
             hintRadioGroup.check(R.id.showDistanceRb);
         else if (userSettings.hint == UserSettings.Hint.AREA)
@@ -1112,7 +1144,7 @@ public class MainActivity extends AppCompatActivity {
         else
             hintRadioGroup.check(R.id.hintNoneRb);
 
-        RadioGroup autoMoveRadioGroup = (RadioGroup)view.findViewById(R.id.autoMoveGroup);
+        RadioGroup autoMoveRadioGroup = (RadioGroup)settingsView.findViewById(R.id.autoMoveGroup);
         if (userSettings.autoMove == UserSettings.AutoMove.THREE)
             autoMoveRadioGroup.check(R.id.threefailuresRb);
         else if (userSettings.autoMove == UserSettings.AutoMove.FIVE)
@@ -1120,7 +1152,7 @@ public class MainActivity extends AppCompatActivity {
         else
             autoMoveRadioGroup.check(R.id.noneFailuresRb);
 
-        RadioGroup zoomRadioGroup = (RadioGroup)view.findViewById(R.id.zoomgroup);
+        RadioGroup zoomRadioGroup = (RadioGroup)settingsView.findViewById(R.id.zoomgroup);
         if (userSettings.zoom == UserSettings.Zoom.CENTER_TOUCH)
             zoomRadioGroup.check(R.id.zoomcentertouch);
         else if (userSettings.zoom == UserSettings.Zoom.CENTER_CANVAS)
@@ -1128,7 +1160,7 @@ public class MainActivity extends AppCompatActivity {
         else
             zoomRadioGroup.check(R.id.zoomnone);
 
-        RadioGroup modeRadioGroup = (RadioGroup)view.findViewById(R.id.modegroup);
+        RadioGroup modeRadioGroup = (RadioGroup)settingsView.findViewById(R.id.modegroup);
         if (userSettings.mode == UserSettings.Mode.GAME)
             modeRadioGroup.check(R.id.gameModeRb);
         else
@@ -1218,12 +1250,54 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void gameModeHandler(View v) {
+        if (userSettings.mode == UserSettings.Mode.VIEW_ONLY)
+            applyGameMode();
+    }
+
+    private void applyGameMode() {
+        clearBoard();
+        updateMoveLabel();
         userSettings.setMode(UserSettings.Mode.GAME);
+        editModeLayout.setVisibility(View.GONE);
+        if (gameReady)
+            loadGame(boardLogic.currentGame);
+    }
+
+    private void applyViewOnlyMode() {
+        userSettings.setMode(UserSettings.Mode.VIEW_ONLY);
+        userSettings.setState(UserSettings.State.EDIT);
+        clearBoard();
+        gameModeLayout.setVisibility(View.GONE);
+        editModeLayout.setVisibility(View.VISIBLE);
+
     }
 
     public void editModeHandler(View v) {
-        userSettings.setMode(UserSettings.Mode.VIEW_ONLY);
-        
+        if (userSettings.state == UserSettings.State.GAME_IN_PROGRESS) {
+
+            AlertDialog.Builder alertDialog = new AlertDialog.Builder(this);
+            alertDialog.setTitle("Warning");
+            alertDialog.setMessage("You have a game in progress.\nChanging mode will reset your current score. Continue?");
+            alertDialog.setPositiveButton("Yes", new DialogInterface.OnClickListener() {
+                public void onClick(DialogInterface dialog, int id) {
+                   applyViewOnlyMode();
+                }
+            });
+            alertDialog.setNegativeButton("No", new DialogInterface.OnClickListener() {
+                public void onClick(DialogInterface dialog, int id) {
+                    dialog.cancel();
+                    RadioGroup modeRadioGroup = (RadioGroup)settingsView.findViewById(R.id.modegroup);
+                    modeRadioGroup.check(R.id.gameModeRb);
+                }
+            });
+            AlertDialog alert = alertDialog.create();
+            alert.setCanceledOnTouchOutside(false);
+            alert.show();
+
+        } else if (userSettings.state != UserSettings.State.EDIT) {
+           applyViewOnlyMode();
+        }
+
     }
 
     private void showDefaultGamesList() {
