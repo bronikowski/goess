@@ -72,24 +72,22 @@
     <LinearLayout
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:layout_gravity="center_horizontal">
+        android:paddingLeft="15dp"
+        android:orientation="vertical">
 
         <RadioGroup
             android:id="@+id/zoomgroup"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:orientation="horizontal"
+            android:orientation="vertical"
             android:textColor="@android:color/black"  >
 
             <RadioButton
                 android:id="@+id/zoomcentertouch"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_gravity="center"
-                android:gravity="center"
                 android:onClick="zoomTouchHandler"
-                android:text="Center touch"
+                android:text="Center the touched point to show maximum possible board context"
                 android:textSize="12dp"
                 android:textColor="@android:color/background_dark"  />
 
@@ -98,11 +96,9 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:onClick="zoomCanvasHandler"
-                android:text="Center canvas"
+                android:text="Do not move the touched point"
                 android:textSize="12dp"
-                android:layout_gravity="center"
                 android:checked="true"
-                android:gravity="center"
                 android:textColor="@android:color/background_dark"  />
             <RadioButton
                 android:id="@+id/zoomnone"
@@ -111,9 +107,7 @@
                 android:onClick="zoomNoneHandler"
                 android:text="None"
                 android:textSize="12dp"
-                android:layout_gravity="center"
                 android:checked="true"
-                android:gravity="center"
                 android:textColor="@android:color/background_dark"  />
         </RadioGroup>
     </LinearLayout>
@@ -277,7 +271,7 @@
     <TextView
         android:layout_width="fill_parent"
         android:layout_height="fill_parent"
-        android:text="Guess hints"
+        android:text="Hints"
         android:textSize="15dp"
         android:textColor="@android:color/black"
         android:paddingTop="5dp"
