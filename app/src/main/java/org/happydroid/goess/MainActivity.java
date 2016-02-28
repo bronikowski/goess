@@ -776,7 +776,9 @@ public class MainActivity extends AppCompatActivity {
         setSupportActionBar(myToolbar);
         myToolbar.refreshDrawableState();
         if (boardLogic.currentIndex == boardLogic.currentGame.moves.size()) {
-            askIfAddToHistory();
+            userSettings.setState(UserSettings.State.GAME_FINISHED);
+            if (userSettings.mode == UserSettings.Mode.GAME)
+                askIfAddToHistory();
             String result = boardLogic.currentGame.result;
             if (userSettings.mode == UserSettings.Mode.GAME)
                 moveLabel.setText(result);
@@ -916,10 +918,9 @@ public class MainActivity extends AppCompatActivity {
 
     private void showAbout() {
         String quote = "“To follow the path, look to the master, follow the master, " +
-                "walk with the master, see through the master, become the master.”";
-
+                "walk with the master, see through the master, become the master.”";cu
         String msg = "<b>How to play</b><br><br>Load a game and try to guess the next move!<br><br>" +
-                    "Skipped moves are not counted against the score.<br><br>" +
+                    "Customize the options to make playing more fun.<br><br>" +
                     "You can save current score when the game is finished.<br>";
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder.setMessage(Html.fromHtml("<i><font color=grey>" + quote + "</font></i><br><br><br>" + msg));

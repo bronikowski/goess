@@ -32,6 +32,7 @@ public class UserSettings {
         GAME_NOT_LOADED,
         GAME_LOADED,
         GAME_IN_PROGRESS,
+        GAME_FINISHED,
         EDIT
     }
 
