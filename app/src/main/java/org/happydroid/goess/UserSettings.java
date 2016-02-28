@@ -57,7 +57,7 @@ public class UserSettings {
         this.preferences = preferences;
         if (preferences != null) {
             showAbout = preferences.getBoolean("showAbout", true);
-            showBoardCoords = preferences.getBoolean("showBoardCoords", false);
+            showBoardCoords = preferences.getBoolean("showBoardCoords", true);
             showIndicator = preferences.getBoolean("showIndicator", true);
             doubleclick = preferences.getBoolean("doubleclick", true);
             showFirstMoves = preferences.getBoolean("showFirstMoves", true);
@@ -77,7 +77,7 @@ public class UserSettings {
             setShowAbout(true);
             setIndicator(true);
             setDoubleClick(false);
-            setShowBoardCoords(false);
+            setShowBoardCoords(true);
             setLineSize(LineSize.NORMAL);
             setHint(Hint.DISTANCE);
             setZoom(Zoom.CENTER_TOUCH);

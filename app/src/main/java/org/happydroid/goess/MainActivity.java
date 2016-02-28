@@ -1,5 +1,6 @@
 package org.happydroid.goess;
 
+import android.graphics.Region;
 import android.text.Html;
 import android.app.AlertDialog;
 import android.content.Context;
@@ -10,6 +11,7 @@ import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
+import android.graphics.RectF;
 import android.graphics.drawable.BitmapDrawable;
 import android.net.Uri;
 import android.os.Bundle;
@@ -62,6 +64,8 @@ public class MainActivity extends AppCompatActivity {
     private static int GAME_REPO_REQUEST_CODE = 2;
     private static int BOARD_SIZE = 19;
     private static float BOARD_SCALE_FACTOR = 1.8f;
+
+    int[][] dimSquares;
 
     GoImages goImages;
     Bitmap rawBoardBitmap;
@@ -116,6 +120,7 @@ public class MainActivity extends AppCompatActivity {
         setSupportActionBar(myToolbar);
         getSupportActionBar().setTitle("Choose a game!");
         setSupportActionBar(myToolbar);
+
 
         goImages = new GoImages();
         stonesImg = new View[BOARD_SIZE][BOARD_SIZE];
@@ -233,6 +238,10 @@ public class MainActivity extends AppCompatActivity {
                         break;
                     case MotionEvent.ACTION_UP:
                         if (gameReady) {
+
+                            if (userSettings.state == UserSettings.State.GAME_LOADED)
+                                userSettings.setState(UserSettings.State.GAME_IN_PROGRESS);
+
                             ViewGroup owner = (ViewGroup) stoneImage.getParent();
                             owner.removeView(horiz);
                             owner.removeView(vertic);
@@ -257,17 +266,17 @@ public class MainActivity extends AppCompatActivity {
                                             tries = 0;
                                             userMoves++;
                                             checkIfCapturing(move);
-                                            if (userSettings.state == UserSettings.State.GAME_LOADED)
-                                                userSettings.setState(UserSettings.State.GAME_IN_PROGRESS);
                                             valid = true;
+
                                         } else {
-                                            if (userSettings.hint == UserSettings.Hint.AREA) {
-                                                //todo
-                                            }
                                             checkIfShowMove();
                                         }
+                                        if (userSettings.hint == UserSettings.Hint.AREA)
+                                            drawBoardGrid(userSettings.showBoardCoords);
+
                                         float totalScore = (currentScore / userMoves) * 100;
                                         updateScoreLabel(totalScore);
+
                                         if (userSettings.zoom != UserSettings.Zoom.NONE)
                                             resetZoom();
                                     } else if (putDummy) {
@@ -285,13 +294,14 @@ public class MainActivity extends AppCompatActivity {
                                                 tries = 0;
                                                 userMoves++;
                                                 checkIfCapturing(move);
-                                                if (userSettings.state == UserSettings.State.GAME_LOADED)
-                                                    userSettings.setState(UserSettings.State.GAME_IN_PROGRESS);
                                                 valid = true;
                                             } else {
                                                 removeLastDummyStone(true);
                                                 checkIfShowMove();
                                             }
+                                            if (userSettings.hint == UserSettings.Hint.AREA)
+                                                drawBoardGrid(userSettings.showBoardCoords);
+
                                             float totalScore = (currentScore / userMoves) * 100;
                                             updateScoreLabel(totalScore);
 
@@ -396,10 +406,6 @@ public class MainActivity extends AppCompatActivity {
             updateGameInfo(boardLogic.currentGame.getGameTitle());
             tries = 0;
         }
-        if (userSettings.autoMove != UserSettings.AutoMove.NONE) {
-            if (userSettings.state == UserSettings.State.GAME_LOADED)
-                userSettings.setState(UserSettings.State.GAME_IN_PROGRESS);
-        }
     }
 
     private void makeMove() {
@@ -487,11 +493,20 @@ public class MainActivity extends AppCompatActivity {
                 x += (diff * 2);
                 if (x > boardWidth)
                     x = boardWidth;
+
             } else {
                 int diff = ((boardWidth / 2) - (int) x);
                 x -= (diff * 2);
                 if (x < 0)
                     x = 0;
+            }
+
+            if (y < (boardWidth / 2)) {
+
+                int diff = ((boardWidth / 2) - (int) y);
+                y -= (diff * 2);
+                if (y < 0)
+                    y = 0;
             }
         }
 
@@ -1207,18 +1222,33 @@ public class MainActivity extends AppCompatActivity {
         drawBoardGrid(userSettings.showBoardCoords);
     }
 
+    private void resetDistanceLabel() {
+        LinearLayout fill = (LinearLayout) findViewById(R.id.scoreFill);
+        ViewGroup.LayoutParams params = fill.getLayoutParams();
+        params.width = 0;
+        View end = (View) findViewById(R.id.scoreFillEnd);
+        end.setVisibility(View.GONE);
+        fill.setLayoutParams(params);
+    }
+
     public void hintDistanceHandler(View v) {
         userSettings.setHint(UserSettings.Hint.DISTANCE);
+        tries = 0;
+        drawBoardGrid(userSettings.showBoardCoords);
+        resetDistanceLabel();
         showIndicator(true);
     }
 
     public void hintAreaHandler(View v) {
         userSettings.setHint(UserSettings.Hint.AREA);
+        tries = 0;
         showIndicator(false);
     }
 
     public void hintNoneHandler(View v) {
         userSettings.setHint(UserSettings.Hint.NONE);
+        tries = 0;
+        drawBoardGrid(userSettings.showBoardCoords);
         showIndicator(false);
     }
 
@@ -1238,15 +1268,28 @@ public class MainActivity extends AppCompatActivity {
     public void threeFailuresHandler(View v) {
         userSettings.setAutoMove(UserSettings.AutoMove.THREE);
         tries = 0;
+        if (userSettings.hint == UserSettings.Hint.DISTANCE)
+            resetDistanceLabel();
+
+        drawBoardGrid(userSettings.showBoardCoords);
     }
 
     public void fiveFailuresHandler(View v) {
         userSettings.setAutoMove(UserSettings.AutoMove.FIVE);
         tries = 0;
+        if (userSettings.hint == UserSettings.Hint.DISTANCE)
+            resetDistanceLabel();
+
+        drawBoardGrid(userSettings.showBoardCoords);
     }
 
     public void noneFailuresHandler(View v) {
         userSettings.setAutoMove(UserSettings.AutoMove.NONE);
+        tries = 0;
+        if (userSettings.hint == UserSettings.Hint.DISTANCE)
+            resetDistanceLabel();
+
+        drawBoardGrid(userSettings.showBoardCoords);
     }
 
     public void gameModeHandler(View v) {
@@ -1312,7 +1355,12 @@ public class MainActivity extends AppCompatActivity {
         startActivityForResult(intent, GAME_REPO_REQUEST_CODE);
     }
 
-    private void drawBoardGrid(boolean grid) {
+    private void dimBoard() {
+        Paint p = new Paint();
+        p.setColor(Color.BLACK);
+    }
+
+    private void drawBoardGrid(boolean coords) {
         Paint p = new Paint();
         p.setColor(Color.BLACK);
         float ratio = 1.0f/boardWidth;
@@ -1363,7 +1411,7 @@ public class MainActivity extends AppCompatActivity {
                 tempCanvas.drawCircle(i + off, j + off, radius, p);
         }
 
-        if (grid) {
+        if (coords) {
             p.setTextSize((offsetW / 2) - 3);
             p.setFakeBoldText(true);
             int c = 0;
@@ -1379,12 +1427,81 @@ public class MainActivity extends AppCompatActivity {
                     padding = (int)(offsetW / 4) + 2;
                 tempCanvas.drawText(String.valueOf(20 - c), boardWidth - padding, i + 5, p);
             }
-
         }
+
+        if (userSettings.hint == UserSettings.Hint.AREA && userSettings.state == UserSettings.State.GAME_IN_PROGRESS)
+            dimBoard(tempCanvas, p);
+
         boardImage.setImageDrawable(new BitmapDrawable(getResources(), tempBitmap));
 
         Log.i(TAG, "boardWidth: " + String.valueOf(boardWidth + ", boardHeight: " +
                 String.valueOf(boardHeight)) + ", offset:" + offset);
 
+    }
+
+    private void dimBoard(Canvas tempCanvas, Paint p) {
+        p.setAlpha(50);
+        float offset = boardWidth / 20;
+        RectF rect = new RectF(offset, offset, offset * 19, offset * 19);
+        Move nextMove = boardLogic.currentGame.moves.get(boardLogic.currentIndex);
+
+        if (tries > 1) {
+            if (nextMove.x < 5 && nextMove.y < 6)
+                tempCanvas.clipRect(offset, offset, offset * 6 + (offset / 2), offset * 6 + (offset / 2), Region.Op.XOR);
+            else if (nextMove.x < 5 && nextMove.y < 10)
+                tempCanvas.clipRect(offset, offset * 5 - (offset / 2), offset * 6 + (offset / 2), offset * 10 + (offset / 2), Region.Op.XOR);
+            else if (nextMove.x < 5 && nextMove.y < 13)
+                tempCanvas.clipRect(offset, offset * 9 - (offset / 2), offset * 6 + (offset / 2), offset * 14 + (offset / 2), Region.Op.XOR);
+            else if (nextMove.x < 5 && nextMove.y >= 13)
+                tempCanvas.clipRect(offset, offset * 14 - (offset / 2), offset * 6 + (offset / 2), offset * 19, Region.Op.XOR);
+
+            else if (nextMove.x < 9 && nextMove.y < 6)
+                tempCanvas.clipRect(offset * 5 - (offset / 2), offset, offset * 10 + (offset / 2), offset * 6 + (offset / 2), Region.Op.XOR);
+            else if (nextMove.x < 9 && nextMove.y < 10)
+                tempCanvas.clipRect(offset * 5 - (offset / 2), offset * 5 - (offset / 2), offset * 10 + (offset / 2),
+                        offset * 10 + (offset / 2), Region.Op.XOR);
+            else if (nextMove.x < 9 && nextMove.y < 13)
+                tempCanvas.clipRect(offset * 5 - (offset / 2), offset * 10 - (offset / 2), offset * 10 + (offset / 2),
+                        offset * 14 + (offset / 2), Region.Op.XOR);
+            else if (nextMove.x < 9 && nextMove.y >= 13)
+                tempCanvas.clipRect(offset * 5 - (offset / 2), offset * 14 - (offset / 2), offset * 10 + (offset / 2),
+                        offset * 19, Region.Op.XOR);
+
+            else if (nextMove.x < 13 && nextMove.y < 6)
+                tempCanvas.clipRect(offset * 10 - (offset / 2), offset, offset * 15 + (offset / 2), offset * 6 + (offset / 2), Region.Op.XOR);
+            else if (nextMove.x < 13 && nextMove.y < 10)
+                tempCanvas.clipRect(offset * 10 - (offset / 2), offset * 5 - (offset / 2), offset * 15 + (offset / 2),
+                        offset * 10 + (offset / 2), Region.Op.XOR);
+            else if (nextMove.x < 13 && nextMove.y < 13)
+                tempCanvas.clipRect(offset * 10 - (offset / 2), offset * 10 - (offset / 2), offset * 15 + (offset / 2),
+                        offset * 14 + (offset / 2), Region.Op.XOR);
+            else if (nextMove.x < 13 && nextMove.y >= 13)
+                tempCanvas.clipRect(offset * 10 - (offset / 2), offset * 14 - (offset / 2), offset * 15 + (offset / 2),
+                        offset * 19, Region.Op.XOR);
+
+            else if (nextMove.x < 19 && nextMove.y < 6)
+                tempCanvas.clipRect(offset * 14 - (offset / 2), offset, offset * 19, offset * 6 + (offset / 2), Region.Op.XOR);
+            else if (nextMove.x < 19 && nextMove.y < 10)
+                tempCanvas.clipRect(offset * 14 - (offset / 2), offset * 5 - (offset / 2), offset * 19 + (offset / 2),
+                        offset * 10 + (offset / 2), Region.Op.XOR);
+            else if (nextMove.x < 19 && nextMove.y < 13)
+                tempCanvas.clipRect(offset * 14 - (offset / 2), offset * 10 - (offset / 2), offset * 19 + (offset / 2),
+                        offset * 14 + (offset / 2), Region.Op.XOR);
+            else if (nextMove.x < 19 && nextMove.y >= 13)
+                tempCanvas.clipRect(offset * 14 - (offset / 2), offset * 14 - (offset / 2), offset * 19,
+                        offset * 19 + (offset / 2), Region.Op.XOR);
+
+            tempCanvas.drawRect(rect, p);
+        } else if (tries == 1) {
+            if (nextMove.x < 10 && nextMove.y < 10)
+                tempCanvas.clipRect(offset, offset, offset * 10 + (offset / 2), offset * 10 + (offset / 2), Region.Op.XOR);
+            else if (nextMove.x < 10 && nextMove.y >= 10)
+                tempCanvas.clipRect(offset, offset * 9 + (offset / 2), offset * 10 + (offset / 2), offset * 19, Region.Op.XOR);
+            else if (nextMove.x >= 10 && nextMove.y < 10)
+                tempCanvas.clipRect(offset * 9 + (offset / 2), offset, offset * 19, offset * 10 + (offset / 2), Region.Op.XOR);
+            else if (nextMove.x >= 10 && nextMove.y >= 10)
+                tempCanvas.clipRect(offset * 9 + (offset / 2), offset * 9 + (offset / 2), offset * 19, offset * 19, Region.Op.XOR);
+            tempCanvas.drawRect(rect, p);
+        }
     }
 }
