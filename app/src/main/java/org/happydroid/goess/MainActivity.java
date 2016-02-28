@@ -34,7 +34,6 @@ import android.widget.CheckBox;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
-import android.widget.RadioButton;
 import android.widget.RadioGroup;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
@@ -64,8 +63,6 @@ public class MainActivity extends AppCompatActivity {
     private static int GAME_REPO_REQUEST_CODE = 2;
     private static int BOARD_SIZE = 19;
     private static float BOARD_SCALE_FACTOR = 1.8f;
-
-    int[][] dimSquares;
 
     GoImages goImages;
     Bitmap rawBoardBitmap;
@@ -102,7 +99,6 @@ public class MainActivity extends AppCompatActivity {
     int userMoves = 0;
     boolean putDummy = true;
     Move lastDummyMove = null;
-
 
     View[][] stonesImg;
     View[][] dummyStonesImg;
@@ -205,7 +201,8 @@ public class MainActivity extends AppCompatActivity {
             public boolean onTouch(View v, MotionEvent event) {
 
                 int action = event.getAction();
-                if (userSettings.mode == UserSettings.Mode.VIEW_ONLY)
+                if (userSettings.mode == UserSettings.Mode.VIEW_ONLY
+                    || (userSettings.state == UserSettings.State.GAME_FINISHED))
                     return true;
                 switch (action) {
                     case MotionEvent.ACTION_DOWN:
@@ -1183,6 +1180,33 @@ public class MainActivity extends AppCompatActivity {
             modeRadioGroup.check(R.id.editModeRb);
     }
 
+    private void replayGame() {
+        clearBoard();
+        String moves = "(" + (String.valueOf(boardLogic.currentIndex)) + "/" + boardLogic.currentGame.moves.size() + ")";
+        moveLabel.setText(moves);
+        if (userSettings.showFirstMoves)
+            makeFirstMoves();
+    }
+
+    public void replayBtnHandler(View v) {
+        AlertDialog.Builder alertDialog = new AlertDialog.Builder(this);
+        alertDialog.setTitle("Warning");
+        alertDialog.setMessage("Replay current game?");
+        alertDialog.setPositiveButton("Yes", new DialogInterface.OnClickListener() {
+            public void onClick(DialogInterface dialog, int id) {
+                replayGame();
+            }
+        });
+        alertDialog.setNegativeButton("No", new DialogInterface.OnClickListener() {
+            public void onClick(DialogInterface dialog, int id) {
+                dialog.cancel();
+            }
+        });
+        AlertDialog alert = alertDialog.create();
+        alert.setCanceledOnTouchOutside(false);
+        alert.show();
+    }
+
     public void firstMovesHandler(View v) {
         CheckBox cb = (CheckBox) v;
         userSettings.setShowFirstMoves(cb.isChecked());
@@ -1356,10 +1380,6 @@ public class MainActivity extends AppCompatActivity {
         startActivityForResult(intent, GAME_REPO_REQUEST_CODE);
     }
 
-    private void dimBoard() {
-        Paint p = new Paint();
-        p.setColor(Color.BLACK);
-    }
 
     private void drawBoardGrid(boolean coords) {
         Paint p = new Paint();
