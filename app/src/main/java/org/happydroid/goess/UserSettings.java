@@ -46,6 +46,7 @@ public class UserSettings {
     boolean showIndicator;
     boolean doubleclick;
     boolean showFirstMoves;
+    boolean markWrongGuess;
     Hint hint;
     LineSize lineSize;
     Zoom zoom;
@@ -62,6 +63,7 @@ public class UserSettings {
             showIndicator = preferences.getBoolean("showIndicator", true);
             doubleclick = preferences.getBoolean("doubleclick", true);
             showFirstMoves = preferences.getBoolean("showFirstMoves", true);
+            markWrongGuess = preferences.getBoolean("markWrongGuess", true);
             String hint = preferences.getString("hint", Hint.DISTANCE.toString());
             this.hint = Hint.valueOf(hint);
             String line = preferences.getString("lineSize", LineSize.NORMAL.toString());
@@ -79,6 +81,7 @@ public class UserSettings {
             setIndicator(true);
             setDoubleClick(false);
             setShowBoardCoords(true);
+            setMarkWrongGuess(true);
             setLineSize(LineSize.NORMAL);
             setHint(Hint.DISTANCE);
             setZoom(Zoom.CENTER_TOUCH);
@@ -126,6 +129,11 @@ public class UserSettings {
     public void setShowFirstMoves(boolean show) {
         showFirstMoves = show;
         preferences.edit().putBoolean("showFirstMoves", show).apply();
+    }
+
+    public void setMarkWrongGuess(boolean mark) {
+        markWrongGuess = mark;
+        preferences.edit().putBoolean("markWrongGuess", mark).apply();
     }
 
     public void setAutoMove(AutoMove automove) {

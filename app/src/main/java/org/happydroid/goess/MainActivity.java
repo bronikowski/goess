@@ -106,6 +106,7 @@ public class MainActivity extends AppCompatActivity {
     ImageView deleteImg;
     TextView deleteTxt;
 
+
     XYMultipleSeriesRenderer graphRenderer;
 
     @Override
@@ -116,7 +117,6 @@ public class MainActivity extends AppCompatActivity {
         setSupportActionBar(myToolbar);
         getSupportActionBar().setTitle("Choose a game!");
         setSupportActionBar(myToolbar);
-
 
         goImages = new GoImages();
         stonesImg = new View[BOARD_SIZE][BOARD_SIZE];
@@ -192,6 +192,7 @@ public class MainActivity extends AppCompatActivity {
 
         final View horiz = (View) findViewById(R.id.horiz);
         final View vertic = (View) findViewById(R.id.vertic);
+     //   lastWrongGuessMark = (ImageView) findViewById(R.id.wrongGuessMark);
 
         horiz.setVisibility(View.INVISIBLE);
         vertic.setVisibility(View.INVISIBLE);
@@ -258,14 +259,17 @@ public class MainActivity extends AppCompatActivity {
                                     if (!userSettings.doubleclick) {
                                         tries++;
                                         if (boardLogic.isValid(move, userSettings.hint)) {
+                                            if (lastWrongGuessMark != null)
+                                                frameLayout.removeView(lastWrongGuessMark);
                                             drawStone(move, true, false);
                                             currentScore += (1.0f / tries);
                                             tries = 0;
                                             userMoves++;
                                             checkIfCapturing(move);
                                             valid = true;
-
                                         } else {
+                                            if (userSettings.markWrongGuess)
+                                                drawWrongGuess(move);
                                             checkIfShowMove();
                                         }
                                         if (userSettings.hint == UserSettings.Hint.AREA)
@@ -278,6 +282,8 @@ public class MainActivity extends AppCompatActivity {
                                             resetZoom();
                                     } else if (putDummy) {
                                         lastDummyMove = new Move(move.x, move.y, move.player);
+                                        if (lastWrongGuessMark != null)
+                                            frameLayout.removeView(lastWrongGuessMark);
                                         drawStone(move, true, true);
                                         putDummy = false;
                                     } else {
@@ -285,6 +291,8 @@ public class MainActivity extends AppCompatActivity {
                                         if (im != null) {
                                             tries++;
                                             if (boardLogic.isValid(move, userSettings.hint)) {
+                                                if (lastWrongGuessMark != null)
+                                                    frameLayout.removeView(lastWrongGuessMark);
                                                 putDummy = true;
                                                 drawStone(move, true, false);
                                                 currentScore += (1.0f / tries);
@@ -294,6 +302,8 @@ public class MainActivity extends AppCompatActivity {
                                                 valid = true;
                                             } else {
                                                 removeLastDummyStone(true);
+                                                if (userSettings.markWrongGuess)
+                                                    drawWrongGuess(move);
                                                 checkIfShowMove();
                                             }
                                             if (userSettings.hint == UserSettings.Hint.AREA)
@@ -627,6 +637,21 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    private void drawWrongGuess(Move move) {
+
+        if (lastWrongGuessMark != null)
+            frameLayout.removeView(lastWrongGuessMark);
+        ImageView img = new ImageView(context);
+        img.setImageDrawable(this.getResources().getDrawable(R.drawable.ic_delete));
+        lastWrongGuessMark = img;
+        int stoneSize = (int)(boardWidth) / 20;
+        FrameLayout.LayoutParams markParam = new FrameLayout.LayoutParams(stoneSize, stoneSize);
+        markParam.leftMargin = ((int) ((move.x + 1) * offsetW)) - ((int)stoneSize / 2);
+        markParam.topMargin = ((int) ((move.y + 1) * offsetH)) - ((int)stoneSize / 2);
+        frameLayout.addView(lastWrongGuessMark, markParam);
+
+    }
+
     private void drawStone(Move move, boolean mark, boolean dummy) {
         Log.i(TAG, "Putting stone at " + String.valueOf(move.x) + ":" + String.valueOf(move.y)
                 + " nr " + String.valueOf(boardLogic.currentIndex) + " of player "
@@ -672,6 +697,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     ImageView lastMarkedStone = null;
+    ImageView lastWrongGuessMark = null;
 
     private void updateLastMoveMark() {
 
@@ -1129,7 +1155,8 @@ public class MainActivity extends AppCompatActivity {
         cb.setChecked(userSettings.doubleclick);
         cb = (CheckBox) settingsView.findViewById(R.id.firstMovesCb);
         cb.setChecked(userSettings.showFirstMoves);
-
+        cb = (CheckBox) settingsView.findViewById(R.id.wrongGuessCb);
+        cb.setChecked(userSettings.markWrongGuess);
 
         checkRadioGroups();
 
@@ -1218,6 +1245,13 @@ public class MainActivity extends AppCompatActivity {
         } else if (userSettings.showFirstMoves && userSettings.state == UserSettings.State.GAME_LOADED) {
             makeFirstMoves();
         }
+    }
+
+    public void wrongGuessHandler(View v) {
+        CheckBox cb = (CheckBox) v;
+        userSettings.setMarkWrongGuess(cb.isChecked());
+        if (lastWrongGuessMark != null)
+            frameLayout.removeView(lastWrongGuessMark);
     }
 
     public void boardCoordsHandler(View v) {
