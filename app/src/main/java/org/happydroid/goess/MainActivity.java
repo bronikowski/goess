@@ -589,16 +589,22 @@ public class MainActivity extends AppCompatActivity {
         tries = 0;
         userMoves = 0;
         if (currentStoneViewId >= 3) {
-            frameLayout.removeViews(3, currentStoneViewId - 2);
             currentStoneViewId = 0;
         }
-        for (int i = 0; i < BOARD_SIZE; ++i)
+        View v = null;
+        for (int i = 0; i < BOARD_SIZE; ++i) {
             for (int j = 0; j < BOARD_SIZE; ++j) {
-                stonesImg[i][j] = null;
-                removeLastDummyStone(false);
+                v = stonesImg[i][j];
+                if (v != null) {
+                    frameLayout.removeView(v);
+                    stonesImg[i][j] = null;
+                }
                 dummyStonesImg[i][j] = null;
             }
-
+        }
+        removeLastDummyStone(false);
+        if (lastWrongGuessMark != null)
+            frameLayout.removeView(lastWrongGuessMark);
     }
 
     private void showIndicator(boolean show) {
@@ -1219,7 +1225,7 @@ public class MainActivity extends AppCompatActivity {
     public void replayBtnHandler(View v) {
         AlertDialog.Builder alertDialog = new AlertDialog.Builder(this);
         alertDialog.setTitle("Warning");
-        alertDialog.setMessage("Replay current game?");
+        alertDialog.setMessage("Start the game from the beginning? This will reset your current score.");
         alertDialog.setPositiveButton("Yes", new DialogInterface.OnClickListener() {
             public void onClick(DialogInterface dialog, int id) {
                 replayGame();
