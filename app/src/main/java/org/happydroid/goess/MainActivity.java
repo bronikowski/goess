@@ -875,7 +875,6 @@ public class MainActivity extends AppCompatActivity {
         boardLogic.currentGame = game;
         updateGameInfo(game.getGameTitle());
         if (userSettings.mode == UserSettings.Mode.GAME) {
-            updateScoreLabel(0);
             ImageView view = (ImageView) findViewById(R.id.gameInfoImg);
             view.setVisibility(View.VISIBLE);
             view = (ImageView) findViewById(R.id.infoImg);
@@ -1182,6 +1181,8 @@ public class MainActivity extends AppCompatActivity {
 
     private void replayGame() {
         clearBoard();
+        drawBoardGrid(userSettings.showBoardCoords);
+        userSettings.setState(UserSettings.State.GAME_IN_PROGRESS);
         String moves = "(" + (String.valueOf(boardLogic.currentIndex)) + "/" + boardLogic.currentGame.moves.size() + ")";
         moveLabel.setText(moves);
         if (userSettings.showFirstMoves)
@@ -1464,6 +1465,10 @@ public class MainActivity extends AppCompatActivity {
         p.setAlpha(50);
         float offset = boardWidth / 20;
         RectF rect = new RectF(offset, offset, offset * 19, offset * 19);
+
+        if (boardLogic.currentIndex == boardLogic.currentGame.moves.size())
+            return;
+
         Move nextMove = boardLogic.currentGame.moves.get(boardLogic.currentIndex);
 
         if (tries > 1) {
