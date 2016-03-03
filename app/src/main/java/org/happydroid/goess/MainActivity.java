@@ -947,6 +947,7 @@ public class MainActivity extends AppCompatActivity {
         }
         String moves = "(" + (String.valueOf(boardLogic.currentIndex)) + "/" + boardLogic.currentGame.moves.size() + ")";
         moveLabel.setText(moves);
+        updateScoreLabel(false);
     }
 
 
