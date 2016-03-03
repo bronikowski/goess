@@ -127,7 +127,7 @@ public class GamesStorage {
         }
     }
 
-    public void addToGamesHistory(GameInfo game, int score) {
+    public void addToGamesHistory(GameInfo game, float score) {
         game.score.add(score);
         if (!gamesHistory.containsKey(game.md5)) {
             gamesHistory.put(game.md5, game);
@@ -136,8 +136,8 @@ public class GamesStorage {
             gamesHistory.get(game.md5).score = game.score;
         for (Map.Entry<String, GameInfo> entry : gamesHistory.entrySet()) {
             Log.v(TAG, "game in history: " + entry.getKey());
-            for (Integer s : entry.getValue().score)
-                Log.v(TAG, "score : " + String.valueOf(s));
+            for (Float s : entry.getValue().score)
+                Log.v(TAG, "score : " + String.valueOf((float)s));
         }
     }
 

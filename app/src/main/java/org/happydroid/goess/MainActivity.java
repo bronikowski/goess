@@ -98,8 +98,7 @@ public class MainActivity extends AppCompatActivity {
     UserSettings userSettings;
     boolean gameReady;
     int tries;
-    float currentScore = 0;
-    int userMoves = 0;
+    float score = 0;
     boolean putDummy = true;
     Move lastDummyMove = null;
 
@@ -265,9 +264,8 @@ public class MainActivity extends AppCompatActivity {
                                             if (lastWrongGuessMark != null)
                                                 frameLayout.removeView(lastWrongGuessMark);
                                             drawStone(move, true, false);
-                                            currentScore += (1.0f / tries);
+                                            countScore();
                                             tries = 0;
-                                            userMoves++;
                                             checkIfCapturing(move);
                                             valid = true;
                                         } else {
@@ -278,8 +276,9 @@ public class MainActivity extends AppCompatActivity {
                                         if (userSettings.hint == UserSettings.Hint.AREA)
                                             drawBoardGrid(userSettings.showBoardCoords);
 
-                                        float totalScore = (currentScore / userMoves) * 100;
-                                        updateScoreLabel(totalScore);
+                                      //  float totalScore = (score / boardLogic.currentIndex) * 100;
+                                      //  Log.v(TAG, ">>>>>>>> index " + String.valueOf(boardLogic.currentIndex) + " / " + String.valueOf(userMoves));
+                                        updateScoreLabel(false);
 
                                         if (userSettings.zoom != UserSettings.Zoom.NONE)
                                             resetZoom();
@@ -298,9 +297,8 @@ public class MainActivity extends AppCompatActivity {
                                                     frameLayout.removeView(lastWrongGuessMark);
                                                 putDummy = true;
                                                 drawStone(move, true, false);
-                                                currentScore += (1.0f / tries);
+                                                countScore();
                                                 tries = 0;
-                                                userMoves++;
                                                 checkIfCapturing(move);
                                                 valid = true;
                                             } else {
@@ -312,8 +310,7 @@ public class MainActivity extends AppCompatActivity {
                                             if (userSettings.hint == UserSettings.Hint.AREA)
                                                 drawBoardGrid(userSettings.showBoardCoords);
 
-                                            float totalScore = (currentScore / userMoves) * 100;
-                                            updateScoreLabel(totalScore);
+                                            updateScoreLabel(false);
 
                                             if (userSettings.zoom != UserSettings.Zoom.NONE)
                                                 resetZoom();
@@ -348,7 +345,6 @@ public class MainActivity extends AppCompatActivity {
                     case R.id.nextBtn:
                         makeMove();
                         boardLogic.score = 0;
-                        updateScoreLabel(lastScore);
                         break;
                     case R.id.prevBtn:
                         removeLastDummyStone(true);
@@ -371,7 +367,6 @@ public class MainActivity extends AppCompatActivity {
                             }
                         }
                         boardLogic.score = 0;
-                        updateScoreLabel(lastScore);
                         break;
                     case R.id.rewindBtn:
                         removeLastDummyStone(true);
@@ -388,7 +383,6 @@ public class MainActivity extends AppCompatActivity {
                             Toast.makeText(getApplicationContext(), "Please choose a game!",
                                     Toast.LENGTH_LONG).show();
                         boardLogic.score = 0;
-                        updateScoreLabel(lastScore);
                         break;
                 }
                 updateGameInfo(boardLogic.currentGame.getGameTitle());
@@ -404,6 +398,15 @@ public class MainActivity extends AppCompatActivity {
             showAbout();
             userSettings.setShowAbout(false);
         }
+    }
+
+    private void countScore() {
+        if (tries == 1)
+            score += 1.0f;
+        else if (tries == 2)
+            score += 0.5f;
+        else if (tries == 3)
+            score += 0.2f;
     }
 
     private void checkIfShowMove() {
@@ -550,7 +553,7 @@ public class MainActivity extends AppCompatActivity {
         }
 
         for (Map.Entry<String, GameInfo> entry : gamesStorage.gamesHistory.entrySet()) {
-            for (Integer s : entry.getValue().score)
+            for (Float s : entry.getValue().score)
                 Log.v(TAG, "score : " + String.valueOf(s));
         }
     }
@@ -567,7 +570,7 @@ public class MainActivity extends AppCompatActivity {
                 g.score.clear();
                 g.score.addAll(gamesStorage.gamesHistory.get(g.md5).score);
             }
-            Log.v(TAG, "read recent  games, game score:  " + String.valueOf(g.score.size()));
+            Log.v(TAG, "read recent  games, game score:  " + String.valueOf((float)g.score.size()));
             gamesStorage.addRecentGame(g.getGameTitleWithRanks(), g);
         }
     }
@@ -586,11 +589,9 @@ public class MainActivity extends AppCompatActivity {
 
     private void clearBoard() {
         boardLogic.clearBoardState();
-        updateScoreLabel(0);
-        lastScore = 0;
-        currentScore = 0;
+        updateScoreLabel(true);
+        score = 0;
         tries = 0;
-        userMoves = 0;
         if (currentStoneViewId >= 3) {
             currentStoneViewId = 0;
         }
@@ -611,15 +612,17 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void showIndicator(boolean show) {
-        RelativeLayout fill = (RelativeLayout) findViewById(R.id.scoreLayout);
+        RelativeLayout fill = (RelativeLayout) findViewById(R.id.distanceLayout);
         fill.setVisibility(show ? View.VISIBLE : View.INVISIBLE);
     }
 
-    float lastScore = 0;
-
-    private void updateScoreLabel(float percentage) { //only from user moves
-        lastScore = percentage;
-        scoreLabel.setText(String.valueOf((int) percentage) + "%");
+    private void updateScoreLabel(boolean clear) {
+        float percentage = (score / boardLogic.currentIndex) * 100;
+        if (clear)
+            scoreLabel.setText("0.0/" + String.valueOf(boardLogic.currentIndex) + " (0%)");
+        else
+            scoreLabel.setText(String.valueOf((float)score) + "/" + String.valueOf(boardLogic.currentIndex)
+                + " (" + String.valueOf((int) percentage) + "%)");
         LinearLayout fill = (LinearLayout) findViewById(R.id.scoreFill);
         LinearLayout bkg = (LinearLayout) findViewById(R.id.scoreBkg);
         ViewGroup.LayoutParams paramsBkg = bkg.getLayoutParams();
@@ -845,12 +848,12 @@ public class MainActivity extends AppCompatActivity {
 
     private void askIfAddToHistory() {
         AlertDialog alertDialog = new AlertDialog.Builder(this).create();
-        alertDialog.setTitle("Game finished with score " + String.valueOf((int)lastScore) + "%");
+        alertDialog.setTitle("Game finished with score " + String.valueOf((float)score));
         alertDialog.setMessage("Add this score to game history?");
         alertDialog.setButton(AlertDialog.BUTTON_POSITIVE, "OK",
                 new DialogInterface.OnClickListener() {
                     public void onClick(DialogInterface dialog, int which) {
-                        gamesStorage.addToGamesHistory(boardLogic.currentGame, (int) lastScore);
+                        gamesStorage.addToGamesHistory(boardLogic.currentGame, score);
                         saveCurrentGameToHistoryPrefs();
                         dialog.dismiss();
                         Toast.makeText(getApplicationContext(), "Score saved!",
@@ -909,6 +912,7 @@ public class MainActivity extends AppCompatActivity {
         clearBoard();
         boardLogic.currentGame = game;
         updateGameInfo(game.getGameTitle());
+        updateScoreLabel(true);
         if (userSettings.mode == UserSettings.Mode.GAME) {
             ImageView view = (ImageView) findViewById(R.id.gameInfoImg);
             view.setVisibility(View.VISIBLE);
@@ -916,8 +920,7 @@ public class MainActivity extends AppCompatActivity {
             view.setVisibility(View.VISIBLE);
             if (userSettings.hint == UserSettings.Hint.DISTANCE)
                 showIndicator(true);
-            tries = userMoves = 0;
-            currentScore = 0;
+            tries = 0;
 
             if (userSettings.showFirstMoves) {
                 makeFirstMoves();
@@ -1110,9 +1113,9 @@ public class MainActivity extends AppCompatActivity {
         int time = 1;
 
         Log.v(TAG, "scores for " + boardLogic.currentGame.md5);
-        for (int i : gamesStorage.gamesHistory.get(boardLogic.currentGame.md5).score) {
+        for (Float i : gamesStorage.gamesHistory.get(boardLogic.currentGame.md5).score) {
             series.add(time++, i);
-            Log.v(TAG, "score " + String.valueOf(i));
+            Log.v(TAG, "score " + String.valueOf((float)i));
         }
 
         XYMultipleSeriesDataset mXYMultipleSeriesDataSet = new XYMultipleSeriesDataset();
@@ -1218,7 +1221,7 @@ public class MainActivity extends AppCompatActivity {
     private void replayGame() {
         clearBoard();
         drawBoardGrid(userSettings.showBoardCoords);
-        userSettings.setState(UserSettings.State.GAME_IN_PROGRESS);
+        userSettings.setState(UserSettings.State.GAME_LOADED);
         String moves = "(" + (String.valueOf(boardLogic.currentIndex)) + "/" + boardLogic.currentGame.moves.size() + ")";
         moveLabel.setText(moves);
         if (userSettings.showFirstMoves)

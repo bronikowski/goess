@@ -74,31 +74,32 @@
         <LinearLayout
             android:id="@+id/percentLayout"
             android:orientation="vertical"
-            android:layout_width="wrap_content" android:layout_height="50dp"
+            android:paddingTop="5dp"
+            android:layout_width="wrap_content" android:layout_height="75dp"
              >
 
             <TextView
                 android:text=""
-                android:id="@+id/scoreTxtLabel"
-                android:paddingLeft="20dp"
-                android:paddingTop="4dp"
-                android:textSize="13dp"
+                android:id="@+id/moveTxtLabel"
+                android:paddingLeft="10dp"
+                android:textSize="11dp"
                 android:layout_width="wrap_content" android:layout_height="25dp" />
             <TextView
-                android:text=""
-                android:id="@+id/moveTxtLabel"
-                android:paddingLeft="20dp"
-                android:paddingTop="4dp"
-                android:textSize="13dp"
-                android:layout_width="wrap_content" android:layout_height="25dp" />
+                android:text="642624564563456"
+                android:id="@+id/scoreTxtLabel"
+                android:paddingLeft="10dp"
+                android:paddingTop="10dp"
+                android:textSize="15dp"
+                android:layout_width="wrap_content" android:layout_height="30dp" />
+
         </LinearLayout>
 
 
         <LinearLayout
             android:orientation="horizontal"
             android:paddingRight="7dp"
-            android:paddingTop="4dp"
-            android:layout_width="wrap_content" android:layout_height="100dp"
+            android:paddingTop="5dp"
+            android:layout_width="wrap_content" android:layout_height="90dp"
             android:gravity="right"
             android:layout_alignParentRight="true">
         <LinearLayout
@@ -109,7 +110,6 @@
                 android:id="@+id/replayBtn"
                 android:layout_width="30dp"
                 android:layout_height="25dp"
-                android:paddingTop="10dp"
                 android:layout_alignParentRight="true"
                 android:onClick="replayBtnHandler"
                 android:background="@drawable/ic_menu_play_clip"
@@ -131,10 +131,11 @@
         </LinearLayout>
 
         <RelativeLayout
-            android:id="@+id/scoreLayout"
+            android:id="@+id/distanceLayout"
             android:orientation="horizontal"
             android:layout_width="100dp"
-            android:layout_height="55dp"
+            android:layout_height="50dp"
+            android:paddingTop="10dp"
             android:layout_centerHorizontal="true">
 
             <LinearLayout

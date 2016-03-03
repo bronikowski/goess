@@ -4,7 +4,7 @@ import java.util.ArrayList;
 
 public class GameInfo {
 
-    ArrayList<Integer> score = new ArrayList<Integer>(1000);
+    ArrayList<Float> score = new ArrayList<Float>(1000);
     ArrayList<Move> moves = new ArrayList<Move>();
     String md5;
     String blackPlayerName = "Black";
