@@ -1,5 +1,6 @@
 package org.happydroid.goess;
 
+import android.graphics.Point;
 import android.graphics.Region;
 import android.text.Html;
 import android.app.AlertDialog;
@@ -41,6 +42,8 @@ import android.widget.Toast;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Random;
+
 import com.google.gson.Gson;
 import com.nononsenseapps.filepicker.FilePickerActivity;
 import org.achartengine.ChartFactory;
@@ -1512,62 +1515,56 @@ public class MainActivity extends AppCompatActivity {
         Move nextMove = boardLogic.currentGame.moves.get(boardLogic.currentIndex);
 
         if (tries > 1) {
-            if (nextMove.x < 5 && nextMove.y < 6)
-                tempCanvas.clipRect(offset, offset, offset * 6 + (offset / 2), offset * 6 + (offset / 2), Region.Op.XOR);
-            else if (nextMove.x < 5 && nextMove.y < 10)
-                tempCanvas.clipRect(offset, offset * 5 - (offset / 2), offset * 6 + (offset / 2), offset * 10 + (offset / 2), Region.Op.XOR);
-            else if (nextMove.x < 5 && nextMove.y < 13)
-                tempCanvas.clipRect(offset, offset * 9 - (offset / 2), offset * 6 + (offset / 2), offset * 14 + (offset / 2), Region.Op.XOR);
-            else if (nextMove.x < 5 && nextMove.y >= 13)
-                tempCanvas.clipRect(offset, offset * 14 - (offset / 2), offset * 6 + (offset / 2), offset * 19, Region.Op.XOR);
 
-            else if (nextMove.x < 9 && nextMove.y < 6)
-                tempCanvas.clipRect(offset * 5 - (offset / 2), offset, offset * 10 + (offset / 2), offset * 6 + (offset / 2), Region.Op.XOR);
-            else if (nextMove.x < 9 && nextMove.y < 10)
-                tempCanvas.clipRect(offset * 5 - (offset / 2), offset * 5 - (offset / 2), offset * 10 + (offset / 2),
-                        offset * 10 + (offset / 2), Region.Op.XOR);
-            else if (nextMove.x < 9 && nextMove.y < 13)
-                tempCanvas.clipRect(offset * 5 - (offset / 2), offset * 10 - (offset / 2), offset * 10 + (offset / 2),
-                        offset * 14 + (offset / 2), Region.Op.XOR);
-            else if (nextMove.x < 9 && nextMove.y >= 13)
-                tempCanvas.clipRect(offset * 5 - (offset / 2), offset * 14 - (offset / 2), offset * 10 + (offset / 2),
-                        offset * 19, Region.Op.XOR);
+            Point p1 = calculateLeftRight(nextMove.x);
+            Point p2 = calculateLeftRight(nextMove.y);
 
-            else if (nextMove.x < 13 && nextMove.y < 6)
-                tempCanvas.clipRect(offset * 10 - (offset / 2), offset, offset * 15 + (offset / 2), offset * 6 + (offset / 2), Region.Op.XOR);
-            else if (nextMove.x < 13 && nextMove.y < 10)
-                tempCanvas.clipRect(offset * 10 - (offset / 2), offset * 5 - (offset / 2), offset * 15 + (offset / 2),
-                        offset * 10 + (offset / 2), Region.Op.XOR);
-            else if (nextMove.x < 13 && nextMove.y < 13)
-                tempCanvas.clipRect(offset * 10 - (offset / 2), offset * 10 - (offset / 2), offset * 15 + (offset / 2),
-                        offset * 14 + (offset / 2), Region.Op.XOR);
-            else if (nextMove.x < 13 && nextMove.y >= 13)
-                tempCanvas.clipRect(offset * 10 - (offset / 2), offset * 14 - (offset / 2), offset * 15 + (offset / 2),
-                        offset * 19, Region.Op.XOR);
+            float left = p1.x;
+            float right = p1.y;
+            float top = p2.x;
+            float bottom = p2.y;
 
-            else if (nextMove.x < 19 && nextMove.y < 6)
-                tempCanvas.clipRect(offset * 14 - (offset / 2), offset, offset * 19, offset * 6 + (offset / 2), Region.Op.XOR);
-            else if (nextMove.x < 19 && nextMove.y < 10)
-                tempCanvas.clipRect(offset * 14 - (offset / 2), offset * 5 - (offset / 2), offset * 19 + (offset / 2),
-                        offset * 10 + (offset / 2), Region.Op.XOR);
-            else if (nextMove.x < 19 && nextMove.y < 13)
-                tempCanvas.clipRect(offset * 14 - (offset / 2), offset * 10 - (offset / 2), offset * 19 + (offset / 2),
-                        offset * 14 + (offset / 2), Region.Op.XOR);
-            else if (nextMove.x < 19 && nextMove.y >= 13)
-                tempCanvas.clipRect(offset * 14 - (offset / 2), offset * 14 - (offset / 2), offset * 19,
-                        offset * 19 + (offset / 2), Region.Op.XOR);
-
+            tempCanvas.clipRect(left, top, right, bottom, Region.Op.XOR);
             tempCanvas.drawRect(rect, p);
+
         } else if (tries == 1) {
-            if (nextMove.x < 10 && nextMove.y < 10)
-                tempCanvas.clipRect(offset, offset, offset * 10 + (offset / 2), offset * 10 + (offset / 2), Region.Op.XOR);
-            else if (nextMove.x < 10 && nextMove.y >= 10)
-                tempCanvas.clipRect(offset, offset * 9 + (offset / 2), offset * 10 + (offset / 2), offset * 19, Region.Op.XOR);
-            else if (nextMove.x >= 10 && nextMove.y < 10)
-                tempCanvas.clipRect(offset * 9 + (offset / 2), offset, offset * 19, offset * 10 + (offset / 2), Region.Op.XOR);
-            else if (nextMove.x >= 10 && nextMove.y >= 10)
-                tempCanvas.clipRect(offset * 9 + (offset / 2), offset * 9 + (offset / 2), offset * 19, offset * 19, Region.Op.XOR);
+            float left = (nextMove.x < 6) ? offset : (nextMove.x < 13 ? offset * 6 + (offset / 2) : offset * 13 + (offset / 2));
+            float top = (nextMove.y < 6) ? offset : (nextMove.y < 13 ? offset * 6 + (offset / 2) : offset * 13 + (offset / 2));
+            float right = (nextMove.x < 6) ? offset * 6 + (offset / 2) : (nextMove.x < 13 ? offset * 13 + (offset / 2) : offset * 19);
+            float bottom = (nextMove.y < 6) ? offset * 6 + (offset / 2) : (nextMove.y < 13 ? offset * 13 + (offset / 2) : offset * 19);
+
+            tempCanvas.clipRect(left, top, right, bottom, Region.Op.XOR);
             tempCanvas.drawRect(rect, p);
         }
+    }
+
+    private Point calculateLeftRight(int move) {
+        Point p = new Point();
+        int offset = boardWidth / 20;
+
+        if (move < 6) {
+            p.x = (move / 3) == 0 ? offset : offset * 3 + (offset / 2);
+            p.y = (move / 3) == 0 ? offset * 3 + (offset / 2) : p.x + offset * 3;
+        } else if (move < 13) {
+            if (move == 9) {
+                Random r = new Random();
+                int i = r.nextInt(100 - 1) + 1;
+                if (i >= 50) {
+                    p.x = offset * 6 + (offset / 2);
+                    p.y = offset * 10 + (offset / 2);
+                } else {
+                    p.x = offset * 9 + (offset / 2);
+                    p.y = offset * 13 + (offset / 2);
+                }
+            } else {
+                p.x = (move / 3) == 2 ? offset * 6 + (offset / 2) : offset * 9 + (offset / 2);
+                p.y = (move / 3) == 2 ? p.x + (offset * 4) : p.x + (offset * 4);
+            }
+
+        } else if (move < 19) {
+            p.x = (move / 4) == 3 ? offset * 13 + (offset / 2) : offset * 16 + (offset / 2);
+            p.y = p.x + (offset * 3);
+        }
+        return p;
     }
 }
