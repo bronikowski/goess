@@ -13,7 +13,7 @@ public class BoardLogic {
     int currentIndex;
     Move.Player currentPlayer;
     Move.Player[][] board;
-    GameInfo currentGame;
+    GameInfo currentGame = null;
     public ArrayList<Move> deadStones = new ArrayList<Move>();
     HashMap<Integer, ArrayList<Move>> captureCache = new HashMap<Integer, ArrayList<Move>>();
     double score;

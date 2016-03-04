@@ -41,9 +41,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Map;
 import java.util.Random;
-
 import com.google.gson.Gson;
 import com.nononsenseapps.filepicker.FilePickerActivity;
 import org.achartengine.ChartFactory;
@@ -59,12 +57,13 @@ public class MainActivity extends AppCompatActivity {
 
     private static String TAG = "MainActivity";
     private static String APP_PREFERENCES = "GoessSettings";
-    private static String APP_PREFERENCES_HISTORY = "GoessGameHistory";
     private static String APP_PREFERENCES_RECENT_GAMES = "GoessRecentGames";
+    private static String APP_PREFERENCES_PLAYED_GAMES = "GoessRecentGames";
     private static String FILE_EXT = "sgf";
     private static int FILE_PICKER_REQUEST_CODE = 1;
     private static int GAME_REPO_REQUEST_CODE = 2;
     private static int BOARD_SIZE = 19;
+    private static int FIRST_MOVES_CNT = 4;
     private static float BOARD_SCALE_FACTOR = 1.8f;
 
     GoImages goImages;
@@ -108,24 +107,26 @@ public class MainActivity extends AppCompatActivity {
     ImageView deleteImg;
     TextView deleteTxt;
 
-
     XYMultipleSeriesRenderer graphRenderer;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        context = this.getApplicationContext();
+        userSettings = new UserSettings(context.getSharedPreferences(APP_PREFERENCES, Context.MODE_PRIVATE));
+        boardLogic = new BoardLogic();
+        gamesStorage = new GamesStorage(context);
+
         myToolbar = (Toolbar) findViewById(R.id.app_bar);
-        setSupportActionBar(myToolbar);
-        getSupportActionBar().setTitle("Choose a game!");
         setSupportActionBar(myToolbar);
 
         goImages = new GoImages();
         stonesImg = new View[BOARD_SIZE][BOARD_SIZE];
         dummyStonesImg = new View[BOARD_SIZE][BOARD_SIZE];
 
-        context = this.getApplicationContext();
-        userSettings = new UserSettings(context.getSharedPreferences(APP_PREFERENCES, Context.MODE_PRIVATE));
+
 
         boardImage = (ImageView) findViewById(R.id.backgroundImg);
         rawBoardBitmap = ((BitmapDrawable) boardImage.getDrawable()).getBitmap();
@@ -141,22 +142,19 @@ public class MainActivity extends AppCompatActivity {
         rewindBtn = (Button) findViewById(R.id.rewindBtn);
         forwardBtn = (Button) findViewById(R.id.forwardBtn);
 
-        boardLogic = new BoardLogic();
-        gamesStorage = new GamesStorage(context);
-
-        loadGameHistory();
-        loadRecentGames();
-
         showIndicator(false);
 
         gameReady = false;
-        userSettings.setState(UserSettings.State.GAME_NOT_LOADED);
 
         frameLayout = (FrameLayout)findViewById(R.id.background);
         gameModeLayout = (RelativeLayout)findViewById(R.id.gameModeLayout);
         editModeLayout = (RelativeLayout)findViewById(R.id.editModeLayout);
         editModeLayout.setVisibility(View.GONE);
         gameModeLayout.setVisibility(View.GONE);
+
+
+        loadPlayedGames();
+        loadRecentGames();
 
         View.OnTouchListener infoImgListener = new View.OnTouchListener() {
             @Override
@@ -179,11 +177,29 @@ public class MainActivity extends AppCompatActivity {
                 offsetW = (boardWidth ) / 20;
                 offsetH = (boardHeight ) / 20;
 
-                drawBoardGrid(userSettings.showBoardCoords);
+
                 ViewGroup.LayoutParams params = frameLayout.getLayoutParams();
 
                 params.height = boardWidth;
                 params.width = boardWidth;
+
+
+                if (userSettings.lastActiveGameMd5.length() > 0) {
+                    GameInfo game = null;
+                    if (gamesStorage.playedGames.containsKey(userSettings.lastActiveGameMd5)) {
+                        game = gamesStorage.playedGames.get(userSettings.lastActiveGameMd5);
+                    }
+                    gameReady = (game != null && game.moves.size() != 0);
+                    if (gameReady) {
+                        loadGame(game);
+                    }
+                } else {
+
+                    getSupportActionBar().setTitle("Choose a game!");
+                    setSupportActionBar(myToolbar);
+                }
+
+                drawBoardGrid(userSettings.showBoardCoords);
 
                 return true;
             }
@@ -205,7 +221,7 @@ public class MainActivity extends AppCompatActivity {
 
                 int action = event.getAction();
                 if (userSettings.mode == UserSettings.Mode.VIEW_ONLY
-                    || (userSettings.state == UserSettings.State.GAME_FINISHED))
+                        || (boardLogic.currentGame.moves.size() == boardLogic.currentIndex))
                     return true;
                 switch (action) {
                     case MotionEvent.ACTION_DOWN:
@@ -213,16 +229,16 @@ public class MainActivity extends AppCompatActivity {
                             Toast.makeText(getApplicationContext(), "Please choose a game!",
                                     Toast.LENGTH_SHORT).show();
                         } else {
-                           if (userSettings.doubleclick) {
+                            if (userSettings.doubleclick) {
 
-                               int x = getXCoord(event.getX());
-                               int y = getYCoord(event.getY());
+                                int x = getXCoord(event.getX());
+                                int y = getYCoord(event.getY());
 
-                               Move move = new Move(x - 1, y - 1, boardLogic.currentPlayer);
-                               ImageView im = (ImageView) dummyStonesImg[move.x][move.y];
-                               if (im == null)
-                                   removeLastDummyStone(true);
-                           }
+                                Move move = new Move(x - 1, y - 1, boardLogic.currentPlayer);
+                                ImageView im = (ImageView) dummyStonesImg[move.x][move.y];
+                                if (im == null)
+                                    removeLastDummyStone(true);
+                            }
                             if ((userSettings.zoom != UserSettings.Zoom.NONE) && !isZoomed()) {
                                 float toolbarHeight = myToolbar.getHeight();
                                 setZoom(event.getX(), event.getY() - toolbarHeight);
@@ -238,9 +254,6 @@ public class MainActivity extends AppCompatActivity {
                         break;
                     case MotionEvent.ACTION_UP:
                         if (gameReady) {
-
-                            if (userSettings.state == UserSettings.State.GAME_LOADED)
-                                userSettings.setState(UserSettings.State.GAME_IN_PROGRESS);
 
                             ViewGroup owner = (ViewGroup) stoneImage.getParent();
                             owner.removeView(horiz);
@@ -276,8 +289,8 @@ public class MainActivity extends AppCompatActivity {
                                         if (userSettings.hint == UserSettings.Hint.AREA)
                                             drawBoardGrid(userSettings.showBoardCoords);
 
-                                      //  float totalScore = (score / boardLogic.currentIndex) * 100;
-                                      //  Log.v(TAG, ">>>>>>>> index " + String.valueOf(boardLogic.currentIndex) + " / " + String.valueOf(userMoves));
+                                        //  float totalScore = (score / boardLogic.currentIndex) * 100;
+                                        //  Log.v(TAG, ">>>>>>>> index " + String.valueOf(boardLogic.currentIndex) + " / " + String.valueOf(userMoves));
                                         updateScoreLabel(false);
 
                                         if (userSettings.zoom != UserSettings.Zoom.NONE)
@@ -398,6 +411,17 @@ public class MainActivity extends AppCompatActivity {
             showAbout();
             userSettings.setShowAbout(false);
         }
+
+
+    }
+
+    @Override
+    public void onPause() {
+
+        super.onPause();
+        Log.v(TAG, "Saving Goess state");
+        saveCurrentGameToPrefs();
+
     }
 
     private void countScore() {
@@ -542,20 +566,20 @@ public class MainActivity extends AppCompatActivity {
         myToolbar.setVisibility(View.VISIBLE);
     }
 
-    private void loadGameHistory() {
-        SharedPreferences  prefs = context.getSharedPreferences(APP_PREFERENCES_HISTORY, Context.MODE_PRIVATE);
+    private void loadPlayedGames() {
+        SharedPreferences  prefs = context.getSharedPreferences(APP_PREFERENCES_PLAYED_GAMES, Context.MODE_PRIVATE);
         Gson gson = new Gson();
         HashMap<String, String> map= (HashMap<String, String>) prefs.getAll();
         for (String s : map.keySet()) {
             String js = map.get(s);
             GameInfo g = gson.fromJson(js, GameInfo.class);
-            gamesStorage.gamesHistory.put(g.md5, g);
+            gamesStorage.playedGames.put(g.md5, g);
         }
 
-        for (Map.Entry<String, GameInfo> entry : gamesStorage.gamesHistory.entrySet()) {
+     /*   for (Map.Entry<String, GameInfo> entry : gamesStorage.playedGames.entrySet()) {
             for (Float s : entry.getValue().score)
                 Log.v(TAG, "score : " + String.valueOf(s));
-        }
+        }*/
     }
 
     private void loadRecentGames() {
@@ -566,10 +590,10 @@ public class MainActivity extends AppCompatActivity {
             String js = map.get(s);
             GameInfo g = gson.fromJson(js, GameInfo.class);
 
-            if (gamesStorage.gamesHistory.containsKey(g.md5)) {
+            /*if (gamesStorage.gamesHistory.containsKey(g.md5)) {
                 g.score.clear();
                 g.score.addAll(gamesStorage.gamesHistory.get(g.md5).score);
-            }
+            }*/
             Log.v(TAG, "read recent  games, game score:  " + String.valueOf((float)g.score.size()));
             gamesStorage.addRecentGame(g.getGameTitleWithRanks(), g);
         }
@@ -592,6 +616,7 @@ public class MainActivity extends AppCompatActivity {
         updateScoreLabel(true);
         score = 0;
         tries = 0;
+
         if (currentStoneViewId >= 3) {
             currentStoneViewId = 0;
         }
@@ -761,10 +786,14 @@ public class MainActivity extends AppCompatActivity {
 
             if (filePath.length() >= 0 && filePath.substring(filePath.length() - 3).equals(FILE_EXT)) {
                 Log.i(TAG, "Opening file: " + filePath);
+
+                if (boardLogic.currentGame != null)
+                    saveCurrentGameToPrefs();
+
                 GameInfo game = boardLogic.parseSGFFile(filePath);
                 if (game != null) {
-                    if (gamesStorage.gamesHistory.containsKey(game.md5)) {
-                        game = gamesStorage.gamesHistory.get(game.md5);
+                    if (gamesStorage.playedGames.containsKey(game.md5)) {
+                        game = gamesStorage.playedGames.get(game.md5);
                     }
                     gameReady = (game != null && game.moves.size() != 0);
                     if (gameReady) {
@@ -781,10 +810,14 @@ public class MainActivity extends AppCompatActivity {
         } else if (requestCode == GAME_REPO_REQUEST_CODE && resultCode == RESULT_OK) {
             String name = data.getStringExtra("gamename");
             String sgf = gamesStorage.getDefaultGameAt(name);
+
+            if (boardLogic.currentGame != null)
+                    saveCurrentGameToPrefs();
+
             GameInfo game = boardLogic.parseSGFString(sgf);
             if (game != null) {
-                if (gamesStorage.gamesHistory.containsKey(game.md5)) {
-                    game = gamesStorage.gamesHistory.get(game.md5);
+                if (gamesStorage.playedGames.containsKey(game.md5)) {
+                    game = gamesStorage.playedGames.get(game.md5);
                 }
                 gameReady = (game != null && game.moves.size() != 0);
                 if (gameReady) {
@@ -811,35 +844,37 @@ public class MainActivity extends AppCompatActivity {
         setSupportActionBar(myToolbar);
         myToolbar.refreshDrawableState();
         if (boardLogic.currentIndex == boardLogic.currentGame.moves.size()) {
-            userSettings.setState(UserSettings.State.GAME_FINISHED);
             if (userSettings.mode == UserSettings.Mode.GAME)
                 askIfAddToHistory();
             String result = boardLogic.currentGame.result;
-            if (userSettings.mode == UserSettings.Mode.GAME)
-                moveLabel.setText(result);
-            else
-                moveLabelEdit.setText(result);
+            if (result.length() > 0) {
+                if (userSettings.mode == UserSettings.Mode.GAME)
+                    moveLabel.setText(result);
+                else
+                    moveLabelEdit.setText(result);
+            }
         }
     }
 
-    private void saveCurrentGameToHistoryPrefs() {
-        SharedPreferences.Editor editor = context.getSharedPreferences(APP_PREFERENCES_HISTORY, Context.MODE_PRIVATE).edit();
-        Gson gson = new Gson();
-        String json = gson.toJson(boardLogic.currentGame);
-        editor.putString(boardLogic.currentGame.md5, json);
-        editor.commit();
+    private void saveCurrentGameToPrefs() {
+        if (boardLogic.currentGame != null) {
 
-    }
-
-    private void deleteCurrentGameHistoryFromPrefs() {
-        SharedPreferences.Editor editor = context.getSharedPreferences(APP_PREFERENCES_HISTORY, Context.MODE_PRIVATE).edit();
-        editor.remove(boardLogic.currentGame.md5);
-        editor.commit();
+            SharedPreferences.Editor editor = context.getSharedPreferences(APP_PREFERENCES_PLAYED_GAMES, Context.MODE_PRIVATE).edit();
+            Gson gson = new Gson();
+            boardLogic.currentGame.lastMove = boardLogic.currentIndex;
+            boardLogic.currentGame.lastScore = score;
+            Log.v(TAG, "Saving current game " + boardLogic.getBlackPlayer());
+            String json = gson.toJson(boardLogic.currentGame);
+            editor.putString(boardLogic.currentGame.md5, json);
+            editor.commit();
+        }
     }
 
     private void saveCurrentGameToRecentPrefs() {
         SharedPreferences.Editor editor = context.getSharedPreferences(APP_PREFERENCES_RECENT_GAMES, Context.MODE_PRIVATE).edit();
         Gson gson = new Gson();
+        boardLogic.currentGame.lastMove = boardLogic.currentIndex - 1;
+        boardLogic.currentGame.lastScore = score;
         String json = gson.toJson(boardLogic.currentGame);
         editor.putString(boardLogic.currentGame.md5, json);
         editor.commit();
@@ -853,8 +888,8 @@ public class MainActivity extends AppCompatActivity {
         alertDialog.setButton(AlertDialog.BUTTON_POSITIVE, "OK",
                 new DialogInterface.OnClickListener() {
                     public void onClick(DialogInterface dialog, int which) {
-                        gamesStorage.addToGamesHistory(boardLogic.currentGame, score);
-                        saveCurrentGameToHistoryPrefs();
+                        gamesStorage.addScoreToPlayedGames(boardLogic.currentGame, score);
+                   //     saveCurrentGameToHistoryPrefs();
                         dialog.dismiss();
                         Toast.makeText(getApplicationContext(), "Score saved!",
                                 Toast.LENGTH_SHORT).show();
@@ -912,8 +947,14 @@ public class MainActivity extends AppCompatActivity {
         clearBoard();
         boardLogic.currentGame = game;
         updateGameInfo(game.getGameTitle());
-        updateScoreLabel(true);
+        userSettings.setLastActiveGame(boardLogic.currentGame.md5);
+
+        drawBoardGrid(userSettings.showBoardCoords);
+
         if (userSettings.mode == UserSettings.Mode.GAME) {
+            score = boardLogic.currentGame.lastScore;
+            updateScoreLabel(score == 0);
+            makeFirstMoves(boardLogic.currentGame.lastMove);
             ImageView view = (ImageView) findViewById(R.id.gameInfoImg);
             view.setVisibility(View.VISIBLE);
             view = (ImageView) findViewById(R.id.infoImg);
@@ -922,8 +963,8 @@ public class MainActivity extends AppCompatActivity {
                 showIndicator(true);
             tries = 0;
 
-            if (userSettings.showFirstMoves) {
-                makeFirstMoves();
+            if (userSettings.showFirstMoves && boardLogic.currentIndex == 0) {
+                makeFirstMoves(FIRST_MOVES_CNT);
             }
             gameModeLayout.setVisibility(View.VISIBLE);
         } else {
@@ -936,12 +977,10 @@ public class MainActivity extends AppCompatActivity {
         gamesStorage.addRecentGame(game.getGameTitleWithRanks(), game);
         saveCurrentGameToRecentPrefs();
 
-        userSettings.setState(UserSettings.State.GAME_LOADED);
-
     }
 
-    private void makeFirstMoves() {
-        int i = 4;
+    private void makeFirstMoves(int i) {
+
         while (i-- > 0) {
             makeMove();
         }
@@ -981,6 +1020,10 @@ public class MainActivity extends AppCompatActivity {
         builder.setItems(items, new DialogInterface.OnClickListener() {
 
             public void onClick(DialogInterface dialog, int item) {
+
+                if (boardLogic.currentGame != null)
+                    saveCurrentGameToPrefs();
+
                 GameInfo game = gamesStorage.getRecentGameAt(items[item].toString());
                 if (game != null) {
                     gameReady = game.moves.size() != 0;
@@ -1074,8 +1117,8 @@ public class MainActivity extends AppCompatActivity {
                 new DialogInterface.OnClickListener() {
                     public void onClick(DialogInterface dialog, int which) {
                         boardLogic.currentGame.score.clear();
-                        gamesStorage.removeFromGamesHistory(boardLogic.currentGame);
-                        deleteCurrentGameHistoryFromPrefs();
+                    //    gamesStorage.removeFromGamesHistory(boardLogic.currentGame);
+                    //    deleteCurrentGameHistoryFromPrefs();
                         dialog.dismiss();
                         Toast.makeText(getApplicationContext(), "Game history deleted!",
                                 Toast.LENGTH_SHORT).show();
@@ -1114,7 +1157,7 @@ public class MainActivity extends AppCompatActivity {
         int time = 1;
 
         Log.v(TAG, "scores for " + boardLogic.currentGame.md5);
-        for (Float i : gamesStorage.gamesHistory.get(boardLogic.currentGame.md5).score) {
+        for (Float i : gamesStorage.playedGames.get(boardLogic.currentGame.md5).score) {
             series.add(time++, i);
             Log.v(TAG, "score " + String.valueOf((float)i));
         }
@@ -1222,11 +1265,10 @@ public class MainActivity extends AppCompatActivity {
     private void replayGame() {
         clearBoard();
         drawBoardGrid(userSettings.showBoardCoords);
-        userSettings.setState(UserSettings.State.GAME_LOADED);
         String moves = "(" + (String.valueOf(boardLogic.currentIndex)) + "/" + boardLogic.currentGame.moves.size() + ")";
         moveLabel.setText(moves);
         if (userSettings.showFirstMoves)
-            makeFirstMoves();
+            makeFirstMoves(FIRST_MOVES_CNT);
     }
 
     public void replayBtnHandler(View v) {
@@ -1251,12 +1293,12 @@ public class MainActivity extends AppCompatActivity {
     public void firstMovesHandler(View v) {
         CheckBox cb = (CheckBox) v;
         userSettings.setShowFirstMoves(cb.isChecked());
-        if (!userSettings.showFirstMoves && userSettings.state == UserSettings.State.GAME_LOADED) {
+        if (!userSettings.showFirstMoves && boardLogic.currentIndex == FIRST_MOVES_CNT) {
             clearBoard();
             String moves = "(" + (String.valueOf(boardLogic.currentIndex)) + "/" + boardLogic.currentGame.moves.size() + ")";
             moveLabel.setText(moves);
-        } else if (userSettings.showFirstMoves && userSettings.state == UserSettings.State.GAME_LOADED) {
-            makeFirstMoves();
+        } else if (userSettings.showFirstMoves &&  boardLogic.currentIndex == 0) {
+            makeFirstMoves(FIRST_MOVES_CNT);
         }
     }
 
@@ -1389,7 +1431,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void editModeHandler(View v) {
-        if (userSettings.state == UserSettings.State.GAME_IN_PROGRESS) {
+        if (boardLogic.currentIndex > 0) {
 
             AlertDialog.Builder alertDialog = new AlertDialog.Builder(this);
             alertDialog.setTitle("Warning");
@@ -1498,7 +1540,7 @@ public class MainActivity extends AppCompatActivity {
             }
         }
 
-        if (userSettings.hint == UserSettings.Hint.AREA && userSettings.state == UserSettings.State.GAME_IN_PROGRESS)
+        if (userSettings.hint == UserSettings.Hint.AREA)
             dimBoard(tempCanvas, p);
 
         boardImage.setImageDrawable(new BitmapDrawable(getResources(), tempBitmap));

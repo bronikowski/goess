@@ -51,7 +51,6 @@ public class SGFParser {
             reader.close();
             String blackName = sgf.getBlackName();
             String blackRank = sgf.getBlackRank();
-            Log.v(TAG, " >>>>>  " + blackRank);
             blackName += " [" + blackRank + "]";
             String whiteName = sgf.getWhiteName();
             String whiteRank = sgf.getWhiteRank();

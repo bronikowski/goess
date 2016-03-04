@@ -29,10 +29,7 @@ public class UserSettings {
     }
 
     enum State {
-        GAME_NOT_LOADED,
-        GAME_LOADED,
-        GAME_IN_PROGRESS,
-        GAME_FINISHED,
+        GAME,
         EDIT
     }
 
@@ -54,6 +51,7 @@ public class UserSettings {
     SharedPreferences preferences;
     State state;
     Mode mode;
+    String lastActiveGameMd5;
 
     UserSettings(SharedPreferences preferences) {
         this.preferences = preferences;
@@ -68,14 +66,15 @@ public class UserSettings {
             this.hint = Hint.valueOf(hint);
             String line = preferences.getString("lineSize", LineSize.NORMAL.toString());
             lineSize = LineSize.valueOf(line);
-            String zoomkind = preferences.getString("zoom", Zoom.CENTER_TOUCH.toString());
+            String zoomkind = preferences.getString("zoom", Zoom.NONE.toString());
             zoom = Zoom.valueOf(zoomkind);
             String automove = preferences.getString("autoMove", AutoMove.THREE.toString());
             autoMove = AutoMove.valueOf(automove);
-            String sate = preferences.getString("state", State.GAME_NOT_LOADED.toString());
+            String sate = preferences.getString("state", State.GAME.toString());
             this.state = State.valueOf(sate);
             String mode = preferences.getString("mode", Mode.GAME.toString());
             this.mode = Mode.valueOf(mode);
+            lastActiveGameMd5 = preferences.getString("lastGame", "");
         } else {
             setShowAbout(true);
             setIndicator(true);
@@ -84,11 +83,18 @@ public class UserSettings {
             setMarkWrongGuess(true);
             setLineSize(LineSize.NORMAL);
             setHint(Hint.DISTANCE);
-            setZoom(Zoom.CENTER_TOUCH);
+            setZoom(Zoom.NONE);
             setAutoMove(AutoMove.THREE);
-            setState(State.GAME_NOT_LOADED);
+            setState(State.GAME);
             setMode(Mode.GAME);
+            setLastActiveGame("");
         }
+    }
+
+
+    public void setLastActiveGame(String md5) {
+        lastActiveGameMd5 = md5;
+        preferences.edit().putString("lastGame", md5).apply();
     }
 
     public void setShowAbout(boolean show) {

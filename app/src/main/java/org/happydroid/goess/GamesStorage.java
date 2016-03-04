@@ -25,7 +25,7 @@ public class GamesStorage {
     HashMap<String, GameInfo> recentGamesByName = new HashMap<String, GameInfo>();
     HashMap<String, String> defaultGamesByName = new HashMap<String, String>();
     LinkedList<String> recentGamesQueue = new LinkedList<String>();
-    HashMap<String, GameInfo> gamesHistory = new HashMap<String, GameInfo>();
+    HashMap<String, GameInfo> playedGames = new HashMap<String, GameInfo>();
 
     ArrayList<String> classic = new ArrayList<String>();
     ArrayList<String> japanese = new ArrayList<String>();
@@ -121,21 +121,21 @@ public class GamesStorage {
         return recentGamesByName.get(name);
     }
 
-    public void removeFromGamesHistory(GameInfo game) {
-        if (gamesHistory.containsKey(game.md5)) {
-            gamesHistory.remove(game.md5);
+    public void removeFromPlayedGames(GameInfo game) { //todo when repo update is done
+        if (playedGames.containsKey(game.md5)) {
+            playedGames.remove(game.md5);
         }
     }
 
-    public void addToGamesHistory(GameInfo game, float score) {
+    public void addScoreToPlayedGames(GameInfo game, float score) {
         game.score.add(score);
-        if (!gamesHistory.containsKey(game.md5)) {
-            gamesHistory.put(game.md5, game);
+        if (!playedGames.containsKey(game.md5)) {
+            playedGames.put(game.md5, game);
         }
         else
-            gamesHistory.get(game.md5).score = game.score;
-        for (Map.Entry<String, GameInfo> entry : gamesHistory.entrySet()) {
-            Log.v(TAG, "game in history: " + entry.getKey());
+            playedGames.get(game.md5).score = game.score;
+        for (Map.Entry<String, GameInfo> entry : playedGames.entrySet()) {
+            Log.v(TAG, "Played game: " + entry.getKey());
             for (Float s : entry.getValue().score)
                 Log.v(TAG, "score : " + String.valueOf((float)s));
         }

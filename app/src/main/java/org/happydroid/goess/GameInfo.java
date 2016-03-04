@@ -14,6 +14,9 @@ public class GameInfo {
     String whitePlayerRank = "";
     String date = "";
     String event = "";
+    Float lastScore = 0.0f;
+    int lastMove = 0;
+
 
     GameInfo() {}
 
