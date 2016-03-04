@@ -126,8 +126,6 @@ public class MainActivity extends AppCompatActivity {
         stonesImg = new View[BOARD_SIZE][BOARD_SIZE];
         dummyStonesImg = new View[BOARD_SIZE][BOARD_SIZE];
 
-
-
         boardImage = (ImageView) findViewById(R.id.backgroundImg);
         rawBoardBitmap = ((BitmapDrawable) boardImage.getDrawable()).getBitmap();
         stoneImage = (ImageView) findViewById(R.id.blackImg);
@@ -686,6 +684,8 @@ public class MainActivity extends AppCompatActivity {
         markParam.leftMargin = ((int) ((move.x + 1) * offsetW)) - ((int)stoneSize / 2);
         markParam.topMargin = ((int) ((move.y + 1) * offsetH)) - ((int)stoneSize / 2);
         frameLayout.addView(lastWrongGuessMark, markParam);
+        boardLogic.currentGame.lastWrongGuessX = move.x;
+        boardLogic.currentGame.lastWrongGuessY = move.y;
 
     }
 
@@ -863,7 +863,6 @@ public class MainActivity extends AppCompatActivity {
             Gson gson = new Gson();
             boardLogic.currentGame.lastMove = boardLogic.currentIndex;
             boardLogic.currentGame.lastScore = score;
-            Log.v(TAG, "Saving current game " + boardLogic.getBlackPlayer());
             String json = gson.toJson(boardLogic.currentGame);
             editor.putString(boardLogic.currentGame.md5, json);
             editor.commit();
@@ -948,20 +947,26 @@ public class MainActivity extends AppCompatActivity {
         boardLogic.currentGame = game;
         updateGameInfo(game.getGameTitle());
         userSettings.setLastActiveGame(boardLogic.currentGame.md5);
-
-        drawBoardGrid(userSettings.showBoardCoords);
+        tries = boardLogic.currentGame.lastTry;
 
         if (userSettings.mode == UserSettings.Mode.GAME) {
             score = boardLogic.currentGame.lastScore;
             updateScoreLabel(score == 0);
             makeFirstMoves(boardLogic.currentGame.lastMove);
+
+            drawBoardGrid(userSettings.showBoardCoords);
+
             ImageView view = (ImageView) findViewById(R.id.gameInfoImg);
             view.setVisibility(View.VISIBLE);
             view = (ImageView) findViewById(R.id.infoImg);
             view.setVisibility(View.VISIBLE);
             if (userSettings.hint == UserSettings.Hint.DISTANCE)
                 showIndicator(true);
-            tries = 0;
+
+            if (userSettings.markWrongGuess && boardLogic.currentGame.lastWrongGuessX >= 0) {
+                Move move = new Move(boardLogic.currentGame.lastWrongGuessX, boardLogic.currentGame.lastWrongGuessY, Move.Player.EMPTY);
+                drawWrongGuess(move);
+            }
 
             if (userSettings.showFirstMoves && boardLogic.currentIndex == 0) {
                 makeFirstMoves(FIRST_MOVES_CNT);
@@ -1558,6 +1563,7 @@ public class MainActivity extends AppCompatActivity {
         if (boardLogic.currentIndex == boardLogic.currentGame.moves.size())
             return;
 
+
         Move nextMove = boardLogic.currentGame.moves.get(boardLogic.currentIndex);
 
         if (tries > 1) {
@@ -1582,6 +1588,7 @@ public class MainActivity extends AppCompatActivity {
             tempCanvas.clipRect(left, top, right, bottom, Region.Op.XOR);
             tempCanvas.drawRect(rect, p);
         }
+        boardLogic.currentGame.lastTry = tries;
     }
 
     private Point calculateLeftRight(int move) {

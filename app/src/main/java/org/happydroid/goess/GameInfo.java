@@ -16,6 +16,9 @@ public class GameInfo {
     String event = "";
     Float lastScore = 0.0f;
     int lastMove = 0;
+    int lastTry = 0;
+    int lastWrongGuessX = -1;
+    int lastWrongGuessY = -1;
 
 
     GameInfo() {}
