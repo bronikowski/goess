@@ -58,11 +58,11 @@ public class UserSettings {
         if (preferences != null) {
             showAbout = preferences.getBoolean("showAbout", true);
             showBoardCoords = preferences.getBoolean("showBoardCoords", true);
-            showIndicator = preferences.getBoolean("showIndicator", true);
+            showIndicator = preferences.getBoolean("showIndicator", false);
             doubleclick = preferences.getBoolean("doubleclick", true);
-            showFirstMoves = preferences.getBoolean("showFirstMoves", true);
+            showFirstMoves = preferences.getBoolean("showFirstMoves", false);
             markWrongGuess = preferences.getBoolean("markWrongGuess", true);
-            String hint = preferences.getString("hint", Hint.DISTANCE.toString());
+            String hint = preferences.getString("hint", Hint.AREA.toString());
             this.hint = Hint.valueOf(hint);
             String line = preferences.getString("lineSize", LineSize.NORMAL.toString());
             lineSize = LineSize.valueOf(line);
@@ -77,12 +77,13 @@ public class UserSettings {
             lastActiveGameMd5 = preferences.getString("lastGame", "");
         } else {
             setShowAbout(true);
-            setIndicator(true);
+            setIndicator(false);
             setDoubleClick(false);
             setShowBoardCoords(true);
             setMarkWrongGuess(true);
+            setShowFirstMoves(false);
             setLineSize(LineSize.NORMAL);
-            setHint(Hint.DISTANCE);
+            setHint(Hint.AREA);
             setZoom(Zoom.NONE);
             setAutoMove(AutoMove.THREE);
             setState(State.GAME);

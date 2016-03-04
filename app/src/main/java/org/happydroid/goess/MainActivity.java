@@ -175,12 +175,13 @@ public class MainActivity extends AppCompatActivity {
                 offsetW = (boardWidth ) / 20;
                 offsetH = (boardHeight ) / 20;
 
-
                 ViewGroup.LayoutParams params = frameLayout.getLayoutParams();
-
                 params.height = boardWidth;
                 params.width = boardWidth;
 
+                if (boardWidth > 500) {
+                    userSettings.setLineSize(UserSettings.LineSize.THICK);
+                }
 
                 if (userSettings.lastActiveGameMd5.length() > 0) {
                     GameInfo game = null;
@@ -192,7 +193,6 @@ public class MainActivity extends AppCompatActivity {
                         loadGame(game);
                     }
                 } else {
-
                     getSupportActionBar().setTitle("Choose a game!");
                     setSupportActionBar(myToolbar);
                 }
@@ -219,7 +219,7 @@ public class MainActivity extends AppCompatActivity {
 
                 int action = event.getAction();
                 if (userSettings.mode == UserSettings.Mode.VIEW_ONLY
-                        || (boardLogic.currentGame.moves.size() == boardLogic.currentIndex))
+                        || (boardLogic.currentGame == null) || (boardLogic.currentGame.moves.size() == boardLogic.currentIndex))
                     return true;
                 switch (action) {
                     case MotionEvent.ACTION_DOWN:
@@ -857,8 +857,8 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void saveCurrentGameToPrefs() {
+        removeLastDummyStone(true);
         if (boardLogic.currentGame != null) {
-
             SharedPreferences.Editor editor = context.getSharedPreferences(APP_PREFERENCES_PLAYED_GAMES, Context.MODE_PRIVATE).edit();
             Gson gson = new Gson();
             boardLogic.currentGame.lastMove = boardLogic.currentIndex;
@@ -1210,12 +1210,13 @@ public class MainActivity extends AppCompatActivity {
         settingsView = (View) inflater.inflate(R.layout.settings, null);
         dialog.setView(settingsView);
 
+        /*
         CheckBox cb = (CheckBox) settingsView.findViewById(R.id.boardCoordsCb);
         cb.setChecked(userSettings.showBoardCoords);
-        cb = (CheckBox) settingsView.findViewById(R.id.doubleClickCb);
-        cb.setChecked(userSettings.doubleclick);
         cb = (CheckBox) settingsView.findViewById(R.id.firstMovesCb);
-        cb.setChecked(userSettings.showFirstMoves);
+        cb.setChecked(userSettings.showFirstMoves);*/
+        CheckBox cb = (CheckBox) settingsView.findViewById(R.id.doubleClickCb);
+        cb.setChecked(userSettings.doubleclick);
         cb = (CheckBox) settingsView.findViewById(R.id.wrongGuessCb);
         cb.setChecked(userSettings.markWrongGuess);
 
@@ -1236,14 +1237,6 @@ public class MainActivity extends AppCompatActivity {
         else
             lineRadioGroup.check(R.id.linetiny);
 
-        RadioGroup hintRadioGroup = (RadioGroup)settingsView.findViewById(R.id.hintgroup);
-        if (userSettings.hint == UserSettings.Hint.DISTANCE)
-            hintRadioGroup.check(R.id.showDistanceRb);
-        else if (userSettings.hint == UserSettings.Hint.AREA)
-            hintRadioGroup.check(R.id.showAreaRb);
-        else
-            hintRadioGroup.check(R.id.hintNoneRb);
-
         RadioGroup autoMoveRadioGroup = (RadioGroup)settingsView.findViewById(R.id.autoMoveGroup);
         if (userSettings.autoMove == UserSettings.AutoMove.THREE)
             autoMoveRadioGroup.check(R.id.threefailuresRb);
@@ -1260,11 +1253,20 @@ public class MainActivity extends AppCompatActivity {
         else
             zoomRadioGroup.check(R.id.zoomnone);
 
-        RadioGroup modeRadioGroup = (RadioGroup)settingsView.findViewById(R.id.modegroup);
+       /* RadioGroup modeRadioGroup = (RadioGroup)settingsView.findViewById(R.id.modegroup);
         if (userSettings.mode == UserSettings.Mode.GAME)
             modeRadioGroup.check(R.id.gameModeRb);
         else
             modeRadioGroup.check(R.id.editModeRb);
+
+             RadioGroup hintRadioGroup = (RadioGroup)settingsView.findViewById(R.id.hintgroup);
+        if (userSettings.hint == UserSettings.Hint.DISTANCE)
+            hintRadioGroup.check(R.id.showDistanceRb);
+        else if (userSettings.hint == UserSettings.Hint.AREA)
+            hintRadioGroup.check(R.id.showAreaRb);
+        else
+            hintRadioGroup.check(R.id.hintNoneRb);
+        */
     }
 
     private void replayGame() {
@@ -1282,6 +1284,7 @@ public class MainActivity extends AppCompatActivity {
         alertDialog.setMessage("Start the game from the beginning? This will reset your current score.");
         alertDialog.setPositiveButton("Yes", new DialogInterface.OnClickListener() {
             public void onClick(DialogInterface dialog, int id) {
+                removeLastDummyStone(true);
                 replayGame();
             }
         });
@@ -1449,8 +1452,8 @@ public class MainActivity extends AppCompatActivity {
             alertDialog.setNegativeButton("No", new DialogInterface.OnClickListener() {
                 public void onClick(DialogInterface dialog, int id) {
                     dialog.cancel();
-                    RadioGroup modeRadioGroup = (RadioGroup)settingsView.findViewById(R.id.modegroup);
-                    modeRadioGroup.check(R.id.gameModeRb);
+                   /* RadioGroup modeRadioGroup = (RadioGroup)settingsView.findViewById(R.id.modegroup);
+                    modeRadioGroup.check(R.id.gameModeRb);*/
                 }
             });
             AlertDialog alert = alertDialog.create();
@@ -1560,7 +1563,7 @@ public class MainActivity extends AppCompatActivity {
         float offset = boardWidth / 20;
         RectF rect = new RectF(offset, offset, offset * 19, offset * 19);
 
-        if (boardLogic.currentIndex == boardLogic.currentGame.moves.size())
+        if (boardLogic.currentGame == null || (boardLogic.currentIndex == boardLogic.currentGame.moves.size()))
             return;
 
 

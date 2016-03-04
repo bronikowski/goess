@@ -82,14 +82,14 @@
                 android:text=""
                 android:id="@+id/moveTxtLabel"
                 android:paddingLeft="10dp"
-                android:textSize="11dp"
+                android:textSize="12dp"
                 android:layout_width="wrap_content" android:layout_height="25dp" />
             <TextView
                 android:text="642624564563456"
                 android:id="@+id/scoreTxtLabel"
                 android:paddingLeft="10dp"
                 android:paddingTop="10dp"
-                android:textSize="15dp"
+                android:textSize="16dp"
                 android:layout_width="wrap_content" android:layout_height="30dp" />
 
         </LinearLayout>
