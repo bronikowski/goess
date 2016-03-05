@@ -630,8 +630,9 @@ public class MainActivity extends AppCompatActivity {
             }
         }
         removeLastDummyStone(false);
-        if (lastWrongGuessMark != null)
+        if (lastWrongGuessMark != null) {
             frameLayout.removeView(lastWrongGuessMark);
+        }
     }
 
     private void showIndicator(boolean show) {
@@ -640,7 +641,8 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void updateScoreLabel(boolean clear) {
-        float percentage = (score / boardLogic.currentIndex) * 100;
+
+        float percentage = boardLogic.currentIndex <= 0 ? 0 : (score / boardLogic.currentIndex) * 100;
         if (clear)
             scoreLabel.setText("0.0/" + String.valueOf(boardLogic.currentIndex) + " (0%)");
         else
@@ -1276,6 +1278,8 @@ public class MainActivity extends AppCompatActivity {
         moveLabel.setText(moves);
         if (userSettings.showFirstMoves)
             makeFirstMoves(FIRST_MOVES_CNT);
+        boardLogic.currentGame.lastWrongGuessX = -1;
+        boardLogic.currentGame.lastWrongGuessY = -1;
     }
 
     public void replayBtnHandler(View v) {
