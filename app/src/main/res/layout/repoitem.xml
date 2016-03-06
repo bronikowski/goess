@@ -1,0 +1,24 @@
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="40dp"
+    android:orientation="horizontal"
+    android:paddingLeft="5dp">
+
+    <TextView
+        android:id="@+id/gameTitle"
+        android:layout_width="wrap_content"
+        android:layout_gravity="center_vertical"
+        android:textColor="@android:color/black"
+        android:textSize="12dp"
+        android:layout_height="35dp" />
+
+    <ImageView
+        android:id="@+id/img"
+        android:layout_width="15dp"
+        android:layout_height="30dp"
+        android:gravity="top"
+        android:visibility="invisible"
+        android:layout_alignParentRight="true"
+        android:background="@drawable/check"/>
+
+</RelativeLayout>

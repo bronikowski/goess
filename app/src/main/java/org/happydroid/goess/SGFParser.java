@@ -1,7 +1,6 @@
 package org.happydroid.goess;
 
 
-import android.util.Log;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
@@ -11,7 +10,7 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 
-import sgfparser.SGF;
+import org.happydroid.goess.sgfparser.SGF;
 
 public class SGFParser {
 
@@ -51,10 +50,10 @@ public class SGFParser {
             reader.close();
             String blackName = sgf.getBlackName();
             String blackRank = sgf.getBlackRank();
-            blackName += " [" + blackRank + "]";
+            blackName += " [" + (blackRank.length() > 0 ? blackRank : "?") + "]";
             String whiteName = sgf.getWhiteName();
             String whiteRank = sgf.getWhiteRank();
-            whiteName += " [" + whiteRank + "]";
+            whiteName += " [" + (whiteRank.length() > 0 ? whiteRank : "?")  + "]";
             name = blackName + " vs " + whiteName;
 
         } catch (Exception e) {
@@ -66,7 +65,7 @@ public class SGFParser {
 
     public GameInfo getGameFromString(String content) {
 
-        StringReader sr= new StringReader(content);
+        StringReader sr = new StringReader(content);
         BufferedReader reader = new BufferedReader(sr);
 
         return parseSGF(reader);

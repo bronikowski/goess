@@ -21,26 +21,22 @@ public class GamesStorage {
 
     static final int RECENT_GAMES_LIST_SIZE = 5;
 
-    String[] folders = {"classic", "japanese", "chinese", "european", "korean"};
     HashMap<String, GameInfo> recentGamesByName = new HashMap<String, GameInfo>();
-    HashMap<String, String> defaultGamesByName = new HashMap<String, String>();
     LinkedList<String> recentGamesQueue = new LinkedList<String>();
-    HashMap<String, GameInfo> playedGames = new HashMap<String, GameInfo>();
 
-    ArrayList<String> classic = new ArrayList<String>();
-    ArrayList<String> japanese = new ArrayList<String>();
-    ArrayList<String> korean = new ArrayList<String>();
-    ArrayList<String> chinese = new ArrayList<String>();
-    ArrayList<String> european = new ArrayList<String>();
+    HashMap<String, String> defaultGamesByName = new HashMap<String, String>();
+    ArrayList<String> repoGameNames = new ArrayList<String>();
+
+    HashMap<String, GameInfo> playedGames = new HashMap<String, GameInfo>(); // in repogames?
 
     Context context;
 
     GamesStorage(Context context) {
         this.context = context;
-        initDefault();
+        initDefaultGames(); // if no list from prefs
     }
 
-    private void initDefault() {
+    private void initDefaultGames() {
         String[] paths = new String[0];
         AssetManager am = context.getResources().getAssets();
         try {
@@ -50,40 +46,21 @@ public class GamesStorage {
         }
 
         for (int i = 0; i < paths.length; ++i) {
-            Log.i(TAG, "Reading " + paths[i]);
-            if (Arrays.asList(folders).contains(paths[i])) {
-                Log.i(TAG, "Reading >>  " + paths[i]);
 
-                String[] subpaths = new String[0];
+            if (paths[i].endsWith(".sgf")) {
+                Log.i(TAG, "Reading game " + paths[i]);
+                String content = null;
                 try {
-                    subpaths = am.list(paths[i]);
+                    content = getFileContent(am.open(paths[i]));
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
-                for (int j = 0; j < subpaths.length; ++j) {
-                    if (subpaths[j].endsWith(".sgf")) {
-                        Log.i(TAG, "Reading game " + subpaths[j]);
-                        String content = null;
-                        try {
-                            content = getFileContent(am.open(paths[i] + "/" + subpaths[j]));
-                        } catch (IOException e) {
-                            e.printStackTrace();
-                        }
-                        Log.i(TAG, "Content " + ((content != null) ? String.valueOf(content.length()) : "(null)"));
-                        if (paths[i].equals("classic"))
-                            classic.add(getNameFromContent(content));
-                        else if (paths[i].equals("japanese"))
-                            japanese.add(getNameFromContent(content));
-                        else if (paths[i].equals("korean"))
-                            korean.add(getNameFromContent(content));
-                        else if (paths[i].equals("european"))
-                            european.add(getNameFromContent(content));
-                        else if (paths[i].equals("chinese"))
-                            chinese.add(getNameFromContent(content));
-                        defaultGamesByName.put(getNameFromContent(content), content);
-                    }
-                }
+                Log.i(TAG, "Content " + ((content != null) ? String.valueOf(content.length()) : "(null)"));
+
+                defaultGamesByName.put(getNameFromContent(content), content);
+                repoGameNames.add(getNameFromContent(content));
             }
+
         }
     }
 

@@ -7,7 +7,7 @@
  * (C) 2016 Marcin Konarski - All Rights Reserved
  */
 
-package sgfparser;
+package org.happydroid.goess.sgfparser;
 
 import java.lang.Iterable;
 import java.util.ArrayList;

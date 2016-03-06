@@ -7,7 +7,7 @@
  * (C) 2016 Marcin Konarski - All Rights Reserved
  */
 
-package sgfparser;
+package org.happydroid.goess.sgfparser;
 
 public class SGFException extends Exception {
     public static final long serialVersionUID = 17l;

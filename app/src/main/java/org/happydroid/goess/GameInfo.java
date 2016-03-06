@@ -4,6 +4,7 @@ import java.util.ArrayList;
 
 public class GameInfo {
 
+    ArrayList<Float> bestScores = new ArrayList<Float>(10);
     ArrayList<Float> score = new ArrayList<Float>(1000);
     ArrayList<Move> moves = new ArrayList<Move>();
     String md5;

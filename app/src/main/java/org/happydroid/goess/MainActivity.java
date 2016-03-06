@@ -1,5 +1,8 @@
 package org.happydroid.goess;
 
+import android.app.AlarmManager;
+import android.app.Dialog;
+import android.app.PendingIntent;
 import android.graphics.Point;
 import android.graphics.Region;
 import android.text.Html;
@@ -30,18 +33,24 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewTreeObserver;
 import android.view.WindowManager;
+import android.widget.AdapterView;
 import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.ListView;
 import android.widget.RadioGroup;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.HashMap;
 import java.util.Random;
+import java.util.TimeZone;
+import com.google.android.gms.common.api.GoogleApiClient;
+import com.google.android.gms.games.Games;
 import com.google.gson.Gson;
 import com.nononsenseapps.filepicker.FilePickerActivity;
 import org.achartengine.ChartFactory;
@@ -51,20 +60,28 @@ import org.achartengine.model.XYMultipleSeriesDataset;
 import org.achartengine.model.XYSeries;
 import org.achartengine.renderer.XYMultipleSeriesRenderer;
 import org.achartengine.renderer.XYSeriesRenderer;
+import org.happydroid.goess.basegameutils.BaseGameUtils;
+import org.happydroid.goess.service.AlarmReceiver;
 
-
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity /*implements
+        GoogleApiClient.ConnectionCallbacks,
+        GoogleApiClient.OnConnectionFailedListener*/  {
 
     private static String TAG = "MainActivity";
     private static String APP_PREFERENCES = "GoessSettings";
     private static String APP_PREFERENCES_RECENT_GAMES = "GoessRecentGames";
-    private static String APP_PREFERENCES_PLAYED_GAMES = "GoessRecentGames";
+    private static String APP_PREFERENCES_REPO_GAMES = "GoessRepoGames";
+    private static String APP_PREFERENCES_PLAYED_GAMES = "GoessPlayedGames";
+    private static String APP_PREFERENCES_TODAYS_GAME = "GoessTodaysGame";
     private static String FILE_EXT = "sgf";
     private static int FILE_PICKER_REQUEST_CODE = 1;
     private static int GAME_REPO_REQUEST_CODE = 2;
+    private static int LEADERBOARD_REQUEST_CODE = 3;
     private static int BOARD_SIZE = 19;
     private static int FIRST_MOVES_CNT = 4;
     private static float BOARD_SCALE_FACTOR = 1.8f;
+
+    private GoogleApiClient googleApiClient;
 
     GoImages goImages;
     Bitmap rawBoardBitmap;
@@ -92,6 +109,10 @@ public class MainActivity extends AppCompatActivity {
     RelativeLayout editModeLayout;
     Toolbar myToolbar;
 
+    ListView gamesList;
+    TextView todaysGameTxt;
+
+    GamesRepoListAdapter gamesRepoAdapter;
     BoardLogic boardLogic;
     GamesStorage gamesStorage;
     UserSettings userSettings;
@@ -108,16 +129,104 @@ public class MainActivity extends AppCompatActivity {
     TextView deleteTxt;
 
     XYMultipleSeriesRenderer graphRenderer;
+/*
+    @Override
+    protected void onStart() {
+        super.onStart();
+        googleApiClient.connect();
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+        googleApiClient.disconnect();
+    }
+
+    @Override
+    public void onConnected(Bundle connectionHint) {
+        if(googleApiClient.isConnected()){
+            Games.Leaderboards.submitScore(googleApiClient, "CgkIyLnYwqQeEAIQBw", 23);
+        }
+    }
+*/
+
+    private void setGameDownloadAlarm() {
+
+        Calendar downloadTime = Calendar.getInstance();
+        downloadTime.setTimeZone(TimeZone.getTimeZone("GMT"));
+        downloadTime.set(Calendar.HOUR_OF_DAY, 11);
+        downloadTime.set(Calendar.MINUTE, 45);
+
+        Intent downloader = new Intent(context, AlarmReceiver.class);
+        PendingIntent recurringDownload = PendingIntent.getBroadcast(context, 0, downloader, PendingIntent.FLAG_CANCEL_CURRENT);
+        AlarmManager alarms = (AlarmManager) this.getSystemService(Context.ALARM_SERVICE);
+        alarms.setInexactRepeating(AlarmManager.RTC_WAKEUP, downloadTime.getTimeInMillis(), AlarmManager.INTERVAL_DAY, recurringDownload);
+    }
+
+    private static int RC_SIGN_IN = 9001;
+    private boolean resolvingConnectionFailure = false;
+    private boolean autoStartSignInFlow = true;
+    private boolean signInClicked = false;
+/*
+    @Override
+    public void onConnectionFailed(ConnectionResult connectionResult) {
+        if (resolvingConnectionFailure) {
+            return;
+        }
+
+        if (signInClicked || autoStartSignInFlow) {
+            autoStartSignInFlow = false;
+            signInClicked = false;
+            resolvingConnectionFailure = true;
+
+            if (!BaseGameUtils.resolveConnectionFailure(this, googleApiClient, connectionResult,
+                    RC_SIGN_IN, "There was an issue with sign-in, please try again later.")) {
+                resolvingConnectionFailure = false;
+            }
+        }
+
+        // display signin button
+    }
+
+    @Override
+    public void onConnectionSuspended(int i) {
+        googleApiClient.connect();
+    }
+
+    private void signInClicked() {
+        signInClicked = true;
+        googleApiClient.connect();
+    }
+
+    private void signOutclicked() {
+        signInClicked = false;
+        Games.signOut(googleApiClient);
+    }*/
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+
+/*
+        googleApiClient = new GoogleApiClient.Builder(this)
+                .addConnectionCallbacks(this)
+                .addOnConnectionFailedListener(this)
+                .addApi(Games.API).addScope(Games.SCOPE_GAMES)
+                .build();
+*/
         context = this.getApplicationContext();
         userSettings = new UserSettings(context.getSharedPreferences(APP_PREFERENCES, Context.MODE_PRIVATE));
         boardLogic = new BoardLogic();
         gamesStorage = new GamesStorage(context);
+
+        setGameDownloadAlarm();
+     //   readTodaysGame();
+
+        //invalidate repo list
+        gamesRepoAdapter = new GamesRepoListAdapter(this, gamesStorage.repoGameNames);
+
 
         myToolbar = (Toolbar) findViewById(R.id.app_bar);
         setSupportActionBar(myToolbar);
@@ -410,7 +519,19 @@ public class MainActivity extends AppCompatActivity {
             userSettings.setShowAbout(false);
         }
 
+    }
 
+    private void readTodaysGame(Dialog dialog) {
+        SharedPreferences  prefs = context.getSharedPreferences(APP_PREFERENCES_TODAYS_GAME, Context.MODE_PRIVATE);
+        String sgf = prefs.getString("todaysGame", "");
+        String name = "Game update error!";
+        if (sgf.length() > 0) {
+            SGFParser parser = new SGFParser();
+            name = parser.getFullName(sgf);
+        }
+        Log.v(TAG, "Got todays game " + name);
+        todaysGameTxt = (TextView) dialog.findViewById(R.id.todaysgamename);
+        todaysGameTxt.setText(name);
     }
 
     @Override
@@ -781,7 +902,23 @@ public class MainActivity extends AppCompatActivity {
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
         String filePath = "";
-        if (requestCode == FILE_PICKER_REQUEST_CODE && resultCode == RESULT_OK) {
+
+        if (requestCode == LEADERBOARD_REQUEST_CODE) {
+
+        } else if (requestCode == RC_SIGN_IN) {
+            signInClicked = false;
+            resolvingConnectionFailure = false;
+            if (resultCode == RESULT_OK) {
+                googleApiClient.connect();
+            } else {
+                // Bring up an error dialog to alert the user that sign-in
+                // failed. The R.string.signin_failure should reference an error
+                // string in your strings.xml file that tells the user they
+                // could not be signed in, such as "Unable to sign in."
+                BaseGameUtils.showActivityResultError(this,
+                        requestCode, resultCode, R.string.signin_failure);
+            }
+        } else if (requestCode == FILE_PICKER_REQUEST_CODE && resultCode == RESULT_OK) {
 
             Uri uri = data.getData();
             filePath = uri.getPath();
@@ -846,8 +983,13 @@ public class MainActivity extends AppCompatActivity {
         setSupportActionBar(myToolbar);
         myToolbar.refreshDrawableState();
         if (boardLogic.currentIndex == boardLogic.currentGame.moves.size()) {
-            if (userSettings.mode == UserSettings.Mode.GAME)
-                askIfAddToHistory();
+
+            askIfAddToHistory();
+
+            if(googleApiClient.isConnected()){
+                Games.Leaderboards.submitScore(googleApiClient, "CgkIyLnYwqQeEAIQBw", (long)score);
+            }
+
             String result = boardLogic.currentGame.result;
             if (result.length() > 0) {
                 if (userSettings.mode == UserSettings.Mode.GAME)
@@ -922,7 +1064,7 @@ public class MainActivity extends AppCompatActivity {
                 showRecentGamesList();
                 return true;
             case R.id.action_gamesList:
-                showDefaultGamesList();
+                showGameRepository();
                 return true;
             case R.id.action_settings:
                 showSettings();
@@ -1124,8 +1266,8 @@ public class MainActivity extends AppCompatActivity {
                 new DialogInterface.OnClickListener() {
                     public void onClick(DialogInterface dialog, int which) {
                         boardLogic.currentGame.score.clear();
-                    //    gamesStorage.removeFromGamesHistory(boardLogic.currentGame);
-                    //    deleteCurrentGameHistoryFromPrefs();
+                        //    gamesStorage.removeFromGamesHistory(boardLogic.currentGame);
+                        //    deleteCurrentGameHistoryFromPrefs();
                         dialog.dismiss();
                         Toast.makeText(getApplicationContext(), "Game history deleted!",
                                 Toast.LENGTH_SHORT).show();
@@ -1280,6 +1422,11 @@ public class MainActivity extends AppCompatActivity {
             makeFirstMoves(FIRST_MOVES_CNT);
         boardLogic.currentGame.lastWrongGuessX = -1;
         boardLogic.currentGame.lastWrongGuessY = -1;
+    }
+
+    public void leaderboardHandler(View v) {
+        startActivityForResult(Games.Leaderboards.getLeaderboardIntent(googleApiClient,
+                "CgkIyLnYwqQeEAIQBw"), LEADERBOARD_REQUEST_CODE);
     }
 
     public void replayBtnHandler(View v) {
@@ -1469,17 +1616,47 @@ public class MainActivity extends AppCompatActivity {
         }
 
     }
+ String[]   games = {
+            "Google Plus",
+            "Twitter",
+            "Windows",
+            "Bing",
+            "Itunes",
+            "Wordpress",
+            "Drupal",
+            "Google Plus",
+            "Twitter",
+            "Windows",
+            "Bing",
+            "Itunes",
+            "Wordpress",
+            "Drupal"
+    } ;
+    private void showGameRepository() {
 
-    private void showDefaultGamesList() {
 
-        Intent intent = new Intent(this, RepoActivity.class);
-        intent.putStringArrayListExtra("classic", gamesStorage.classic);
-        intent.putStringArrayListExtra("japanese", gamesStorage.japanese);
-        intent.putStringArrayListExtra("korean", gamesStorage.korean);
-        intent.putStringArrayListExtra("chinese", gamesStorage.chinese);
-        intent.putStringArrayListExtra("european", gamesStorage.european);
 
-        startActivityForResult(intent, GAME_REPO_REQUEST_CODE);
+        Dialog dialog = new Dialog(this);
+        dialog.setContentView(R.layout.repo);
+        readTodaysGame(dialog);
+
+        gamesList = (ListView ) dialog.findViewById(R.id.repoList);
+
+        gamesList.setAdapter(gamesRepoAdapter);
+        gamesList.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view,
+                                    int position, long id) {
+                Toast.makeText(MainActivity.this, "You Clicked at " + position, Toast.LENGTH_SHORT).show();
+
+            }
+        });
+
+
+        dialog.setCancelable(true);
+        dialog.setTitle("Games repository");
+        dialog.show();
+
     }
 
 
