@@ -154,8 +154,8 @@ public class MainActivity extends AppCompatActivity /*implements
 
         Calendar downloadTime = Calendar.getInstance();
         downloadTime.setTimeZone(TimeZone.getTimeZone("GMT"));
-        downloadTime.set(Calendar.HOUR_OF_DAY, 11);
-        downloadTime.set(Calendar.MINUTE, 45);
+        downloadTime.set(Calendar.HOUR_OF_DAY, 1);
+        downloadTime.set(Calendar.MINUTE, 5);
 
         Intent downloader = new Intent(context, AlarmReceiver.class);
         PendingIntent recurringDownload = PendingIntent.getBroadcast(context, 0, downloader, PendingIntent.FLAG_CANCEL_CURRENT);
@@ -225,10 +225,12 @@ public class MainActivity extends AppCompatActivity /*implements
      //   readTodaysGame();
 
         //invalidate repo list
-        gamesRepoAdapter = new GamesRepoListAdapter(this, gamesStorage.repoGameNames);
+        gamesRepoAdapter = new GamesRepoListAdapter(this, gamesStorage.repoGameNamesForDisplay);
 
 
         myToolbar = (Toolbar) findViewById(R.id.app_bar);
+        setSupportActionBar(myToolbar);
+        getSupportActionBar().setTitle("Choose a game!");
         setSupportActionBar(myToolbar);
 
         goImages = new GoImages();
@@ -260,8 +262,8 @@ public class MainActivity extends AppCompatActivity /*implements
         gameModeLayout.setVisibility(View.GONE);
 
 
-        loadPlayedGames();
-        loadRecentGames();
+        gamesStorage.loadPlayedGamesFromSharedPrefs();
+        gamesStorage.loadRecentGamesFromSharedPrefs();
 
         View.OnTouchListener infoImgListener = new View.OnTouchListener() {
             @Override
@@ -294,16 +296,13 @@ public class MainActivity extends AppCompatActivity /*implements
 
                 if (userSettings.lastActiveGameMd5.length() > 0) {
                     GameInfo game = null;
-                    if (gamesStorage.playedGames.containsKey(userSettings.lastActiveGameMd5)) {
-                        game = gamesStorage.playedGames.get(userSettings.lastActiveGameMd5);
+                    if (gamesStorage.playedGamesByMd5.containsKey(userSettings.lastActiveGameMd5)) {
+                        game = gamesStorage.playedGamesByMd5.get(userSettings.lastActiveGameMd5);
                     }
                     gameReady = (game != null && game.moves.size() != 0);
                     if (gameReady) {
                         loadGame(game);
                     }
-                } else {
-                    getSupportActionBar().setTitle("Choose a game!");
-                    setSupportActionBar(myToolbar);
                 }
 
                 drawBoardGrid(userSettings.showBoardCoords);
@@ -443,7 +442,7 @@ public class MainActivity extends AppCompatActivity /*implements
                                         }
                                     }
                                     if (valid)
-                                        updateGameInfo(boardLogic.currentGame.getGameTitle());
+                                        updateGameInfo();
                                 }
                             }
                         }
@@ -505,7 +504,7 @@ public class MainActivity extends AppCompatActivity /*implements
                         boardLogic.score = 0;
                         break;
                 }
-                updateGameInfo(boardLogic.currentGame.getGameTitle());
+                updateGameInfo();
             }
         };
 
@@ -521,7 +520,8 @@ public class MainActivity extends AppCompatActivity /*implements
 
     }
 
-    private void readTodaysGame(Dialog dialog) {
+
+    private String readTodaysGame() {
         SharedPreferences  prefs = context.getSharedPreferences(APP_PREFERENCES_TODAYS_GAME, Context.MODE_PRIVATE);
         String sgf = prefs.getString("todaysGame", "");
         String name = "Game update error!";
@@ -530,8 +530,9 @@ public class MainActivity extends AppCompatActivity /*implements
             name = parser.getFullName(sgf);
         }
         Log.v(TAG, "Got todays game " + name);
-        todaysGameTxt = (TextView) dialog.findViewById(R.id.todaysgamename);
-        todaysGameTxt.setText(name);
+        gamesStorage.setTodaysGame(sgf);
+        return name;
+
     }
 
     @Override
@@ -539,7 +540,7 @@ public class MainActivity extends AppCompatActivity /*implements
 
         super.onPause();
         Log.v(TAG, "Saving Goess state");
-        saveCurrentGameToPrefs();
+        saveCurrentGameToPlayedGamesPrefs();
 
     }
 
@@ -555,11 +556,11 @@ public class MainActivity extends AppCompatActivity /*implements
     private void checkIfShowMove() {
         if (tries == 3 && userSettings.autoMove == UserSettings.AutoMove.THREE) {
             makeMove();
-            updateGameInfo(boardLogic.currentGame.getGameTitle());
+            updateGameInfo();
             tries = 0;
         } else if (tries == 5 && userSettings.autoMove == UserSettings.AutoMove.FIVE) {
             makeMove();
-            updateGameInfo(boardLogic.currentGame.getGameTitle());
+            updateGameInfo();
             tries = 0;
         }
     }
@@ -685,38 +686,9 @@ public class MainActivity extends AppCompatActivity /*implements
         myToolbar.setVisibility(View.VISIBLE);
     }
 
-    private void loadPlayedGames() {
-        SharedPreferences  prefs = context.getSharedPreferences(APP_PREFERENCES_PLAYED_GAMES, Context.MODE_PRIVATE);
-        Gson gson = new Gson();
-        HashMap<String, String> map= (HashMap<String, String>) prefs.getAll();
-        for (String s : map.keySet()) {
-            String js = map.get(s);
-            GameInfo g = gson.fromJson(js, GameInfo.class);
-            gamesStorage.playedGames.put(g.md5, g);
-        }
 
-     /*   for (Map.Entry<String, GameInfo> entry : gamesStorage.playedGames.entrySet()) {
-            for (Float s : entry.getValue().score)
-                Log.v(TAG, "score : " + String.valueOf(s));
-        }*/
-    }
 
-    private void loadRecentGames() {
-        SharedPreferences  prefs = context.getSharedPreferences(APP_PREFERENCES_RECENT_GAMES, Context.MODE_PRIVATE);
-        Gson gson = new Gson();
-        HashMap<String, String> map= (HashMap<String, String>) prefs.getAll();
-        for (String s : map.keySet()) {
-            String js = map.get(s);
-            GameInfo g = gson.fromJson(js, GameInfo.class);
 
-            /*if (gamesStorage.gamesHistory.containsKey(g.md5)) {
-                g.score.clear();
-                g.score.addAll(gamesStorage.gamesHistory.get(g.md5).score);
-            }*/
-            Log.v(TAG, "read recent  games, game score:  " + String.valueOf((float)g.score.size()));
-            gamesStorage.addRecentGame(g.getGameTitleWithRanks(), g);
-        }
-    }
 
     private void checkIfCapturing(Move move) {
         if (boardLogic.isCapturing(move)) {
@@ -750,7 +722,7 @@ public class MainActivity extends AppCompatActivity /*implements
                 dummyStonesImg[i][j] = null;
             }
         }
-        removeLastDummyStone(false);
+        removeLastDummyStone(true);
         if (lastWrongGuessMark != null) {
             frameLayout.removeView(lastWrongGuessMark);
         }
@@ -927,12 +899,12 @@ public class MainActivity extends AppCompatActivity /*implements
                 Log.i(TAG, "Opening file: " + filePath);
 
                 if (boardLogic.currentGame != null)
-                    saveCurrentGameToPrefs();
+                    saveCurrentGameToPlayedGamesPrefs();
 
                 GameInfo game = boardLogic.parseSGFFile(filePath);
                 if (game != null) {
-                    if (gamesStorage.playedGames.containsKey(game.md5)) {
-                        game = gamesStorage.playedGames.get(game.md5);
+                    if (gamesStorage.playedGamesByMd5.containsKey(game.md5)) {
+                        game = gamesStorage.playedGamesByMd5.get(game.md5);
                     }
                     gameReady = (game != null && game.moves.size() != 0);
                     if (gameReady) {
@@ -946,24 +918,24 @@ public class MainActivity extends AppCompatActivity /*implements
                 openFilePicker();
             }
 
-        } else if (requestCode == GAME_REPO_REQUEST_CODE && resultCode == RESULT_OK) {
+        } /*else if (requestCode == GAME_REPO_REQUEST_CODE && resultCode == RESULT_OK) {
             String name = data.getStringExtra("gamename");
             String sgf = gamesStorage.getDefaultGameAt(name);
 
             if (boardLogic.currentGame != null)
-                    saveCurrentGameToPrefs();
+                saveCurrentGameToPlayedGamesPrefs();
 
             GameInfo game = boardLogic.parseSGFString(sgf);
             if (game != null) {
-                if (gamesStorage.playedGames.containsKey(game.md5)) {
-                    game = gamesStorage.playedGames.get(game.md5);
+                if (gamesStorage.playedGamesByMd5.containsKey(game.md5)) {
+                    game = gamesStorage.playedGamesByMd5.get(game.md5);
                 }
                 gameReady = (game != null && game.moves.size() != 0);
                 if (gameReady) {
                     loadGame(game);
                 }
-            }
-        }
+            }*/
+       // }
     }
 
     private void updateMoveLabel() {
@@ -976,11 +948,10 @@ public class MainActivity extends AppCompatActivity /*implements
         }
     }
 
-    private void updateGameInfo(String title) {
+    private void updateGameInfo() {
         scoreLabel.setText(scoreLabel.getText());
         updateMoveLabel();
-        getSupportActionBar().setTitle(title);
-        setSupportActionBar(myToolbar);
+
         myToolbar.refreshDrawableState();
         if (boardLogic.currentIndex == boardLogic.currentGame.moves.size()) {
 
@@ -1000,7 +971,7 @@ public class MainActivity extends AppCompatActivity /*implements
         }
     }
 
-    private void saveCurrentGameToPrefs() {
+    private void saveCurrentGameToPlayedGamesPrefs() {
         removeLastDummyStone(true);
         if (boardLogic.currentGame != null) {
             SharedPreferences.Editor editor = context.getSharedPreferences(APP_PREFERENCES_PLAYED_GAMES, Context.MODE_PRIVATE).edit();
@@ -1013,15 +984,7 @@ public class MainActivity extends AppCompatActivity /*implements
         }
     }
 
-    private void saveCurrentGameToRecentPrefs() {
-        SharedPreferences.Editor editor = context.getSharedPreferences(APP_PREFERENCES_RECENT_GAMES, Context.MODE_PRIVATE).edit();
-        Gson gson = new Gson();
-        boardLogic.currentGame.lastMove = boardLogic.currentIndex - 1;
-        boardLogic.currentGame.lastScore = score;
-        String json = gson.toJson(boardLogic.currentGame);
-        editor.putString(boardLogic.currentGame.md5, json);
-        editor.commit();
-    }
+
 
 
     private void askIfAddToHistory() {
@@ -1031,7 +994,7 @@ public class MainActivity extends AppCompatActivity /*implements
         alertDialog.setButton(AlertDialog.BUTTON_POSITIVE, "OK",
                 new DialogInterface.OnClickListener() {
                     public void onClick(DialogInterface dialog, int which) {
-                        gamesStorage.addScoreToPlayedGames(boardLogic.currentGame, score);
+                        gamesStorage.updateScoreInPlayedGames(boardLogic.currentGame, score);
                    //     saveCurrentGameToHistoryPrefs();
                         dialog.dismiss();
                         Toast.makeText(getApplicationContext(), "Score saved!",
@@ -1089,7 +1052,9 @@ public class MainActivity extends AppCompatActivity /*implements
     private void loadGame(GameInfo game) {
         clearBoard();
         boardLogic.currentGame = game;
-        updateGameInfo(game.getGameTitle());
+        updateGameInfo();
+        getSupportActionBar().setTitle(boardLogic.currentGame.getGameTitle());
+        setSupportActionBar(myToolbar);
         userSettings.setLastActiveGame(boardLogic.currentGame.md5);
         tries = boardLogic.currentGame.lastTry;
 
@@ -1123,8 +1088,12 @@ public class MainActivity extends AppCompatActivity /*implements
         }
 
         Log.v(TAG, "load  game " + game.md5 + "   score size " + String.valueOf(boardLogic.currentGame.score.size()));
-        gamesStorage.addRecentGame(game.getGameTitleWithRanks(), game);
-        saveCurrentGameToRecentPrefs();
+        gamesStorage.addRecentGame(game.md5);
+        boardLogic.currentGame.lastMove = boardLogic.currentIndex - 1;
+        boardLogic.currentGame.lastScore = score;
+        gamesStorage.addToPlayedGames(game.md5, boardLogic.currentGame);
+   //     gamesStorage.saveToRecentGamesSharedPrefs();
+        saveCurrentGameToPlayedGamesPrefs();
 
     }
 
@@ -1153,15 +1122,15 @@ public class MainActivity extends AppCompatActivity /*implements
     }
 
     private void showRecentGamesList() {
-        int cnt = gamesStorage.recentGamesQueue.size() > 0 ? gamesStorage.recentGamesQueue.size() : 0;
+        int cnt = gamesStorage.recentMd5ById.size() > 0 ? gamesStorage.recentMd5ById.size() : 0;
         if (cnt == 0) {
             Toast.makeText(getApplicationContext(), "No recent games found!", Toast.LENGTH_SHORT).show();
             return;
         }
         final CharSequence[] items = new CharSequence[cnt];
         int i = 0;
-        for (String key : gamesStorage.recentGamesQueue) {
-            items[i++] = key;
+        for (Integer id : gamesStorage.recentMd5ById.keySet()) {
+            items[id] = gamesStorage.getGameTitleByMd5(gamesStorage.recentMd5ById.get(id));
         }
 
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
@@ -1171,9 +1140,9 @@ public class MainActivity extends AppCompatActivity /*implements
             public void onClick(DialogInterface dialog, int item) {
 
                 if (boardLogic.currentGame != null)
-                    saveCurrentGameToPrefs();
+                    saveCurrentGameToPlayedGamesPrefs();
 
-                GameInfo game = gamesStorage.getRecentGameAt(items[item].toString());
+                GameInfo game = gamesStorage.getRecentGameById(item);
                 if (game != null) {
                     gameReady = game.moves.size() != 0;
                     if (gameReady) {
@@ -1266,7 +1235,7 @@ public class MainActivity extends AppCompatActivity /*implements
                 new DialogInterface.OnClickListener() {
                     public void onClick(DialogInterface dialog, int which) {
                         boardLogic.currentGame.score.clear();
-                        //    gamesStorage.removeFromGamesHistory(boardLogic.currentGame);
+                        //    gamesStorage.removeFromGamesHistory(boardLogic.currentGame); //?
                         //    deleteCurrentGameHistoryFromPrefs();
                         dialog.dismiss();
                         Toast.makeText(getApplicationContext(), "Game history deleted!",
@@ -1306,7 +1275,7 @@ public class MainActivity extends AppCompatActivity /*implements
         int time = 1;
 
         Log.v(TAG, "scores for " + boardLogic.currentGame.md5);
-        for (Float i : gamesStorage.playedGames.get(boardLogic.currentGame.md5).score) {
+        for (Float i : gamesStorage.playedGamesByMd5.get(boardLogic.currentGame.md5).score) {
             series.add(time++, i);
             Log.v(TAG, "score " + String.valueOf((float)i));
         }
@@ -1422,6 +1391,26 @@ public class MainActivity extends AppCompatActivity /*implements
             makeFirstMoves(FIRST_MOVES_CNT);
         boardLogic.currentGame.lastWrongGuessX = -1;
         boardLogic.currentGame.lastWrongGuessY = -1;
+    }
+
+    public void repoGameHandler(String name) {
+
+        if (boardLogic.currentGame != null)
+            saveCurrentGameToPlayedGamesPrefs();
+
+        GameInfo game = boardLogic.parseSGFString(name);
+        if (game != null) {
+            if (gamesStorage.playedGamesByMd5.containsKey(game.md5)) {
+                game = gamesStorage.playedGamesByMd5.get(game.md5);
+            }
+            gameReady = (game != null && game.moves.size() != 0);
+            if (gameReady) {
+                loadGame(game);
+            }
+        } else
+            Toast.makeText(getApplicationContext(), "Could not load the game!",
+                    Toast.LENGTH_SHORT).show();
+
     }
 
     public void leaderboardHandler(View v) {
@@ -1616,39 +1605,44 @@ public class MainActivity extends AppCompatActivity /*implements
         }
 
     }
- String[]   games = {
-            "Google Plus",
-            "Twitter",
-            "Windows",
-            "Bing",
-            "Itunes",
-            "Wordpress",
-            "Drupal",
-            "Google Plus",
-            "Twitter",
-            "Windows",
-            "Bing",
-            "Itunes",
-            "Wordpress",
-            "Drupal"
-    } ;
+
     private void showGameRepository() {
 
-
-
-        Dialog dialog = new Dialog(this);
+        final Dialog dialog = new Dialog(this);
         dialog.setContentView(R.layout.repo);
-        readTodaysGame(dialog);
+        String name = readTodaysGame();
+
+        final Button b = (Button) dialog.findViewById(R.id.todaysgamename);
+        b.setBackgroundDrawable(null);
+        b.setText(name);
+
+        b.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                repoGameHandler(gamesStorage.todaysGameSgf);
+                dialog.dismiss();
+            }
+        });
 
         gamesList = (ListView ) dialog.findViewById(R.id.repoList);
+
+
+        for (int i = 0; i < gamesStorage.repoSgfsById.size(); ++i) {
+        //    String n = gamesList.getItemAtPosition(i).toString();
+
+         //   ImageView iv = (ImageView) view.findViewById(R.id.img);
+        //    iv.setVisibility(View.VISIBLE);
+        }
+
 
         gamesList.setAdapter(gamesRepoAdapter);
         gamesList.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
-            public void onItemClick(AdapterView<?> parent, View view,
-                                    int position, long id) {
-                Toast.makeText(MainActivity.this, "You Clicked at " + position, Toast.LENGTH_SHORT).show();
-
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                String name = gamesList.getItemAtPosition(position).toString();
+                Log.v(TAG, "get repo game at position " + String.valueOf(position));
+                repoGameHandler(gamesStorage.repoSgfsById.get(position));
+                dialog.dismiss();
             }
         });
 

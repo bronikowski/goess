@@ -40,7 +40,7 @@ public class SGFParser {
 
     public String getFullName(String content) {
 
-        StringReader sr= new StringReader(content);
+        StringReader sr = new StringReader(content);
         BufferedReader reader = new BufferedReader(sr);
         String name = "";
         SGF sgf = new SGF(SGF.GAME_TYPE.GO, "Goess");

@@ -1,42 +1,133 @@
 package org.happydroid.goess;
 
 
+import android.content.SharedPreferences;
 import android.util.Log;
 import android.content.Context;
 import android.content.res.AssetManager;
+import com.google.gson.Gson;
 import java.io.BufferedReader;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.LinkedList;
+import java.util.ListIterator;
 import java.util.Map;
+import java.util.Objects;
 
 public class GamesStorage {
 
     private static String TAG = "GamesStorage";
 
     static final int RECENT_GAMES_LIST_SIZE = 5;
+    private static String APP_PREFERENCES_REPO_GAMES = "GoessRepoGames";
+    private static String APP_PREFERENCES_PLAYED_GAMES = "GoessPlayedGames";
+    private static String APP_PREFERENCES_RECENT_GAMES = "GoessRecentGames";
 
-    HashMap<String, GameInfo> recentGamesByName = new HashMap<String, GameInfo>();
+    String todaysGameSgf = "";
+
+    int recentMd5Index;
+
+    HashMap<Integer, String> recentMd5ById = new HashMap<Integer, String>();
     LinkedList<String> recentGamesQueue = new LinkedList<String>();
+    HashMap<Integer, String> repoSgfsById = new HashMap<Integer, String>();
+    HashMap<String, GameInfo> playedGamesByMd5 = new HashMap<String, GameInfo>();
 
-    HashMap<String, String> defaultGamesByName = new HashMap<String, String>();
-    ArrayList<String> repoGameNames = new ArrayList<String>();
-
-    HashMap<String, GameInfo> playedGames = new HashMap<String, GameInfo>(); // in repogames?
+    String[] repoGameNamesForDisplay;
 
     Context context;
 
     GamesStorage(Context context) {
+
         this.context = context;
-        initDefaultGames(); // if no list from prefs
+        recentMd5Index = 0;
+
+        loadRepoSgfsFromSharedPrefs();
+        if (repoSgfsById.size() == 0) {
+            Log.v(TAG, "Repo games from SP empty, reading defaults");
+            loadDefaultGames();
+            saveRepoSgfsToSharedPrefs();
+        }
+
+        prepareRepoGameNames();
+
     }
 
-    private void initDefaultGames() {
+    public void loadPlayedGamesFromSharedPrefs() {
+        SharedPreferences  prefs = context.getSharedPreferences(APP_PREFERENCES_PLAYED_GAMES, Context.MODE_PRIVATE);
+        Gson gson = new Gson();
+        HashMap<String, String> map= (HashMap<String, String>) prefs.getAll();
+        for (String s : map.keySet()) {
+            String js = map.get(s);
+            GameInfo g = gson.fromJson(js, GameInfo.class);
+            playedGamesByMd5.put(g.md5, g);
+            Log.v(TAG, "loead from SP game played " + g.md5);
+        }
+
+     /*   for (Map.Entry<String, GameInfo> entry : gamesStorage.playedGames.entrySet()) {
+            for (Float s : entry.getValue().score)
+                Log.v(TAG, "score : " + String.valueOf(s));
+        }*/
+    }
+
+    private void prepareRepoGameNames() {
+        repoGameNamesForDisplay = new String[repoSgfsById.size()];
+        for (Integer i : repoSgfsById.keySet()) {
+            Log.v(TAG, ">>> add name " + repoSgfsById.get(i));
+            repoGameNamesForDisplay[i] = (getNameFromContent(repoSgfsById.get(i)));
+        }
+    }
+
+    private void loadRepoSgfsFromSharedPrefs() {
+        SharedPreferences prefs = context.getSharedPreferences(APP_PREFERENCES_REPO_GAMES, Context.MODE_PRIVATE);
+        HashMap<String, String> map = (HashMap<String, String>) prefs.getAll();
+
+        for (String s : map.keySet()) {
+            String val = map.get(s);
+
+            Log.v(TAG, "load repo games from SP, game id: " + s);
+            repoSgfsById.put(Integer.parseInt(s), val);
+
+        }
+
+    }
+
+    public void loadRecentGamesFromSharedPrefs() {
+        SharedPreferences  prefs = context.getSharedPreferences(APP_PREFERENCES_RECENT_GAMES, Context.MODE_PRIVATE);
+        Gson gson = new Gson();
+        HashMap<String, String> map= (HashMap<String, String>) prefs.getAll();
+        for (String s : map.keySet()) {
+            String val = map.get(s);
+            recentMd5ById.put(Integer.parseInt(s), val);
+        }
+    }
+
+    public void saveToRecentGamesSharedPrefs() {
+        SharedPreferences.Editor editor = context.getSharedPreferences(APP_PREFERENCES_RECENT_GAMES, Context.MODE_PRIVATE).edit();
+
+        ListIterator<String> listIterator = recentGamesQueue.listIterator();
+        int id = 0;
+        while (listIterator.hasNext()) {
+            editor.putString(String.valueOf(id), listIterator.next());
+            editor.commit();
+            id++;
+	    }
+
+    }
+
+    public String getGameTitleByMd5(String md5) {
+        Log.v(TAG, "request game played " + md5);
+        return playedGamesByMd5.get(md5).getGameTitleWithRanks();
+    }
+
+
+    public void setTodaysGame(String sgf) {
+        this.todaysGameSgf = sgf;
+    }
+
+    private void loadDefaultGames() {
         String[] paths = new String[0];
         AssetManager am = context.getResources().getAssets();
         try {
@@ -45,6 +136,7 @@ public class GamesStorage {
             e.printStackTrace();
         }
 
+        int idx = 0;
         for (int i = 0; i < paths.length; ++i) {
 
             if (paths[i].endsWith(".sgf")) {
@@ -55,13 +147,26 @@ public class GamesStorage {
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
-                Log.i(TAG, "Content " + ((content != null) ? String.valueOf(content.length()) : "(null)"));
 
-                defaultGamesByName.put(getNameFromContent(content), content);
-                repoGameNames.add(getNameFromContent(content));
+           //     repoGameNamesForDisplay.add(getNameFromContent(content));
+                if (content != null) {
+                    repoSgfsById.put(idx++, content);
+                    Log.i(TAG, "add default game at  " + String.valueOf(idx) + "  " + getNameFromContent(content));
+                }
+
             }
 
         }
+    }
+
+    private void saveRepoSgfsToSharedPrefs() { // call when update received
+
+        SharedPreferences.Editor editor = context.getSharedPreferences(APP_PREFERENCES_REPO_GAMES, Context.MODE_PRIVATE).edit();
+        for (int i = 0; i < repoSgfsById.size(); ++i) {
+            editor.putString(String.valueOf(i), repoSgfsById.get(i));
+            editor.commit();
+        }
+
     }
 
     private String getNameFromContent(String content) {
@@ -89,51 +194,56 @@ public class GamesStorage {
         return sb.toString();
     }
 
-    public String getDefaultGameAt(String name) {
-        return defaultGamesByName.get(name);
-    }
 
-    public GameInfo getRecentGameAt(String name) {
-        Log.v(TAG, "get recent game " + name + " " + recentGamesByName.get(name).md5);
-        return recentGamesByName.get(name);
+    public GameInfo getRecentGameById(int id) {
+        Log.v(TAG, "get recent game by id " + id);
+        return playedGamesByMd5.get(recentMd5ById.get(id));
     }
 
     public void removeFromPlayedGames(GameInfo game) { //todo when repo update is done
-        if (playedGames.containsKey(game.md5)) {
-            playedGames.remove(game.md5);
+        if (playedGamesByMd5.containsKey(game.md5)) {
+            playedGamesByMd5.remove(game.md5);
         }
     }
 
-    public void addScoreToPlayedGames(GameInfo game, float score) {
+
+
+    public void updateScoreInPlayedGames(GameInfo game, float score) {
         game.score.add(score);
-        if (!playedGames.containsKey(game.md5)) {
-            playedGames.put(game.md5, game);
+        if (!playedGamesByMd5.containsKey(game.md5)) {
+            playedGamesByMd5.put(game.md5, game);
         }
         else
-            playedGames.get(game.md5).score = game.score;
-        for (Map.Entry<String, GameInfo> entry : playedGames.entrySet()) {
+            playedGamesByMd5.get(game.md5).score = game.score;
+        for (Map.Entry<String, GameInfo> entry : playedGamesByMd5.entrySet()) {
             Log.v(TAG, "Played game: " + entry.getKey());
             for (Float s : entry.getValue().score)
                 Log.v(TAG, "score : " + String.valueOf((float)s));
         }
     }
 
-    public void addRecentGame(String name, GameInfo game) {
+    public void addToPlayedGames(String md5, GameInfo game) {
+        playedGamesByMd5.put(md5, game);
+        Log.v(TAG, "put game played " + md5);
+    }
 
-        if (!recentGamesByName.containsKey(name)) {
-            if (recentGamesByName.size() < RECENT_GAMES_LIST_SIZE)
-                recentGamesQueue.addFirst(name);
+    public void addRecentGame(String md5) { //todo reorder
+
+        if (!recentMd5ById.containsKey(md5)) {
+            if (recentMd5ById.size() < RECENT_GAMES_LIST_SIZE)
+                recentGamesQueue.addFirst(md5);
             else {
                 String last = recentGamesQueue.removeLast();
-                recentGamesByName.remove(last);
-                recentGamesQueue.addFirst(name);
+                recentMd5ById.remove(last);
+                recentGamesQueue.addFirst(md5);
             }
         } else {
-            recentGamesQueue.remove(name);
-            recentGamesQueue.addFirst(name);
+            recentGamesQueue.remove(md5);
+            recentGamesQueue.addFirst(md5);
         }
-        recentGamesByName.put(name, game);
-        Log.v(TAG, "add recent game " + name + " " + game.md5 + " with score " + String.valueOf(game.score.size()));
+
+        saveToRecentGamesSharedPrefs(); // not here
+
     }
 
 }
