@@ -1,9 +1,12 @@
 package org.happydroid.goess;
 
 
+import android.util.Log;
+
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.StringReader;
 import java.security.MessageDigest;
@@ -11,6 +14,7 @@ import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 
 import org.happydroid.goess.sgfparser.SGF;
+import org.happydroid.goess.sgfparser.SGFException;
 
 public class SGFParser {
 
@@ -35,6 +39,7 @@ public class SGFParser {
         } catch (NoSuchAlgorithmException e) {
             e.printStackTrace();
         }
+
         return null;
     }
 
@@ -85,6 +90,36 @@ public class SGFParser {
             e.printStackTrace();
         }
         return gameInfo;
+    }
+
+    public String getMd5FromFile(String content) {
+        SGF sgf = new SGF(SGF.GAME_TYPE.GO, "Goess");
+
+        String md5Input = "";
+        try {
+            StringReader sr= new StringReader(content);
+            BufferedReader reader= new BufferedReader(sr);
+            sgf.load(reader);
+            reader.close();
+            ArrayList<SGF.Coord> coordsList = sgf.getMainLine();
+            ArrayList<Move> list = new ArrayList<Move>();
+
+            SGF.Player player = sgf.firstToMove();
+
+            for (SGF.Coord coord : coordsList) {
+                if (!coord.equals(SGF.PASS)) {
+                    Move move = new Move(coord.col(), coord.row(), player == SGF.Player.BLACK ? Move.Player.BLACK : Move.Player.WHITE);
+                    player = (player == SGF.Player.BLACK) ? SGF.Player.WHITE : SGF.Player.BLACK;
+                    list.add(move);
+                    md5Input += coord.data();
+                }
+            }
+        } catch (SGFException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return md5(md5Input);
     }
 
     private GameInfo parseSGF(BufferedReader reader) {

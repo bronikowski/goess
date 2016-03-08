@@ -220,13 +220,14 @@ public class MainActivity extends AppCompatActivity /*implements
         userSettings = new UserSettings(context.getSharedPreferences(APP_PREFERENCES, Context.MODE_PRIVATE));
         boardLogic = new BoardLogic();
         gamesStorage = new GamesStorage(context);
+        gamesStorage.loadPlayedGamesFromSharedPrefs();
 
         setGameDownloadAlarm();
      //   readTodaysGame();
 
         //invalidate repo list
         gamesRepoAdapter = new GamesRepoListAdapter(this, gamesStorage.repoGameNamesForDisplay);
-
+        setRepoIcons();
 
         myToolbar = (Toolbar) findViewById(R.id.app_bar);
         setSupportActionBar(myToolbar);
@@ -262,8 +263,8 @@ public class MainActivity extends AppCompatActivity /*implements
         gameModeLayout.setVisibility(View.GONE);
 
 
-        gamesStorage.loadPlayedGamesFromSharedPrefs();
-        gamesStorage.loadRecentGamesFromSharedPrefs();
+
+    //    gamesStorage.loadRecentGamesFromSharedPrefs();
 
         View.OnTouchListener infoImgListener = new View.OnTouchListener() {
             @Override
@@ -520,6 +521,24 @@ public class MainActivity extends AppCompatActivity /*implements
 
     }
 
+    private void setRepoIcons() {
+
+        gamesRepoAdapter.iconsVisible.clear();
+        for (int i = 0; i < gamesStorage.repoSgfsById.size(); ++i) {
+
+            SGFParser parser = new SGFParser();
+            String md5 = parser.getMd5FromFile(gamesStorage.repoSgfsById.get(i));
+            GameInfo game = gamesStorage.playedGamesByMd5.get(md5);
+            if (game != null && (game.score.size() > 0)) {
+                gamesRepoAdapter.iconsVisible.add(i);
+
+            }
+        }
+
+        for (Integer i : gamesRepoAdapter.iconsVisible ) {
+            Log.v(TAG, ">>>>>>>>>> iconsvisible: " + i);
+        }
+    }
 
     private String readTodaysGame() {
         SharedPreferences  prefs = context.getSharedPreferences(APP_PREFERENCES_TODAYS_GAME, Context.MODE_PRIVATE);
@@ -541,6 +560,7 @@ public class MainActivity extends AppCompatActivity /*implements
         super.onPause();
         Log.v(TAG, "Saving Goess state");
         saveCurrentGameToPlayedGamesPrefs();
+    //    gamesStorage.saveToRecentGamesMd5SharedPrefs();
 
     }
 
@@ -951,15 +971,18 @@ public class MainActivity extends AppCompatActivity /*implements
     private void updateGameInfo() {
         scoreLabel.setText(scoreLabel.getText());
         updateMoveLabel();
-
         myToolbar.refreshDrawableState();
-        if (boardLogic.currentIndex == boardLogic.currentGame.moves.size()) {
 
+        if (boardLogic.currentIndex == boardLogic.currentGame.moves.size()) {
+            int id = getListIdForGame();
+            if (id >= 0) {
+                gamesRepoAdapter.iconsVisible.add(id);
+            }
             askIfAddToHistory();
 
-            if(googleApiClient.isConnected()){
-                Games.Leaderboards.submitScore(googleApiClient, "CgkIyLnYwqQeEAIQBw", (long)score);
-            }
+         //   if(googleApiClient.isConnected()){
+          //      Games.Leaderboards.submitScore(googleApiClient, "CgkIyLnYwqQeEAIQBw", (long)score);
+         //   }
 
             String result = boardLogic.currentGame.result;
             if (result.length() > 0) {
@@ -974,6 +997,7 @@ public class MainActivity extends AppCompatActivity /*implements
     private void saveCurrentGameToPlayedGamesPrefs() {
         removeLastDummyStone(true);
         if (boardLogic.currentGame != null) {
+            Log.v(TAG, ">>>>>>>>> save game to played games " + String.valueOf(boardLogic.currentGame.score.size()));
             SharedPreferences.Editor editor = context.getSharedPreferences(APP_PREFERENCES_PLAYED_GAMES, Context.MODE_PRIVATE).edit();
             Gson gson = new Gson();
             boardLogic.currentGame.lastMove = boardLogic.currentIndex;
@@ -983,8 +1007,6 @@ public class MainActivity extends AppCompatActivity /*implements
             editor.commit();
         }
     }
-
-
 
 
     private void askIfAddToHistory() {
@@ -1122,15 +1144,18 @@ public class MainActivity extends AppCompatActivity /*implements
     }
 
     private void showRecentGamesList() {
-        int cnt = gamesStorage.recentMd5ById.size() > 0 ? gamesStorage.recentMd5ById.size() : 0;
+
+        HashMap<Integer, String> recentGamesMd5 = gamesStorage.getRecentGamesMd5FromSharedPrefs();
+
+        int cnt = recentGamesMd5.size() > 0 ? recentGamesMd5.size() : 0;
         if (cnt == 0) {
             Toast.makeText(getApplicationContext(), "No recent games found!", Toast.LENGTH_SHORT).show();
             return;
         }
         final CharSequence[] items = new CharSequence[cnt];
-        int i = 0;
-        for (Integer id : gamesStorage.recentMd5ById.keySet()) {
-            items[id] = gamesStorage.getGameTitleByMd5(gamesStorage.recentMd5ById.get(id));
+
+        for (Integer id : recentGamesMd5.keySet()) {
+            items[id] = gamesStorage.getGameTitleByMd5(recentGamesMd5.get(id));
         }
 
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
@@ -1235,6 +1260,10 @@ public class MainActivity extends AppCompatActivity /*implements
                 new DialogInterface.OnClickListener() {
                     public void onClick(DialogInterface dialog, int which) {
                         boardLogic.currentGame.score.clear();
+                        int id = getListIdForGame();
+                        if (id >= 0) {
+                            gamesRepoAdapter.iconsVisible.remove((Integer)id);
+                        }
                         //    gamesStorage.removeFromGamesHistory(boardLogic.currentGame); //?
                         //    deleteCurrentGameHistoryFromPrefs();
                         dialog.dismiss();
@@ -1250,6 +1279,19 @@ public class MainActivity extends AppCompatActivity /*implements
                     }
                 });
         alertDialog.show();
+    }
+
+    private int getListIdForGame() {
+        int id = -1;
+        int i = 0;
+        for (String s : gamesStorage.repoGameNamesForDisplay) {
+            if (s.equals(boardLogic.currentGame.getGameTitleWithRanks())) {
+                id = i;
+                break;
+            }
+            i++;
+        }
+        return id;
     }
 
     private void showAlertMessage(String msg) {
@@ -1393,12 +1435,12 @@ public class MainActivity extends AppCompatActivity /*implements
         boardLogic.currentGame.lastWrongGuessY = -1;
     }
 
-    public void repoGameHandler(String name) {
+    public void repoGameHandler(String sgf) {
 
         if (boardLogic.currentGame != null)
             saveCurrentGameToPlayedGamesPrefs();
 
-        GameInfo game = boardLogic.parseSGFString(name);
+        GameInfo game = boardLogic.parseSGFString(sgf);
         if (game != null) {
             if (gamesStorage.playedGamesByMd5.containsKey(game.md5)) {
                 game = gamesStorage.playedGamesByMd5.get(game.md5);
@@ -1625,17 +1667,9 @@ public class MainActivity extends AppCompatActivity /*implements
         });
 
         gamesList = (ListView ) dialog.findViewById(R.id.repoList);
-
-
-        for (int i = 0; i < gamesStorage.repoSgfsById.size(); ++i) {
-        //    String n = gamesList.getItemAtPosition(i).toString();
-
-         //   ImageView iv = (ImageView) view.findViewById(R.id.img);
-        //    iv.setVisibility(View.VISIBLE);
-        }
-
-
         gamesList.setAdapter(gamesRepoAdapter);
+
+
         gamesList.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
@@ -1645,7 +1679,6 @@ public class MainActivity extends AppCompatActivity /*implements
                 dialog.dismiss();
             }
         });
-
 
         dialog.setCancelable(true);
         dialog.setTitle("Games repository");

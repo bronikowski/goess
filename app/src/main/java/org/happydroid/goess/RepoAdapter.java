@@ -31,7 +31,6 @@ public class RepoAdapter extends BaseExpandableListAdapter {
 
     @Override
     public Object getChild(int groupPosition, int childPosition) {
-
         return null;
     }
 

@@ -11,11 +11,13 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.ListIterator;
 import java.util.Map;
-import java.util.Objects;
+import java.util.SortedSet;
+import java.util.TreeSet;
 
 public class GamesStorage {
 
@@ -30,8 +32,8 @@ public class GamesStorage {
 
     int recentMd5Index;
 
-    HashMap<Integer, String> recentMd5ById = new HashMap<Integer, String>();
-    LinkedList<String> recentGamesQueue = new LinkedList<String>();
+
+    LinkedList<String> recentGamesMd5Queue = new LinkedList<String>();
     HashMap<Integer, String> repoSgfsById = new HashMap<Integer, String>();
     HashMap<String, GameInfo> playedGamesByMd5 = new HashMap<String, GameInfo>();
 
@@ -45,6 +47,8 @@ public class GamesStorage {
         recentMd5Index = 0;
 
         loadRepoSgfsFromSharedPrefs();
+        loadRecentMd5FromSharedPrefs();
+
         if (repoSgfsById.size() == 0) {
             Log.v(TAG, "Repo games from SP empty, reading defaults");
             loadDefaultGames();
@@ -52,6 +56,18 @@ public class GamesStorage {
         }
 
         prepareRepoGameNames();
+
+    }
+
+    public void loadRecentMd5FromSharedPrefs() {
+
+        HashMap<Integer, String> recentGamesMd5 = getRecentGamesMd5FromSharedPrefs();
+
+        SortedSet<Integer> keys = new TreeSet<Integer>(recentGamesMd5.keySet());
+        for (Integer key : keys) {
+           String value = recentGamesMd5.get(key);
+           recentGamesMd5Queue.add(value);
+        }
 
     }
 
@@ -63,13 +79,9 @@ public class GamesStorage {
             String js = map.get(s);
             GameInfo g = gson.fromJson(js, GameInfo.class);
             playedGamesByMd5.put(g.md5, g);
-            Log.v(TAG, "loead from SP game played " + g.md5);
+            Log.v(TAG, " >>>>>>> load from SP game played " + g.md5);
         }
 
-     /*   for (Map.Entry<String, GameInfo> entry : gamesStorage.playedGames.entrySet()) {
-            for (Float s : entry.getValue().score)
-                Log.v(TAG, "score : " + String.valueOf(s));
-        }*/
     }
 
     private void prepareRepoGameNames() {
@@ -94,20 +106,22 @@ public class GamesStorage {
 
     }
 
-    public void loadRecentGamesFromSharedPrefs() {
+    public HashMap<Integer, String> getRecentGamesMd5FromSharedPrefs() {
         SharedPreferences  prefs = context.getSharedPreferences(APP_PREFERENCES_RECENT_GAMES, Context.MODE_PRIVATE);
-        Gson gson = new Gson();
-        HashMap<String, String> map= (HashMap<String, String>) prefs.getAll();
+        HashMap<Integer, String> recentMd5ById = new HashMap<Integer, String>();
+        HashMap<String, String> map = (HashMap<String, String>) prefs.getAll();
         for (String s : map.keySet()) {
             String val = map.get(s);
             recentMd5ById.put(Integer.parseInt(s), val);
         }
+
+        return recentMd5ById;
     }
 
-    public void saveToRecentGamesSharedPrefs() {
+    public void saveToRecentGamesMd5SharedPrefs() {
         SharedPreferences.Editor editor = context.getSharedPreferences(APP_PREFERENCES_RECENT_GAMES, Context.MODE_PRIVATE).edit();
 
-        ListIterator<String> listIterator = recentGamesQueue.listIterator();
+        ListIterator<String> listIterator = recentGamesMd5Queue.listIterator();
         int id = 0;
         while (listIterator.hasNext()) {
             editor.putString(String.valueOf(id), listIterator.next());
@@ -197,15 +211,15 @@ public class GamesStorage {
 
     public GameInfo getRecentGameById(int id) {
         Log.v(TAG, "get recent game by id " + id);
-        return playedGamesByMd5.get(recentMd5ById.get(id));
+        return playedGamesByMd5.get(recentGamesMd5Queue.get(id));
     }
+
 
     public void removeFromPlayedGames(GameInfo game) { //todo when repo update is done
         if (playedGamesByMd5.containsKey(game.md5)) {
             playedGamesByMd5.remove(game.md5);
         }
     }
-
 
 
     public void updateScoreInPlayedGames(GameInfo game, float score) {
@@ -227,22 +241,21 @@ public class GamesStorage {
         Log.v(TAG, "put game played " + md5);
     }
 
-    public void addRecentGame(String md5) { //todo reorder
+    public void addRecentGame(String md5) {
 
-        if (!recentMd5ById.containsKey(md5)) {
-            if (recentMd5ById.size() < RECENT_GAMES_LIST_SIZE)
-                recentGamesQueue.addFirst(md5);
+        if (!recentGamesMd5Queue.contains(md5)) {
+            if (recentGamesMd5Queue.size() < RECENT_GAMES_LIST_SIZE)
+                recentGamesMd5Queue.addFirst(md5);
             else {
-                String last = recentGamesQueue.removeLast();
-                recentMd5ById.remove(last);
-                recentGamesQueue.addFirst(md5);
+                recentGamesMd5Queue.removeLast();
+                recentGamesMd5Queue.addFirst(md5);
             }
         } else {
-            recentGamesQueue.remove(md5);
-            recentGamesQueue.addFirst(md5);
+            recentGamesMd5Queue.remove(md5);
+            recentGamesMd5Queue.addFirst(md5);
         }
 
-        saveToRecentGamesSharedPrefs(); // not here
+        saveToRecentGamesMd5SharedPrefs();
 
     }
 
