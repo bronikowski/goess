@@ -46,7 +46,6 @@ import android.widget.TextView;
 import android.widget.Toast;
 import java.util.ArrayList;
 import java.util.Calendar;
-import java.util.HashMap;
 import java.util.Random;
 import java.util.TimeZone;
 import com.google.android.gms.common.ConnectionResult;
@@ -151,7 +150,6 @@ public class MainActivity extends AppCompatActivity implements
     }
 
     private void setGameDownloadAlarm() {
-
         Calendar downloadTime = Calendar.getInstance();
         downloadTime.setTimeZone(TimeZone.getTimeZone("GMT"));
         downloadTime.set(Calendar.HOUR_OF_DAY, 1);
@@ -1721,13 +1719,15 @@ public class MainActivity extends AppCompatActivity implements
         }
 
 
-        b.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                repoGameHandler(gamesStorage.todaysGameSgf);
-                dialog.dismiss();
-            }
-        });
+        if (!name.equals("Game update error!")) {
+            b.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    repoGameHandler(gamesStorage.todaysGameSgf);
+                    dialog.dismiss();
+                }
+            });
+        }
 
 
         gamesList = (ListView ) dialog.findViewById(R.id.repoList);
