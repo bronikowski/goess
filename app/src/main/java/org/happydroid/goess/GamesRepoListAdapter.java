@@ -42,25 +42,19 @@ public class GamesRepoListAdapter extends ArrayAdapter<String>  {
             view = inflater.inflate(R.layout.repoitem, parent, false);
             viewHolder = new ViewHolder();
             viewHolder.position = position;
-
             viewHolder.txtTitle = (TextView) view.findViewById(R.id.gameTitle);
             viewHolder.icon = (ImageView) view.findViewById(R.id.img);
-
             view.setTag(viewHolder);
         } else
             viewHolder = (ViewHolder) view.getTag();
 
 
-         viewHolder.txtTitle.setText(games[position]);
-
+        viewHolder.txtTitle.setText(games[position]);
         viewHolder.icon.setVisibility(View.GONE);
 
         if (iconsVisible.contains(games[position])) {
             viewHolder.icon.setVisibility(View.VISIBLE);
-
         }
-
-
 
         return view;
     }
@@ -69,6 +63,7 @@ public class GamesRepoListAdapter extends ArrayAdapter<String>  {
     public int getCount() {
         return games.length;
     }
+
     @Override
     public String getItem(int position) {
         return games[position];

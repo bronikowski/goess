@@ -23,7 +23,7 @@ public class GamesStorage {
     private static String TAG = "GamesStorage";
 
     static final int RECENT_GAMES_LIST_SIZE = 5;
-    static final int REPO_GAMES_LIST_SIZE = 10;
+    static final int REPO_GAMES_LIST_SIZE = 30;
     private static String APP_PREFERENCES_REPO_GAMES = "GoessRepoGames";
     private static String APP_PREFERENCES_PLAYED_GAMES = "GoessPlayedGames";
     private static String APP_PREFERENCES_RECENT_GAMES = "GoessRecentGames";

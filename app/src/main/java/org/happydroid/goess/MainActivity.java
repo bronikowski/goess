@@ -314,7 +314,6 @@ public class MainActivity extends AppCompatActivity implements
 
         final View horiz = (View) findViewById(R.id.horiz);
         final View vertic = (View) findViewById(R.id.vertic);
-     //   lastWrongGuessMark = (ImageView) findViewById(R.id.wrongGuessMark);
 
         horiz.setVisibility(View.INVISIBLE);
         vertic.setVisibility(View.INVISIBLE);
@@ -378,9 +377,9 @@ public class MainActivity extends AppCompatActivity implements
                                     if (!userSettings.doubleclick) {
                                         tries++;
                                         if (boardLogic.isValid(move, userSettings.hint)) {
-                                            if (lastWrongGuessMark != null)
-                                                frameLayout.removeView(lastWrongGuessMark);
+                                            removeLastWrongGuess();
                                             drawStone(move, true, false);
+
                                             countScore();
                                             tries = 0;
                                             checkIfCapturing(move);
@@ -401,8 +400,7 @@ public class MainActivity extends AppCompatActivity implements
                                             resetZoom();
                                     } else if (putDummy) {
                                         lastDummyMove = new Move(move.x, move.y, move.player);
-                                        if (lastWrongGuessMark != null)
-                                            frameLayout.removeView(lastWrongGuessMark);
+                                        removeLastWrongGuess();
                                         drawStone(move, true, true);
                                         putDummy = false;
                                     } else {
@@ -410,8 +408,7 @@ public class MainActivity extends AppCompatActivity implements
                                         if (im != null) {
                                             tries++;
                                             if (boardLogic.isValid(move, userSettings.hint)) {
-                                                if (lastWrongGuessMark != null)
-                                                    frameLayout.removeView(lastWrongGuessMark);
+                                                removeLastWrongGuess();
                                                 putDummy = true;
                                                 drawStone(move, true, false);
                                                 countScore();
@@ -518,6 +515,11 @@ public class MainActivity extends AppCompatActivity implements
 
     }
 
+    private void removeLastWrongGuess() {
+        if (lastWrongGuessMark != null)
+            frameLayout.removeView(lastWrongGuessMark);
+    }
+
     private void setRepoIcons() {
 
         gamesRepoAdapter.iconsVisible.clear();
@@ -591,6 +593,7 @@ public class MainActivity extends AppCompatActivity implements
     private void makeMove() {
         Move move = boardLogic.getNextMove();
         if (move != null) {
+            removeLastWrongGuess();
             drawStone(move, true, false);
             checkIfCapturing(move);
         }
@@ -746,9 +749,7 @@ public class MainActivity extends AppCompatActivity implements
             }
         }
         removeLastDummyStone(true);
-        if (lastWrongGuessMark != null) {
-            frameLayout.removeView(lastWrongGuessMark);
-        }
+        removeLastWrongGuess();
     }
 
     private void showIndicator(boolean show) {
@@ -792,8 +793,7 @@ public class MainActivity extends AppCompatActivity implements
 
     private void drawWrongGuess(Move move) {
 
-        if (lastWrongGuessMark != null)
-            frameLayout.removeView(lastWrongGuessMark);
+        removeLastWrongGuess();
         ImageView img = new ImageView(context);
         img.setImageDrawable(this.getResources().getDrawable(R.drawable.ic_delete));
         lastWrongGuessMark = img;
@@ -1498,8 +1498,7 @@ public class MainActivity extends AppCompatActivity implements
     public void wrongGuessHandler(View v) {
         CheckBox cb = (CheckBox) v;
         userSettings.setMarkWrongGuess(cb.isChecked());
-        if (lastWrongGuessMark != null)
-            frameLayout.removeView(lastWrongGuessMark);
+        removeLastWrongGuess();
     }
 
     public void boardCoordsHandler(View v) {
