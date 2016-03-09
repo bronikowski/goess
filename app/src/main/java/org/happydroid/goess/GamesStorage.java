@@ -5,6 +5,8 @@ import android.content.SharedPreferences;
 import android.util.Log;
 import android.content.Context;
 import android.content.res.AssetManager;
+
+import com.google.android.gms.games.Game;
 import com.google.gson.Gson;
 import java.io.BufferedReader;
 import java.io.FileNotFoundException;
@@ -39,6 +41,7 @@ public class GamesStorage {
     HashMap<String, GameInfo> playedGamesByMd5 = new HashMap<String, GameInfo>();
 
     String[] repoGameNamesForDisplay;
+    String[] recentGameNamesForDisplay;
 
     Context context;
 
@@ -60,6 +63,7 @@ public class GamesStorage {
         }
 
         prepareRepoGameNames();
+        prepareRecentGameNames();
 
     }
 
@@ -88,6 +92,21 @@ public class GamesStorage {
 
     }
 
+    private void prepareRecentGameNames() {
+
+        HashMap<Integer, String> recentGamesMd5 = getRecentGamesMd5FromSharedPrefs();
+
+        recentGameNamesForDisplay = new String[recentGamesMd5.size()];
+        for (Integer i : recentGamesMd5.keySet()) {
+            String title = getGameTitleByMd5(recentGamesMd5.get(i));
+            if (title.length() > 0) {
+                recentGameNamesForDisplay[i] = getGameTitleByMd5(recentGamesMd5.get(i));
+                Log.v(TAG, ">>> load recent name " + i + " " +title);
+            }
+        }
+
+    }
+
     private void prepareRepoGameNames() {
         repoGameNamesForDisplay = new String[repoSgfsById.size()];
         for (Integer i : repoSgfsById.keySet()) {
@@ -109,6 +128,7 @@ public class GamesStorage {
         }
 
     }
+
 
     public HashMap<Integer, String> getRecentGamesMd5FromSharedPrefs() {
         SharedPreferences  prefs = context.getSharedPreferences(APP_PREFERENCES_RECENT_GAMES, Context.MODE_PRIVATE);
@@ -137,7 +157,11 @@ public class GamesStorage {
 
     public String getGameTitleByMd5(String md5) {
         Log.v(TAG, "request game played " + md5);
-        return playedGamesByMd5.get(md5).getGameTitleWithRanks();
+        GameInfo game = playedGamesByMd5.get(md5);
+        String title = "";
+        if (game != null)
+            title = game.getGameTitleWithRanks();
+        return title;
     }
 
 
@@ -278,6 +302,7 @@ public class GamesStorage {
         }
 
         saveToRecentGamesMd5SharedPrefs();
+        prepareRecentGameNames();
 
     }
 

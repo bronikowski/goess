@@ -110,8 +110,10 @@ public class MainActivity extends AppCompatActivity implements
     Toolbar myToolbar;
 
     ListView gamesList;
+    ListView recentGamesList;
 
     GamesRepoListAdapter gamesRepoAdapter;
+    GamesRepoListAdapter recentGamesAdapter;
     BoardLogic boardLogic;
     GamesStorage gamesStorage;
     UserSettings userSettings;
@@ -224,6 +226,7 @@ public class MainActivity extends AppCompatActivity implements
         //invalidate repo list
 
         gamesRepoAdapter = new GamesRepoListAdapter(this, gamesStorage.repoGameNamesForDisplay);
+        recentGamesAdapter = new GamesRepoListAdapter(this, gamesStorage.recentGameNamesForDisplay);
         setRepoIcons();
 
         myToolbar = (Toolbar) findViewById(R.id.app_bar);
@@ -523,12 +526,17 @@ public class MainActivity extends AppCompatActivity implements
     private void setRepoIcons() {
 
         gamesRepoAdapter.iconsVisible.clear();
+        recentGamesAdapter.iconsVisible.clear();
+
         for (String md5 : gamesStorage.playedGamesByMd5.keySet()) {
 
             GameInfo game = gamesStorage.playedGamesByMd5.get(md5);
 
             if (game != null && (game.score.size() > 0) && !gamesRepoAdapter.iconsVisible.contains(game.getGameTitleWithRanks())) {
                 gamesRepoAdapter.iconsVisible.add(game.getGameTitleWithRanks());
+            }
+            if (game != null && (game.score.size() > 0) && !recentGamesAdapter.iconsVisible.contains(game.getGameTitleWithRanks())) {
+                recentGamesAdapter.iconsVisible.add(game.getGameTitleWithRanks());
             }
         }
 
@@ -980,8 +988,10 @@ public class MainActivity extends AppCompatActivity implements
         if (boardLogic.currentIndex == boardLogic.currentGame.moves.size()) {
 
             if (!gamesRepoAdapter.iconsVisible.contains(boardLogic.currentGame.getGameTitleWithRanks())) {
-                Log.v(TAG, ">>>>>>>>>>> add icon " + boardLogic.currentGame.getGameTitleWithRanks());
                 gamesRepoAdapter.iconsVisible.add(boardLogic.currentGame.getGameTitleWithRanks());
+            }
+            if (!recentGamesAdapter.iconsVisible.contains(boardLogic.currentGame.getGameTitleWithRanks())) {
+                recentGamesAdapter.iconsVisible.add(boardLogic.currentGame.getGameTitleWithRanks());
             }
             askIfAddToHistory();
 
@@ -1115,12 +1125,12 @@ public class MainActivity extends AppCompatActivity implements
         }
 
         Log.v(TAG, "load  game " + game.md5 + "   score size " + String.valueOf(boardLogic.currentGame.score.size()));
-        gamesStorage.addRecentGame(game.md5);
+
         boardLogic.currentGame.lastMove = boardLogic.currentIndex - 1;
         boardLogic.currentGame.lastScore = score;
         gamesStorage.addToPlayedGames(game.md5, boardLogic.currentGame);
-   //     gamesStorage.saveToRecentGamesSharedPrefs();
         saveCurrentGameToPlayedGamesPrefs();
+        gamesStorage.addRecentGame(game.md5);
 
     }
 
@@ -1150,6 +1160,35 @@ public class MainActivity extends AppCompatActivity implements
 
     private void showRecentGamesList() {
 
+        if (gamesStorage.recentGameNamesForDisplay.length == 0){
+            Toast.makeText(getApplicationContext(), "No recent games found!", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        final Dialog dialog = new Dialog(this);
+        dialog.setContentView(R.layout.recent);
+
+        recentGamesList = (ListView ) dialog.findViewById(R.id.recentList);
+
+        recentGamesAdapter.games = gamesStorage.recentGameNamesForDisplay;
+        recentGamesAdapter.notifyDataSetChanged();
+        recentGamesList.setAdapter(recentGamesAdapter);
+
+        recentGamesList.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+             //   String name = recentGamesList.getItemAtPosition(position).toString();
+                Log.v(TAG, "get recent repo game at position " + String.valueOf(position));
+                recentGameHandler(position);
+                dialog.dismiss();
+            }
+        });
+
+        dialog.setCancelable(true);
+        dialog.setTitle("Recent games");
+        dialog.show();
+
+        /*
         HashMap<Integer, String> recentGamesMd5 = gamesStorage.getRecentGamesMd5FromSharedPrefs();
 
         int cnt = recentGamesMd5.size() > 0 ? recentGamesMd5.size() : 0;
@@ -1188,6 +1227,7 @@ public class MainActivity extends AppCompatActivity implements
         alert.setCanceledOnTouchOutside(true);
         alert.setOnShowListener(new RecentGamesListener());
         alert.show();
+        */
     }
 
     public void onGameInfoImgClicked(View v) {
@@ -1267,6 +1307,7 @@ public class MainActivity extends AppCompatActivity implements
                         boardLogic.currentGame.score.clear();
 
                         gamesRepoAdapter.iconsVisible.remove(boardLogic.currentGame.getGameTitleWithRanks());
+                        recentGamesAdapter.iconsVisible.remove(boardLogic.currentGame.getGameTitleWithRanks());
 
                         //    gamesStorage.removeFromGamesHistory(boardLogic.currentGame); //?
                         //    deleteCurrentGameHistoryFromPrefs();
@@ -1437,6 +1478,20 @@ public class MainActivity extends AppCompatActivity implements
             makeFirstMoves(FIRST_MOVES_CNT);
         boardLogic.currentGame.lastWrongGuessX = -1;
         boardLogic.currentGame.lastWrongGuessY = -1;
+    }
+
+    private void recentGameHandler(int position) {
+        if (boardLogic.currentGame != null)
+            saveCurrentGameToPlayedGamesPrefs();
+
+        GameInfo game = gamesStorage.getRecentGameById(position);
+        if (game != null) {
+            gameReady = game.moves.size() != 0;
+            if (gameReady) {
+                loadGame(game);
+            }
+        } else
+            Toast.makeText(getApplicationContext(), "Could not load game!", Toast.LENGTH_SHORT).show();
     }
 
     public void repoGameHandler(String sgf) {
