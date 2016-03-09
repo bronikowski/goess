@@ -25,8 +25,12 @@ public class GameInfo {
     GameInfo() {}
 
     public String getGameTitleWithRanks() {
-        return blackPlayerName + (blackPlayerRank.length() > 0 ? ( " [" + blackPlayerRank + "]") : "") +
-                " vs " + whitePlayerName + (whitePlayerRank.length() > 0 ? (" [" + whitePlayerRank + "]") : "");
+        if (blackPlayerRank.length() == 0)
+            blackPlayerRank = "?";
+        if (whitePlayerRank.length() == 0)
+            whitePlayerRank = "?";
+        return blackPlayerName +  " [" + blackPlayerRank + "]" +
+                " vs " + whitePlayerName + " [" + whitePlayerRank + "]";
     }
 
     public String getGameTitle() {

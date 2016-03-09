@@ -11,7 +11,6 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.ListIterator;
@@ -24,9 +23,11 @@ public class GamesStorage {
     private static String TAG = "GamesStorage";
 
     static final int RECENT_GAMES_LIST_SIZE = 5;
+    static final int REPO_GAMES_LIST_SIZE = 10;
     private static String APP_PREFERENCES_REPO_GAMES = "GoessRepoGames";
     private static String APP_PREFERENCES_PLAYED_GAMES = "GoessPlayedGames";
     private static String APP_PREFERENCES_RECENT_GAMES = "GoessRecentGames";
+    private static String APP_PREFERENCES_TODAYS_GAME = "GoessTodaysGame";
 
     String todaysGameSgf = "";
 
@@ -45,6 +46,9 @@ public class GamesStorage {
 
         this.context = context;
         recentMd5Index = 0;
+
+        SharedPreferences  prefs = context.getSharedPreferences(APP_PREFERENCES_TODAYS_GAME, Context.MODE_PRIVATE);
+        String todaysGame = prefs.getString("todaysGame", "");
 
         loadRepoSgfsFromSharedPrefs();
         loadRecentMd5FromSharedPrefs();
@@ -87,7 +91,7 @@ public class GamesStorage {
     private void prepareRepoGameNames() {
         repoGameNamesForDisplay = new String[repoSgfsById.size()];
         for (Integer i : repoSgfsById.keySet()) {
-            Log.v(TAG, ">>> add name " + repoSgfsById.get(i));
+            Log.v(TAG, ">>> add name " + i + " "  + getNameFromContent(repoSgfsById.get(i)));
             repoGameNamesForDisplay[i] = (getNameFromContent(repoSgfsById.get(i)));
         }
     }
@@ -138,7 +142,27 @@ public class GamesStorage {
 
 
     public void setTodaysGame(String sgf) {
-        this.todaysGameSgf = sgf;
+        if (!todaysGameSgf.equals(sgf)) {
+            Log.v(TAG, ">>>>>>> replace todays game" + todaysGameSgf);
+            if (todaysGameSgf.length() > 0) {
+
+                for (int i = repoSgfsById.size() - 2; i >= 0; --i) {
+                    String tmp = repoSgfsById.get(i);
+                    repoSgfsById.remove(i);
+                    repoSgfsById.put(i + 1, tmp);
+                }
+                repoSgfsById.put(0, todaysGameSgf);
+                //check if remove also from playedgames
+                prepareRepoGameNames();
+
+                Log.v(TAG, ">>>>>>> replace todays game with" + repoGameNamesForDisplay[0]);
+
+                //updatelist
+                saveRepoSgfsToSharedPrefs();
+            }
+            this.todaysGameSgf = sgf;
+
+        }
     }
 
     private void loadDefaultGames() {
@@ -163,17 +187,15 @@ public class GamesStorage {
                 }
 
            //     repoGameNamesForDisplay.add(getNameFromContent(content));
-                if (content != null) {
+                if (content != null && (repoSgfsById.size() < REPO_GAMES_LIST_SIZE)) {
                     repoSgfsById.put(idx++, content);
                     Log.i(TAG, "add default game at  " + String.valueOf(idx) + "  " + getNameFromContent(content));
                 }
-
             }
-
         }
     }
 
-    private void saveRepoSgfsToSharedPrefs() { // call when update received
+    private void saveRepoSgfsToSharedPrefs() {
 
         SharedPreferences.Editor editor = context.getSharedPreferences(APP_PREFERENCES_REPO_GAMES, Context.MODE_PRIVATE).edit();
         for (int i = 0; i < repoSgfsById.size(); ++i) {
@@ -215,7 +237,7 @@ public class GamesStorage {
     }
 
 
-    public void removeFromPlayedGames(GameInfo game) { //todo when repo update is done
+    public void removeFromPlayedGames(GameInfo game) { // remove when not in reposgfs and recents
         if (playedGamesByMd5.containsKey(game.md5)) {
             playedGamesByMd5.remove(game.md5);
         }
@@ -238,10 +260,10 @@ public class GamesStorage {
 
     public void addToPlayedGames(String md5, GameInfo game) {
         playedGamesByMd5.put(md5, game);
-        Log.v(TAG, "put game played " + md5);
+        Log.v(TAG, "put game played " + game.getGameTitleWithRanks());
     }
 
-    public void addRecentGame(String md5) {
+    public void addRecentGame(String md5) { //check if remove also from playedgames
 
         if (!recentGamesMd5Queue.contains(md5)) {
             if (recentGamesMd5Queue.size() < RECENT_GAMES_LIST_SIZE)

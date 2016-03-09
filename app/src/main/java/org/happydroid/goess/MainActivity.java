@@ -223,9 +223,10 @@ public class MainActivity extends AppCompatActivity /*implements
         gamesStorage.loadPlayedGamesFromSharedPrefs();
 
         setGameDownloadAlarm();
-     //   readTodaysGame();
+        readTodaysGame();
 
         //invalidate repo list
+
         gamesRepoAdapter = new GamesRepoListAdapter(this, gamesStorage.repoGameNamesForDisplay);
         setRepoIcons();
 
@@ -524,32 +525,38 @@ public class MainActivity extends AppCompatActivity /*implements
     private void setRepoIcons() {
 
         gamesRepoAdapter.iconsVisible.clear();
-        for (int i = 0; i < gamesStorage.repoSgfsById.size(); ++i) {
+        for (String md5 : gamesStorage.playedGamesByMd5.keySet()) {
 
-            SGFParser parser = new SGFParser();
-            String md5 = parser.getMd5FromFile(gamesStorage.repoSgfsById.get(i));
             GameInfo game = gamesStorage.playedGamesByMd5.get(md5);
-            if (game != null && (game.score.size() > 0)) {
-                gamesRepoAdapter.iconsVisible.add(i);
 
+            if (game != null && (game.score.size() > 0) && !gamesRepoAdapter.iconsVisible.contains(game.getGameTitleWithRanks())) {
+                gamesRepoAdapter.iconsVisible.add(game.getGameTitleWithRanks());
             }
         }
 
-        for (Integer i : gamesRepoAdapter.iconsVisible ) {
-            Log.v(TAG, ">>>>>>>>>> iconsvisible: " + i);
+        for (String s : gamesRepoAdapter.iconsVisible ) {
+            Log.v(TAG, ">>>>>>>>>> iconsvisible for: " + s);
         }
     }
 
     private String readTodaysGame() {
         SharedPreferences  prefs = context.getSharedPreferences(APP_PREFERENCES_TODAYS_GAME, Context.MODE_PRIVATE);
         String sgf = prefs.getString("todaysGame", "");
-        String name = "Game update error!";
+        String name = "Game update error!"; //trigger alarm?
         if (sgf.length() > 0) {
             SGFParser parser = new SGFParser();
             name = parser.getFullName(sgf);
+         /*   String todaysMd5 = parser.getMd5FromFile(sgf);
+            if (gamesStorage.playedGamesByMd5.containsKey(todaysMd5)) {
+                GameInfo game = gamesStorage.playedGamesByMd5.get(todaysMd5);
+                if (game != null && (game.score.size() > 0) && !gamesRepoAdapter.iconsVisible.contains(game.getGameTitleWithRanks())) {
+                    gamesRepoAdapter.iconsVisible.add(game.getGameTitleWithRanks());
+                }
+            }*/
         }
         Log.v(TAG, "Got todays game " + name);
         gamesStorage.setTodaysGame(sgf);
+
         return name;
 
     }
@@ -974,9 +981,10 @@ public class MainActivity extends AppCompatActivity /*implements
         myToolbar.refreshDrawableState();
 
         if (boardLogic.currentIndex == boardLogic.currentGame.moves.size()) {
-            int id = getListIdForGame();
-            if (id >= 0) {
-                gamesRepoAdapter.iconsVisible.add(id);
+
+            if (!gamesRepoAdapter.iconsVisible.contains(boardLogic.currentGame.getGameTitleWithRanks())) {
+                Log.v(TAG, ">>>>>>>>>>> add icon " + boardLogic.currentGame.getGameTitleWithRanks());
+                gamesRepoAdapter.iconsVisible.add(boardLogic.currentGame.getGameTitleWithRanks());
             }
             askIfAddToHistory();
 
@@ -1260,10 +1268,9 @@ public class MainActivity extends AppCompatActivity /*implements
                 new DialogInterface.OnClickListener() {
                     public void onClick(DialogInterface dialog, int which) {
                         boardLogic.currentGame.score.clear();
-                        int id = getListIdForGame();
-                        if (id >= 0) {
-                            gamesRepoAdapter.iconsVisible.remove((Integer)id);
-                        }
+
+                        gamesRepoAdapter.iconsVisible.remove(boardLogic.currentGame.getGameTitleWithRanks());
+
                         //    gamesStorage.removeFromGamesHistory(boardLogic.currentGame); //?
                         //    deleteCurrentGameHistoryFromPrefs();
                         dialog.dismiss();
@@ -1657,7 +1664,13 @@ public class MainActivity extends AppCompatActivity /*implements
         final Button b = (Button) dialog.findViewById(R.id.todaysgamename);
         b.setBackgroundDrawable(null);
         b.setText(name);
+        Log.v(TAG, ">>>>>>>>>>>>>> check for name " + name);
+        if (gamesRepoAdapter.iconsVisible.contains(name)) {
+            ImageView iv = (ImageView) dialog.findViewById(R.id.todaysgameimg);
+            iv.setVisibility(View.VISIBLE);
+        }
 
+        
         b.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -1666,9 +1679,12 @@ public class MainActivity extends AppCompatActivity /*implements
             }
         });
 
-        gamesList = (ListView ) dialog.findViewById(R.id.repoList);
-        gamesList.setAdapter(gamesRepoAdapter);
 
+        gamesList = (ListView ) dialog.findViewById(R.id.repoList);
+
+        gamesRepoAdapter.games = gamesStorage.repoGameNamesForDisplay;
+        gamesRepoAdapter.notifyDataSetChanged();
+        gamesList.setAdapter(gamesRepoAdapter);
 
         gamesList.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override

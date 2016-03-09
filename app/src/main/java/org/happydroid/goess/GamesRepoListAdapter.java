@@ -15,7 +15,7 @@ public class GamesRepoListAdapter extends ArrayAdapter<String>  {
 
     private final Activity context;
     String[] games;
-    ArrayList<Integer> iconsVisible = new ArrayList<>();
+    ArrayList<String> iconsVisible = new ArrayList<>();
     LayoutInflater inflater;
 
 
@@ -39,21 +39,43 @@ public class GamesRepoListAdapter extends ArrayAdapter<String>  {
         final ViewHolder viewHolder;
 
         if (view == null) {
-            view = inflater.inflate(R.layout.repoitem, null);
+            view = inflater.inflate(R.layout.repoitem, parent, false);
             viewHolder = new ViewHolder();
             viewHolder.position = position;
+
             viewHolder.txtTitle = (TextView) view.findViewById(R.id.gameTitle);
             viewHolder.icon = (ImageView) view.findViewById(R.id.img);
+
             view.setTag(viewHolder);
         } else
             viewHolder = (ViewHolder) view.getTag();
 
-        viewHolder.txtTitle.setText(games[position]);
 
-        if (iconsVisible.contains(viewHolder.position)) {
+         viewHolder.txtTitle.setText(games[position]);
+
+        viewHolder.icon.setVisibility(View.GONE);
+
+        if (iconsVisible.contains(games[position])) {
             viewHolder.icon.setVisibility(View.VISIBLE);
+
         }
 
+
+
         return view;
+    }
+
+    @Override
+    public int getCount() {
+        return games.length;
+    }
+    @Override
+    public String getItem(int position) {
+        return games[position];
+    }
+
+    @Override
+    public long getItemId(int position) {
+        return position;
     }
 }
