@@ -49,6 +49,7 @@ import java.util.Calendar;
 import java.util.HashMap;
 import java.util.Random;
 import java.util.TimeZone;
+import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.games.Games;
 import com.google.gson.Gson;
@@ -63,14 +64,13 @@ import org.achartengine.renderer.XYSeriesRenderer;
 import org.happydroid.goess.basegameutils.BaseGameUtils;
 import org.happydroid.goess.service.AlarmReceiver;
 
-public class MainActivity extends AppCompatActivity /*implements
+
+public class MainActivity extends AppCompatActivity implements
         GoogleApiClient.ConnectionCallbacks,
-        GoogleApiClient.OnConnectionFailedListener*/  {
+        GoogleApiClient.OnConnectionFailedListener  {
 
     private static String TAG = "MainActivity";
     private static String APP_PREFERENCES = "GoessSettings";
-    private static String APP_PREFERENCES_RECENT_GAMES = "GoessRecentGames";
-    private static String APP_PREFERENCES_REPO_GAMES = "GoessRepoGames";
     private static String APP_PREFERENCES_PLAYED_GAMES = "GoessPlayedGames";
     private static String APP_PREFERENCES_TODAYS_GAME = "GoessTodaysGame";
     private static String FILE_EXT = "sgf";
@@ -110,7 +110,6 @@ public class MainActivity extends AppCompatActivity /*implements
     Toolbar myToolbar;
 
     ListView gamesList;
-    TextView todaysGameTxt;
 
     GamesRepoListAdapter gamesRepoAdapter;
     BoardLogic boardLogic;
@@ -129,7 +128,7 @@ public class MainActivity extends AppCompatActivity /*implements
     TextView deleteTxt;
 
     XYMultipleSeriesRenderer graphRenderer;
-/*
+
     @Override
     protected void onStart() {
         super.onStart();
@@ -144,11 +143,10 @@ public class MainActivity extends AppCompatActivity /*implements
 
     @Override
     public void onConnected(Bundle connectionHint) {
-        if(googleApiClient.isConnected()){
+        if (googleApiClient.isConnected()){
             Games.Leaderboards.submitScore(googleApiClient, "CgkIyLnYwqQeEAIQBw", 23);
         }
     }
-*/
 
     private void setGameDownloadAlarm() {
 
@@ -167,7 +165,7 @@ public class MainActivity extends AppCompatActivity /*implements
     private boolean resolvingConnectionFailure = false;
     private boolean autoStartSignInFlow = true;
     private boolean signInClicked = false;
-/*
+
     @Override
     public void onConnectionFailed(ConnectionResult connectionResult) {
         if (resolvingConnectionFailure) {
@@ -201,21 +199,19 @@ public class MainActivity extends AppCompatActivity /*implements
     private void signOutclicked() {
         signInClicked = false;
         Games.signOut(googleApiClient);
-    }*/
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-
-/*
         googleApiClient = new GoogleApiClient.Builder(this)
                 .addConnectionCallbacks(this)
                 .addOnConnectionFailedListener(this)
                 .addApi(Games.API).addScope(Games.SCOPE_GAMES)
                 .build();
-*/
+
         context = this.getApplicationContext();
         userSettings = new UserSettings(context.getSharedPreferences(APP_PREFERENCES, Context.MODE_PRIVATE));
         boardLogic = new BoardLogic();
@@ -350,8 +346,8 @@ public class MainActivity extends AppCompatActivity /*implements
                             if ((userSettings.zoom != UserSettings.Zoom.NONE) && !isZoomed()) {
                                 float toolbarHeight = myToolbar.getHeight();
                                 setZoom(event.getX(), event.getY() - toolbarHeight);
-                            } else //red lines not showing on first touch if zoom is on
-                                drawRedLines(event.getX(), event.getY(), horiz, vertic);
+                            }
+                            drawRedLines(event.getX(), event.getY(), horiz, vertic);
                         }
 
                         break;
@@ -903,6 +899,7 @@ public class MainActivity extends AppCompatActivity /*implements
         String filePath = "";
 
         if (requestCode == LEADERBOARD_REQUEST_CODE) {
+            Log.v(TAG, "Starting leaderboard");
 
         } else if (requestCode == RC_SIGN_IN) {
             signInClicked = false;
@@ -988,9 +985,9 @@ public class MainActivity extends AppCompatActivity /*implements
             }
             askIfAddToHistory();
 
-         //   if(googleApiClient.isConnected()){
-          //      Games.Leaderboards.submitScore(googleApiClient, "CgkIyLnYwqQeEAIQBw", (long)score);
-         //   }
+            if(googleApiClient.isConnected()){
+                Games.Leaderboards.submitScore(googleApiClient, "CgkIyLnYwqQeEAIQBw", (long)score);
+            }
 
             String result = boardLogic.currentGame.result;
             if (result.length() > 0) {
@@ -1463,8 +1460,7 @@ public class MainActivity extends AppCompatActivity /*implements
     }
 
     public void leaderboardHandler(View v) {
-        startActivityForResult(Games.Leaderboards.getLeaderboardIntent(googleApiClient,
-                "CgkIyLnYwqQeEAIQBw"), LEADERBOARD_REQUEST_CODE);
+        startActivityForResult(Games.Leaderboards.getLeaderboardIntent(googleApiClient, "CgkIyLnYwqQeEAIQBw"), LEADERBOARD_REQUEST_CODE);
     }
 
     public void replayBtnHandler(View v) {
@@ -1670,7 +1666,7 @@ public class MainActivity extends AppCompatActivity /*implements
             iv.setVisibility(View.VISIBLE);
         }
 
-        
+
         b.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
