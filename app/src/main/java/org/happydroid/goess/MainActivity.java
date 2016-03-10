@@ -993,6 +993,9 @@ public class MainActivity extends AppCompatActivity implements
 
         if (boardLogic.currentIndex == boardLogic.currentGame.moves.size()) {
 
+            boardLogic.currentGame.lastWrongGuessX = -1;
+            boardLogic.currentGame.lastWrongGuessY = -1;
+
             if (!gamesRepoAdapter.iconsVisible.contains(boardLogic.currentGame.getGameTitleWithRanks())) {
                 gamesRepoAdapter.iconsVisible.add(boardLogic.currentGame.getGameTitleWithRanks());
             }
