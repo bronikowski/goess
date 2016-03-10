@@ -44,15 +44,16 @@ import android.widget.RadioGroup;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
-
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Random;
 import java.util.TimeZone;
+import com.google.android.gms.auth.api.Auth;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.games.Games;
+import com.google.android.gms.games.GamesActivityResultCodes;
 import com.google.gson.Gson;
 import com.nononsenseapps.filepicker.FilePickerActivity;
 import org.achartengine.ChartFactory;
@@ -77,7 +78,6 @@ public class MainActivity extends AppCompatActivity implements
     private static String LEADERBOARD_ID = "CgkIyLnYwqQeEAIQDA";
     private static String FILE_EXT = "sgf";
     private static int FILE_PICKER_REQUEST_CODE = 1;
-    private static int GAME_REPO_REQUEST_CODE = 2;
     private static int LEADERBOARD_REQUEST_CODE = 3;
     private static int BOARD_SIZE = 19;
     private static int FIRST_MOVES_CNT = 4;
@@ -171,6 +171,7 @@ public class MainActivity extends AppCompatActivity implements
 
     @Override
     public void onConnectionFailed(ConnectionResult connectionResult) {
+
         if (resolvingConnectionFailure) {
             return;
         }
@@ -912,8 +913,16 @@ public class MainActivity extends AppCompatActivity implements
         super.onActivityResult(requestCode, resultCode, data);
         String filePath = "";
 
+        boolean userLoggedOut = (resultCode == GamesActivityResultCodes.RESULT_RECONNECT_REQUIRED)
+                && (requestCode == LEADERBOARD_REQUEST_CODE);
+        if (userLoggedOut) {
+            Log.v(TAG, "Reconnecting to games services");
+            resolvingConnectionFailure = false;
+            autoStartSignInFlow = true;
+            googleApiClient.disconnect();
+        }
+
         if (requestCode == LEADERBOARD_REQUEST_CODE) {
-            Log.v(TAG, "Starting leaderboard");
 
         } else if (requestCode == RC_SIGN_IN) {
             signInClicked = false;
@@ -1006,6 +1015,8 @@ public class MainActivity extends AppCompatActivity implements
 
             if (googleApiClient.isConnected()){
                 Games.Leaderboards.submitScore(googleApiClient, LEADERBOARD_ID, (long) score);
+            } else {
+                googleApiClient.connect();
             }
 
             String result = boardLogic.currentGame.result;
@@ -1524,8 +1535,21 @@ public class MainActivity extends AppCompatActivity implements
 
     }
 
+    private void signIn() {
+        Intent signInIntent = Auth.GoogleSignInApi.getSignInIntent(googleApiClient);
+        startActivityForResult(signInIntent, RC_SIGN_IN);
+    }
+
     public void leaderboardHandler(View v) {
-        startActivityForResult(Games.Leaderboards.getLeaderboardIntent(googleApiClient, LEADERBOARD_ID), LEADERBOARD_REQUEST_CODE);
+        //if (!signInClicked) {
+
+
+        if (googleApiClient.isConnected())
+            startActivityForResult(Games.Leaderboards.getLeaderboardIntent(googleApiClient, LEADERBOARD_ID), LEADERBOARD_REQUEST_CODE);
+        else {
+            Log.v(TAG, ">>>>>>>>>>>.fadsfsa");
+            googleApiClient.connect();
+        }
     }
 
     public void replayBtnHandler(View v) {
