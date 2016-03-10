@@ -50,8 +50,6 @@ public class GameDownloadService extends Service {
 
         private static final String TAG = "GameDownloadAsyncTask";
 
-        private PowerManager.WakeLock mWakeLock;
-
         public DownloadTask() {
         }
 
@@ -72,21 +70,24 @@ public class GameDownloadService extends Service {
                             + " " + connection.getResponseMessage());
                 }
 
-                output = openFileOutput("todaysgame.sgf", Context.MODE_PRIVATE);
                 input = connection.getInputStream();
 
-                byte data[] = new byte[4096];
-                int count;
-                while ((count = input.read(data)) != -1) {
-
-                    output.write(data, 0, count);
+                BufferedReader reader = new BufferedReader(new InputStreamReader(input));
+                StringBuilder str = new StringBuilder();
+                String line = null;
+                while ((line = reader.readLine()) != null) {
+                    str.append(line);
                 }
+                input.close();
+
+                Bundle resultData = new Bundle();
+                resultData.putString("sgf", str.toString());
+                receiver.send(UPDATE_RESULT, resultData);
+
             } catch (Exception e) {
                 Log.v(TAG, e.toString());
             } finally {
                 try {
-                    if (output != null)
-                        output.close();
                     if (input != null)
                         input.close();
                 } catch (IOException ignored) {
@@ -97,33 +98,6 @@ public class GameDownloadService extends Service {
                     connection.disconnect();
             }
 
-            File file = getBaseContext().getFileStreamPath("todaysgame.sgf");
-            if (file.exists()) {
-                String line = "";
-                FileInputStream fis = null;
-                try {
-                    fis = openFileInput("todaysgame.sgf");
-                } catch (FileNotFoundException e) {
-                    e.printStackTrace();
-                }
-                InputStreamReader isr = new InputStreamReader(fis);
-                BufferedReader bufferedReader = new BufferedReader(isr);
-                StringBuilder sb = new StringBuilder();
-
-                try {
-                    while ((line = bufferedReader.readLine()) != null) {
-                        sb.append(line);
-                    }
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-                Log.v(TAG, sb.toString());
-
-                Bundle resultData = new Bundle();
-                resultData.putString("sgf", sb.toString());
-                receiver.send(UPDATE_RESULT, resultData);
-
-            }
             return "";
         }
 

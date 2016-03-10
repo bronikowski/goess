@@ -2,14 +2,14 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="org.happydroid.goess"
     xmlns:tools="http://schemas.android.com/tools"
-    android:versionName="1.1.5"
-    android:versionCode="8">
+    android:versionName="1.1.8"
+    android:versionCode="11">
 
     <uses-sdk  android:minSdkVersion="19" android:targetSdkVersion="23"/>
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.STORAGE" />
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
-
+    <uses-permission android:name="com.android.alarm.permission.SET_ALARM"/>
 
     <application
         tools:replace="android:icon"
@@ -20,7 +20,6 @@
         android:theme="@style/Theme.AppCompat.Light.NoActionBar">
 
         <receiver android:name=".service.AlarmReceiver"></receiver>
-
         <service android:name=".service.GameDownloadService"></service>
 
         <meta-data
