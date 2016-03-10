@@ -5,8 +5,6 @@ import android.content.SharedPreferences;
 import android.util.Log;
 import android.content.Context;
 import android.content.res.AssetManager;
-
-import com.google.android.gms.games.Game;
 import com.google.gson.Gson;
 import java.io.BufferedReader;
 import java.io.FileNotFoundException;
