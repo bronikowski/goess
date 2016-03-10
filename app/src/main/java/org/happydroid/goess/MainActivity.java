@@ -1011,12 +1011,29 @@ public class MainActivity extends AppCompatActivity implements
             if (!recentGamesAdapter.iconsVisible.contains(boardLogic.currentGame.getGameTitleWithRanks())) {
                 recentGamesAdapter.iconsVisible.add(boardLogic.currentGame.getGameTitleWithRanks());
             }
+
+            if (userSettings.lastScores.size() < 7)
+                userSettings.lastScores.addFirst(score);
+            else {
+                userSettings.lastScores.removeLast();
+                userSettings.lastScores.addFirst(score);
+            }
+            userSettings.setLastScores();
+
+            float sum = 0;
+            for (int i = 0; i < userSettings.lastScores.size(); ++i) {
+                sum += userSettings.lastScores.get(i);
+            }
+
             askIfAddToHistory();
 
-            if (googleApiClient.isConnected()){
-                Games.Leaderboards.submitScore(googleApiClient, LEADERBOARD_ID, (long) score);
+            if (googleApiClient.isConnected()) {
+
+                Games.Leaderboards.submitScore(googleApiClient, LEADERBOARD_ID, (long) sum);
             } else {
                 googleApiClient.connect();
+                if (googleApiClient.isConnected())
+                    Games.Leaderboards.submitScore(googleApiClient, LEADERBOARD_ID, (long) sum);
             }
 
             String result = boardLogic.currentGame.result;

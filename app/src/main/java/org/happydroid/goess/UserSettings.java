@@ -3,6 +3,11 @@ package org.happydroid.goess;
 
 import android.content.SharedPreferences;
 
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.Set;
+
 public class UserSettings {
 
     enum Hint {
@@ -52,6 +57,8 @@ public class UserSettings {
     State state;
     Mode mode;
     String lastActiveGameMd5;
+    LinkedList<Float> lastScores = new LinkedList<Float>();
+
 
     UserSettings(SharedPreferences preferences) {
         this.preferences = preferences;
@@ -75,6 +82,10 @@ public class UserSettings {
             String mode = preferences.getString("mode", Mode.GAME.toString());
             this.mode = Mode.valueOf(mode);
             lastActiveGameMd5 = preferences.getString("lastGame", "");
+
+            for (int i = 0; i < 7; i++)
+                lastScores.add(preferences.getFloat("score_" + i, 0));
+
         } else {
             setShowAbout(true);
             setIndicator(false);
@@ -89,9 +100,23 @@ public class UserSettings {
             setState(State.GAME);
             setMode(Mode.GAME);
             setLastActiveGame("");
+
+            for (int i = 0; i < 7; i++)
+                lastScores.addFirst(0.0f);
         }
     }
 
+
+    public void setLastScores() {
+
+        if (lastScores != null) {
+            for (int i = 0; i < lastScores.size(); i++) {
+                preferences.edit().remove("score_" + i);
+                preferences.edit().putFloat("score_" + i, lastScores.get(i)).apply();
+            }
+        }
+
+    }
 
     public void setLastActiveGame(String md5) {
         lastActiveGameMd5 = md5;
