@@ -51,7 +51,7 @@ public class GamesStorage {
         recentMd5Index = 0;
 
         SharedPreferences  prefs = context.getSharedPreferences(APP_PREFERENCES_TODAYS_GAME, Context.MODE_PRIVATE);
-        String todaysGame = prefs.getString("todaysGame", "");
+        todaysGameSgf = prefs.getString("todaysGame", "");
 
         loadRepoSgfsFromSharedPrefs();
         loadRecentMd5FromSharedPrefs();
@@ -167,7 +167,6 @@ public class GamesStorage {
 
     public void setTodaysGame(String sgf) {
         if (!todaysGameSgf.equals(sgf)) {
-            Log.v(TAG, ">>>>>>> replace todays game" + todaysGameSgf);
             if (todaysGameSgf.length() > 0) {
 
                 for (int i = repoSgfsById.size() - 2; i >= 0; --i) {
@@ -181,10 +180,9 @@ public class GamesStorage {
 
                 Log.v(TAG, ">>>>>>> replace todays game with" + repoGameNamesForDisplay[0]);
 
-                //updatelist
                 saveRepoSgfsToSharedPrefs();
             }
-            this.todaysGameSgf = sgf;
+            todaysGameSgf = sgf;
 
         }
     }

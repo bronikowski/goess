@@ -44,6 +44,8 @@ import android.widget.RadioGroup;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
+
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Random;
@@ -72,6 +74,7 @@ public class MainActivity extends AppCompatActivity implements
     private static String APP_PREFERENCES = "GoessSettings";
     private static String APP_PREFERENCES_PLAYED_GAMES = "GoessPlayedGames";
     private static String APP_PREFERENCES_TODAYS_GAME = "GoessTodaysGame";
+    private static String LEADERBOARD_ID = "CgkIyLnYwqQeEAIQDA";
     private static String FILE_EXT = "sgf";
     private static int FILE_PICKER_REQUEST_CODE = 1;
     private static int GAME_REPO_REQUEST_CODE = 2;
@@ -144,9 +147,9 @@ public class MainActivity extends AppCompatActivity implements
 
     @Override
     public void onConnected(Bundle connectionHint) {
-        if (googleApiClient.isConnected()){
-            Games.Leaderboards.submitScore(googleApiClient, "CgkIyLnYwqQeEAIQBw", 23);
-        }
+     //   if (googleApiClient.isConnected()){
+      //      Games.Leaderboards.submitScore(googleApiClient, "CgkIyLnYwqQeEAIQBw", 23);
+      //  }
     }
 
     private void setGameDownloadAlarm() {
@@ -766,11 +769,16 @@ public class MainActivity extends AppCompatActivity implements
     private void updateScoreLabel(boolean clear) {
 
         float percentage = boardLogic.currentIndex <= 0 ? 0 : (score / boardLogic.currentIndex) * 100;
+
+        BigDecimal roundedScore = new BigDecimal(score).setScale(1, BigDecimal.ROUND_HALF_UP);
+
         if (clear)
             scoreLabel.setText("0.0/" + String.valueOf(boardLogic.currentIndex) + " (0%)");
-        else
-            scoreLabel.setText(String.valueOf((float)score) + "/" + String.valueOf(boardLogic.currentIndex)
-                + " (" + String.valueOf((int) percentage) + "%)");
+        else {
+            scoreLabel.setText(String.valueOf(roundedScore) + "/" + String.valueOf(boardLogic.currentIndex)
+                    + " (" + String.valueOf((int) percentage) + "%)");
+
+        }
         LinearLayout fill = (LinearLayout) findViewById(R.id.scoreFill);
         LinearLayout bkg = (LinearLayout) findViewById(R.id.scoreBkg);
         ViewGroup.LayoutParams paramsBkg = bkg.getLayoutParams();
@@ -993,8 +1001,8 @@ public class MainActivity extends AppCompatActivity implements
             }
             askIfAddToHistory();
 
-            if(googleApiClient.isConnected()){
-                Games.Leaderboards.submitScore(googleApiClient, "CgkIyLnYwqQeEAIQBw", (long)score);
+            if (googleApiClient.isConnected()){
+                Games.Leaderboards.submitScore(googleApiClient, LEADERBOARD_ID, (long) score);
             }
 
             String result = boardLogic.currentGame.result;
@@ -1024,12 +1032,13 @@ public class MainActivity extends AppCompatActivity implements
 
     private void askIfAddToHistory() {
         AlertDialog alertDialog = new AlertDialog.Builder(this).create();
-        alertDialog.setTitle("Game finished with score " + String.valueOf((float)score));
+        final BigDecimal roundedScore = new BigDecimal(score).setScale(1, BigDecimal.ROUND_HALF_UP);
+        alertDialog.setTitle("Game finished with score " + String.valueOf(roundedScore));
         alertDialog.setMessage("Add this score to game history?");
         alertDialog.setButton(AlertDialog.BUTTON_POSITIVE, "OK",
                 new DialogInterface.OnClickListener() {
                     public void onClick(DialogInterface dialog, int which) {
-                        gamesStorage.updateScoreInPlayedGames(boardLogic.currentGame, score);
+                        gamesStorage.updateScoreInPlayedGames(boardLogic.currentGame, roundedScore.floatValue());
                    //     saveCurrentGameToHistoryPrefs();
                         dialog.dismiss();
                         Toast.makeText(getApplicationContext(), "Score saved!",
@@ -1513,7 +1522,7 @@ public class MainActivity extends AppCompatActivity implements
     }
 
     public void leaderboardHandler(View v) {
-        startActivityForResult(Games.Leaderboards.getLeaderboardIntent(googleApiClient, "CgkIyLnYwqQeEAIQBw"), LEADERBOARD_REQUEST_CODE);
+        startActivityForResult(Games.Leaderboards.getLeaderboardIntent(googleApiClient, LEADERBOARD_ID), LEADERBOARD_REQUEST_CODE);
     }
 
     public void replayBtnHandler(View v) {

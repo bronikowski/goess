@@ -11,5 +11,5 @@ Save this file as res/values/games-ids.xml in your project.
     <string name="achievement_teacher">CgkIyLnYwqQeEAIQAw</string>
     <string name="achievement_master">CgkIyLnYwqQeEAIQBA</string>
     <string name="achievement_pro">CgkIyLnYwqQeEAIQBQ</string>
-    <string name="leaderboard_best_players">CgkIyLnYwqQeEAIQBw</string>
+    <string name="leaderboard_best_players">CgkIyLnYwqQeEAIQDA</string>
 </resources>
