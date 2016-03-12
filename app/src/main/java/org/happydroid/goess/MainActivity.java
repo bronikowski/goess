@@ -51,6 +51,7 @@ import java.util.Random;
 import java.util.TimeZone;
 import com.google.android.gms.auth.api.Auth;
 import com.google.android.gms.common.ConnectionResult;
+import com.google.android.gms.common.GooglePlayServicesUtil;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.games.Games;
 import com.google.android.gms.games.GamesActivityResultCodes;
@@ -79,6 +80,7 @@ public class MainActivity extends AppCompatActivity implements
     private static String FILE_EXT = "sgf";
     private static int FILE_PICKER_REQUEST_CODE = 1;
     private static int LEADERBOARD_REQUEST_CODE = 3;
+    private static int GET_PLAY_SERVICES = 5;
     private static int BOARD_SIZE = 19;
     private static int FIRST_MOVES_CNT = 4;
     private static float BOARD_SCALE_FACTOR = 1.8f;
@@ -132,6 +134,7 @@ public class MainActivity extends AppCompatActivity implements
     TextView deleteTxt;
 
     XYMultipleSeriesRenderer graphRenderer;
+
 
     @Override
     protected void onStart() {
@@ -1519,14 +1522,24 @@ public class MainActivity extends AppCompatActivity implements
     }
 
     public void leaderboardHandler(View v) {
-        //if (!signInClicked) {
-
 
         if (googleApiClient.isConnected())
             startActivityForResult(Games.Leaderboards.getLeaderboardIntent(googleApiClient, LEADERBOARD_ID), LEADERBOARD_REQUEST_CODE);
         else {
-            Log.v(TAG, ">>>>>>>>>>>.fadsfsa");
-            googleApiClient.connect();
+            Log.v(TAG, ">>>>>>>>>>> get leaderboard");
+            int statusCode = GooglePlayServicesUtil.isGooglePlayServicesAvailable(this);
+            if (statusCode != ConnectionResult.SUCCESS) {
+                Log.v(TAG, "no game services: " + statusCode);
+                if (GooglePlayServicesUtil.isUserRecoverableError(statusCode)) {
+                    Dialog errorDialog = GooglePlayServicesUtil.getErrorDialog(statusCode, this, GET_PLAY_SERVICES);
+                    if (errorDialog != null)
+                        errorDialog.show();
+                } else {
+                    Toast.makeText(getApplicationContext(),
+                            "Google Play Services are not available on your phone!", Toast.LENGTH_LONG).show();
+                }
+            } else
+                googleApiClient.connect();
         }
     }
 
@@ -1742,7 +1755,7 @@ public class MainActivity extends AppCompatActivity implements
                 }
             });
         }
-        
+
         gamesList = (ListView ) dialog.findViewById(R.id.repoList);
 
         gamesRepoAdapter.games = gamesStorage.repoGameNamesForDisplay;
