@@ -936,6 +936,7 @@ public class MainActivity extends AppCompatActivity implements
                 // could not be signed in, such as "Unable to sign in."
                 BaseGameUtils.showActivityResultError(this,
                         requestCode, resultCode, R.string.signin_failure);
+                signInClicked = true;
             }
         } else if (requestCode == FILE_PICKER_REQUEST_CODE && resultCode == RESULT_OK) {
 
@@ -1226,46 +1227,6 @@ public class MainActivity extends AppCompatActivity implements
         dialog.setTitle("Recent games");
         dialog.show();
 
-        /*
-        HashMap<Integer, String> recentGamesMd5 = gamesStorage.getRecentGamesMd5FromSharedPrefs();
-
-        int cnt = recentGamesMd5.size() > 0 ? recentGamesMd5.size() : 0;
-        if (cnt == 0) {
-            Toast.makeText(getApplicationContext(), "No recent games found!", Toast.LENGTH_SHORT).show();
-            return;
-        }
-        final CharSequence[] items = new CharSequence[cnt];
-
-        for (Integer id : recentGamesMd5.keySet()) {
-            items[id] = gamesStorage.getGameTitleByMd5(recentGamesMd5.get(id));
-        }
-
-        AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        builder.setTitle("Recent games");
-        builder.setItems(items, new DialogInterface.OnClickListener() {
-
-            public void onClick(DialogInterface dialog, int item) {
-
-                if (boardLogic.currentGame != null)
-                    saveCurrentGameToPlayedGamesPrefs();
-
-                GameInfo game = gamesStorage.getRecentGameById(item);
-                if (game != null) {
-                    gameReady = game.moves.size() != 0;
-                    if (gameReady) {
-                        loadGame(game);
-                    }
-                } else
-                    Toast.makeText(getApplicationContext(), "Could not load game!", Toast.LENGTH_SHORT).show();
-            }
-
-        });
-
-        AlertDialog alert = builder.create();
-        alert.setCanceledOnTouchOutside(true);
-        alert.setOnShowListener(new RecentGamesListener());
-        alert.show();
-        */
     }
 
     public void onGameInfoImgClicked(View v) {
@@ -1542,7 +1503,7 @@ public class MainActivity extends AppCompatActivity implements
             if (gamesStorage.playedGamesByMd5.containsKey(game.md5)) {
                 game = gamesStorage.playedGamesByMd5.get(game.md5);
             }
-            gameReady = (game != null && game.moves.size() != 0);
+            gameReady = (game.moves.size() != 0);
             if (gameReady) {
                 loadGame(game);
             }
@@ -1781,8 +1742,7 @@ public class MainActivity extends AppCompatActivity implements
                 }
             });
         }
-
-
+        
         gamesList = (ListView ) dialog.findViewById(R.id.repoList);
 
         gamesRepoAdapter.games = gamesStorage.repoGameNamesForDisplay;
@@ -1885,6 +1845,11 @@ public class MainActivity extends AppCompatActivity implements
 
     }
 
+    float nextLeft = 0;
+    float nextTop = 0;
+    float nextRight = 0;
+    float nextBottom = 0;
+
     private void dimBoard(Canvas tempCanvas, Paint p) {
         p.setAlpha(50);
         float offset = boardWidth / 20;
@@ -1893,27 +1858,47 @@ public class MainActivity extends AppCompatActivity implements
         if (boardLogic.currentGame == null || (boardLogic.currentIndex == boardLogic.currentGame.moves.size()))
             return;
 
-
         Move nextMove = boardLogic.currentGame.moves.get(boardLogic.currentIndex);
 
         if (tries > 1) {
+            tempCanvas.clipRect(nextLeft, nextTop, nextRight, nextBottom, Region.Op.XOR);
+            tempCanvas.drawRect(rect, p);
+        } else if (tries == 1) {
 
-            Point p1 = calculateLeftRight(nextMove.x);
-            Point p2 = calculateLeftRight(nextMove.y);
 
+            Point p1 = calculateLeftRight(nextMove.x, true);
             float left = p1.x;
             float right = p1.y;
+            Point p2 = calculateLeftRight(nextMove.y, false);
             float top = p2.x;
             float bottom = p2.y;
 
-            tempCanvas.clipRect(left, top, right, bottom, Region.Op.XOR);
-            tempCanvas.drawRect(rect, p);
-
-        } else if (tries == 1) {
-            float left = (nextMove.x < 6) ? offset : (nextMove.x < 13 ? offset * 6 + (offset / 2) : offset * 13 + (offset / 2));
-            float top = (nextMove.y < 6) ? offset : (nextMove.y < 13 ? offset * 6 + (offset / 2) : offset * 13 + (offset / 2));
-            float right = (nextMove.x < 6) ? offset * 6 + (offset / 2) : (nextMove.x < 13 ? offset * 13 + (offset / 2) : offset * 19);
-            float bottom = (nextMove.y < 6) ? offset * 6 + (offset / 2) : (nextMove.y < 13 ? offset * 13 + (offset / 2) : offset * 19);
+            /*
+            if (nextMove.y == 9) {
+                Random r = new Random();
+                int i = r.nextInt(100 - 1) + 1;
+                if (i >= 50) {
+                    top = offset;
+                    bottom = offset * 10 + (offset / 2);
+                    nextTop = (offset * 5) + (offset / 2);
+                    nextBottom = bottom;
+                } else {
+                    top = offset * 9 + (offset / 2);
+                    bottom = offset * 19;
+                    nextTop = top;
+                    nextBottom = top + (offset * 5);
+                }
+            } else if (nextMove.y < 10) {
+                top = offset;
+                bottom = offset * 10 + (offset / 2);
+                nextTop = (nextMove.y / 5) == 0 ? offset : offset * 5 + (offset / 2);
+                nextBottom = (nextMove.y / 5) == 0 ? offset * 5 + (offset / 2) : nextTop + (offset * 5);
+            } else {
+                top = offset * 9 + (offset / 2);
+                bottom = offset * 19;
+                nextTop = (nextMove.y / 7) == 1 ? offset * 9 + (offset / 2) : offset * 14 + (offset / 2);
+                nextBottom = nextTop + (offset * 5);
+            }*/
 
             tempCanvas.clipRect(left, top, right, bottom, Region.Op.XOR);
             tempCanvas.drawRect(rect, p);
@@ -1921,33 +1906,47 @@ public class MainActivity extends AppCompatActivity implements
         boardLogic.currentGame.lastTry = tries;
     }
 
-    private Point calculateLeftRight(int move) {
+    private Point calculateLeftRight(int move, boolean leftRight) {
         Point p = new Point();
         int offset = boardWidth / 20;
 
-        if (move < 6) {
-            p.x = (move / 3) == 0 ? offset : offset * 3 + (offset / 2);
-            p.y = (move / 3) == 0 ? offset * 3 + (offset / 2) : p.x + offset * 3;
-        } else if (move < 13) {
-            if (move == 9) {
-                Random r = new Random();
-                int i = r.nextInt(100 - 1) + 1;
-                if (i >= 50) {
-                    p.x = offset * 6 + (offset / 2);
-                    p.y = offset * 10 + (offset / 2);
-                } else {
-                    p.x = offset * 9 + (offset / 2);
-                    p.y = offset * 13 + (offset / 2);
-                }
-            } else {
-                p.x = (move / 3) == 2 ? offset * 6 + (offset / 2) : offset * 9 + (offset / 2);
-                p.y = (move / 3) == 2 ? p.x + (offset * 4) : p.x + (offset * 4);
-            }
+        float nextleft = 0;
+        float nextright = 0;
 
-        } else if (move < 19) {
-            p.x = (move / 4) == 3 ? offset * 13 + (offset / 2) : offset * 16 + (offset / 2);
-            p.y = p.x + (offset * 3);
+        if (move == 9) {
+            Random r = new Random();
+            int i = r.nextInt(100 - 1) + 1;
+            if (i >= 50) {
+                p.x = offset;
+                p.y = offset * 10 + (offset / 2);
+                nextleft = (offset * 5) + (offset / 2);
+                nextright = p.y;
+            } else {
+                p.x = offset * 9 + (offset / 2);
+                p.y = offset * 19;
+                nextleft = p.x;
+                nextright = p.x + (offset * 5);
+            }
+        } else if (move < 10) {
+            p.x = offset;
+            p.y = offset * 10 + (offset / 2);
+            nextleft = (move / 5) == 0 ? offset : offset * 5 + (offset / 2);
+            nextright = (move / 5) == 0 ? offset * 5 + (offset / 2) : nextleft + (offset * 5);
+        } else {
+            p.x = offset * 9 + (offset / 2);
+            p.y = offset * 19;
+            nextleft = (move / 7) == 1 ? offset * 9 + (offset / 2) : offset * 14 + (offset / 2);
+            nextright = nextleft + (offset * 5);
         }
+
+        if (leftRight) {
+            nextLeft = nextleft;
+            nextRight = nextright;
+        } else {
+            nextTop = nextleft;
+            nextBottom = nextright;
+        }
+
         return p;
     }
 }
