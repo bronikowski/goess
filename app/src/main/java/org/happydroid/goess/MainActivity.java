@@ -1294,7 +1294,7 @@ public class MainActivity extends AppCompatActivity implements
         }
 
         graphRenderer.setPanEnabled(false, false);
-        graphRenderer.setYAxisMax(100);
+        graphRenderer.setYAxisMax(370);
         graphRenderer.setYAxisMin(0);
         graphRenderer.setYTitle("Guess %");
         graphRenderer.setXTitle("Games played");
@@ -1742,6 +1742,7 @@ public class MainActivity extends AppCompatActivity implements
         final Button b = (Button) dialog.findViewById(R.id.todaysgamename);
         b.setBackgroundDrawable(null);
         b.setText(name);
+        b.setClickable(true);
         Log.v(TAG, ">>>>>>>>>>>>>> check for name " + name);
         if (gamesRepoAdapter.iconsVisible.contains(name)) {
             ImageView iv = (ImageView) dialog.findViewById(R.id.todaysgameimg);
