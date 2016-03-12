@@ -158,8 +158,11 @@ public class MainActivity extends AppCompatActivity implements
     private void setGameDownloadAlarm() {
         Calendar downloadTime = Calendar.getInstance();
         downloadTime.setTimeZone(TimeZone.getTimeZone("GMT"));
-        downloadTime.set(Calendar.HOUR_OF_DAY, 1);
-        downloadTime.set(Calendar.MINUTE, 5);
+        Random r = new Random();
+        int delay = r.nextInt(4 - 1) + 1;
+        downloadTime.set(Calendar.HOUR_OF_DAY, 1 + delay);
+        delay = r.nextInt(50 - 1) + 1;
+        downloadTime.set(Calendar.MINUTE, 5 + delay);
 
         Intent downloader = new Intent(context, AlarmReceiver.class);
         PendingIntent recurringDownload = PendingIntent.getBroadcast(context, 0, downloader, PendingIntent.FLAG_CANCEL_CURRENT);
@@ -1878,40 +1881,12 @@ public class MainActivity extends AppCompatActivity implements
             tempCanvas.drawRect(rect, p);
         } else if (tries == 1) {
 
-
             Point p1 = calculateLeftRight(nextMove.x, true);
             float left = p1.x;
             float right = p1.y;
             Point p2 = calculateLeftRight(nextMove.y, false);
             float top = p2.x;
             float bottom = p2.y;
-
-            /*
-            if (nextMove.y == 9) {
-                Random r = new Random();
-                int i = r.nextInt(100 - 1) + 1;
-                if (i >= 50) {
-                    top = offset;
-                    bottom = offset * 10 + (offset / 2);
-                    nextTop = (offset * 5) + (offset / 2);
-                    nextBottom = bottom;
-                } else {
-                    top = offset * 9 + (offset / 2);
-                    bottom = offset * 19;
-                    nextTop = top;
-                    nextBottom = top + (offset * 5);
-                }
-            } else if (nextMove.y < 10) {
-                top = offset;
-                bottom = offset * 10 + (offset / 2);
-                nextTop = (nextMove.y / 5) == 0 ? offset : offset * 5 + (offset / 2);
-                nextBottom = (nextMove.y / 5) == 0 ? offset * 5 + (offset / 2) : nextTop + (offset * 5);
-            } else {
-                top = offset * 9 + (offset / 2);
-                bottom = offset * 19;
-                nextTop = (nextMove.y / 7) == 1 ? offset * 9 + (offset / 2) : offset * 14 + (offset / 2);
-                nextBottom = nextTop + (offset * 5);
-            }*/
 
             tempCanvas.clipRect(left, top, right, bottom, Region.Op.XOR);
             tempCanvas.drawRect(rect, p);
